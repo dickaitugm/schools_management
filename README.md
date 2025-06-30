@@ -1,4 +1,4 @@
-# School Management System
+# BB Society Information System
 
 A comprehensive desktop application for managing schools, teachers, and students built with Electron, React, TailwindCSS, and SQLite.
 

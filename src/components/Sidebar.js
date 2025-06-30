@@ -16,7 +16,7 @@ const Sidebar = () => {
   return (
     <div className="w-64 bg-blue-800 text-white h-full">
       <div className="p-4">
-        <h1 className="text-xl font-bold mb-8">School Management</h1>
+        <h1 className="text-xl font-bold mb-8">BB Society Information System</h1>
         <nav>
           <ul className="space-y-2">
             {menuItems.map((item) => (

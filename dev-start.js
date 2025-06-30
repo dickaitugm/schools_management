@@ -1,7 +1,7 @@
 const { spawn } = require('child_process');
 const path = require('path');
 
-console.log('🚀 Starting School Management System Development Environment');
+console.log('🚀 Starting BB Society Information System Development Environment');
 console.log('');
 
 // Start React development server

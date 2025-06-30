@@ -167,7 +167,7 @@ const AttendanceManagement = () => {
         >
           ← Back to Schedules
         </button>
-        <h1 className="text-3xl font-bold text-gray-800">Attendance Management</h1>
+        <h1 className="text-3xl font-bold text-gray-800">BB Society - Attendance Management</h1>
       </div>
 
       {/* Schedule Information */}

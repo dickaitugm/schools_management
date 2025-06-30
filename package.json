@@ -1,7 +1,7 @@
 {
-  "name": "school-management-app",
+  "name": "bb-society-information-system",
   "version": "1.0.0",
-  "description": "A desktop application for school management with CRUD operations",
+  "description": "A desktop application for BB Society Information System with CRUD operations",
   "main": "public/electron.js",
   "scripts": {
     "dev": "concurrently \"npm run react-dev\" \"npm run electron-dev\"",

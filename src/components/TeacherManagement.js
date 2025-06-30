@@ -151,7 +151,7 @@ const TeacherManagement = ({ selectedSchoolId }) => {
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-800">
-          Teachers {selectedSchoolId && `- ${getSchoolName(selectedSchoolId)}`}
+          BB Society - Teachers {selectedSchoolId && `- ${getSchoolName(selectedSchoolId)}`}
         </h1>
         <button
           onClick={handleAddNew}
