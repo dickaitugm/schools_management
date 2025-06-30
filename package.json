@@ -1,0 +1,57 @@
+{
+  "name": "school-management-app",
+  "version": "1.0.0",
+  "description": "A desktop application for school management with CRUD operations",
+  "main": "public/electron.js",
+  "scripts": {
+    "dev": "concurrently \"npm run react-dev\" \"npm run electron-dev\"",
+    "react-dev": "react-scripts start",
+    "electron-dev": "electron .",
+    "build": "react-scripts build",
+    "electron-build": "npm run build && electron-builder",
+    "start": "react-scripts start",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-scripts": "5.0.1",
+    "sqlite3": "^5.1.6",
+    "electron-is-dev": "^2.0.0",
+    "react-router-dom": "^6.8.1"
+  },
+  "devDependencies": {
+    "electron": "^22.0.0",
+    "electron-builder": "^24.0.0",
+    "concurrently": "^7.6.0",
+    "wait-on": "^7.0.1",
+    "tailwindcss": "^3.2.4",
+    "autoprefixer": "^10.4.13",
+    "postcss": "^8.4.21"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "build": {
+    "appId": "com.school.management",
+    "productName": "School Management System",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "build/**/*",
+      "public/electron.js",
+      "node_modules/**/*"
+    ]
+  }
+}
