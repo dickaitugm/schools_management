@@ -6,7 +6,6 @@ import TeacherManagement from './components/TeacherManagement';
 import StudentManagement from './components/StudentManagement';
 import LessonManagement from './components/LessonManagement';
 import ScheduleManagement from './components/ScheduleManagement';
-import CalendarView from './components/CalendarView';
 import SchoolProfile from './components/SchoolProfile';
 import TeacherProfile from './components/TeacherProfile';
 import StudentProfile from './components/StudentProfile';
@@ -54,7 +53,6 @@ function App() {
             <Route path="/lessons" element={<LessonManagement />} />
             <Route path="/lessons/:id" element={<LessonProfile />} />
             <Route path="/schedules" element={<ScheduleManagement />} />
-            <Route path="/calendar" element={<CalendarView />} />
           </Routes>
         </div>
       </div>

@@ -10,8 +10,7 @@ const Sidebar = () => {
     { path: '/teachers', name: 'Teachers', icon: '👨‍🏫' },
     { path: '/students', name: 'Students', icon: '👨‍🎓' },
     { path: '/lessons', name: 'Lessons', icon: '📚' },
-    { path: '/schedules', name: 'Schedules', icon: '📅' },
-    { path: '/calendar', name: 'Calendar', icon: '🗓️' },
+    { path: '/schedules', name: 'Schedules', icon: '📅' }
   ];
 
   return (

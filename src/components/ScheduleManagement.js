@@ -10,6 +10,8 @@ const ScheduleManagement = () => {
   const [teachers, setTeachers] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState(null);
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(null);
   const [filters, setFilters] = useState({
     school_id: '',
     date_from: '',
@@ -33,6 +35,11 @@ const ScheduleManagement = () => {
   useEffect(() => {
     fetchSchedules();
   }, [filters]);
+
+  // Update filters when changing calendar month
+  useEffect(() => {
+    // Don't auto-set date filters, let user manually set them if needed
+  }, [currentDate]);
 
   const fetchData = async () => {
     try {
@@ -193,24 +200,85 @@ const ScheduleManagement = () => {
     }
   };
 
+  // Calendar functions
+  const getDaysInMonth = (date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startingDayOfWeek = firstDay.getDay();
+
+    const days = [];
+    
+    // Add empty cells for days before the first day of the month
+    for (let i = 0; i < startingDayOfWeek; i++) {
+      days.push(null);
+    }
+    
+    // Add all days of the month
+    for (let day = 1; day <= daysInMonth; day++) {
+      days.push(new Date(year, month, day));
+    }
+    
+    return days;
+  };
+
+  const getSchedulesForDate = (date) => {
+    if (!date) return [];
+    // Use local date string to avoid timezone issues
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const dateStr = `${year}-${month}-${day}`;
+    return schedules.filter(schedule => schedule.scheduled_date === dateStr);
+  };
+
+  const navigateMonth = (direction) => {
+    const newDate = new Date(currentDate);
+    newDate.setMonth(currentDate.getMonth() + direction);
+    setCurrentDate(newDate);
+  };
+
+  // Function to navigate to specific date and select it
+  const navigateToDate = (dateString) => {
+    if (!dateString) return;
+    const date = new Date(dateString + 'T00:00:00'); // Add time to avoid timezone issues
+    setCurrentDate(new Date(date.getFullYear(), date.getMonth(), 1)); // Set calendar to that month
+    
+    // Small delay to allow calendar to update, then select the date
+    setTimeout(() => {
+      setSelectedDate(date); // Select the specific date
+    }, 100);
+  };
+
+  // Helper function to format date consistently
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString + 'T00:00:00');
+    return date.toLocaleDateString();
+  };
+
+  const getCalendarStatusColor = (status) => {
+    switch (status) {
+      case 'scheduled': return 'bg-blue-500';
+      case 'completed': return 'bg-green-500';
+      case 'cancelled': return 'bg-red-500';
+      case 'rescheduled': return 'bg-yellow-500';
+      default: return 'bg-gray-500';
+    }
+  };
+
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-800">Schedule Management</h1>
-        <div className="flex space-x-3">
-          <button
-            onClick={() => navigate('/calendar')}
-            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
-          >
-            Calendar View
-          </button>
-          <button
-            onClick={handleAddNew}
-            className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors"
-          >
-            Add New Schedule
-          </button>
-        </div>
+        <button
+          onClick={handleAddNew}
+          className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors"
+        >
+          Add New Schedule
+        </button>
       </div>
 
       {/* Filters */}
@@ -256,86 +324,310 @@ const ScheduleManagement = () => {
         </div>
       </div>
 
-      {/* Schedules Table */}
-      <div className="bg-white rounded-lg shadow-md overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Date & Time
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Lessons
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                School
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Teachers
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Duration
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Status
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {schedules.map((schedule) => (
-              <tr key={schedule.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  <div>
-                    <div className="font-medium">
-                      {schedule.scheduled_date ? new Date(schedule.scheduled_date).toLocaleDateString() : 'N/A'}
-                    </div>
-                    <div className="text-gray-500">{schedule.scheduled_time || 'N/A'}</div>
+      {/* Main Content Grid - Calendar and Table side by side */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Calendar View */}
+        <div className="bg-white rounded-lg shadow-md">
+          {/* Calendar Header */}
+          <div className="flex justify-between items-center p-4 border-b">
+            <button
+              onClick={() => navigateMonth(-1)}
+              className="p-2 hover:bg-gray-100 rounded-lg text-xl"
+            >
+              ←
+            </button>
+            <h2 className="text-lg font-semibold text-gray-800">
+              {new Date(currentDate.getFullYear(), currentDate.getMonth()).toLocaleDateString('en-US', { 
+                month: 'long', 
+                year: 'numeric' 
+              })}
+            </h2>
+            <button
+              onClick={() => navigateMonth(1)}
+              className="p-2 hover:bg-gray-100 rounded-lg text-xl"
+            >
+              →
+            </button>
+          </div>
+
+          {/* Calendar Grid */}
+          <div className="p-4">
+            {/* Day Headers */}
+            <div className="grid grid-cols-7 gap-1 mb-2">
+              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+                <div key={day} className="p-2 text-center font-medium text-gray-600 text-sm">
+                  {day}
+                </div>
+              ))}
+            </div>
+
+            {/* Calendar Days */}
+            <div className="grid grid-cols-7 gap-1">
+              {getDaysInMonth(currentDate).map((day, index) => {
+                const daySchedules = day ? getSchedulesForDate(day) : [];
+                const isToday = day && day.toDateString() === new Date().toDateString();
+                const isSelected = selectedDate && day && day.toDateString() === selectedDate.toDateString();
+
+                return (
+                  <div
+                    key={index}
+                    className={`min-h-[80px] border border-gray-200 p-1 cursor-pointer hover:bg-gray-50 ${
+                      day ? 'bg-white' : 'bg-gray-50'
+                    } ${isToday ? 'ring-2 ring-blue-500' : ''} ${
+                      isSelected ? 'bg-blue-50' : ''
+                    }`}
+                    onClick={() => {
+                      if (day) {
+                        // If clicking the same date, clear selection
+                        if (selectedDate && day.toDateString() === selectedDate.toDateString()) {
+                          setSelectedDate(null);
+                        } else {
+                          setSelectedDate(day);
+                        }
+                      }
+                    }}
+                  >
+                    {day && (
+                      <>
+                        <div className={`text-xs font-medium mb-1 ${isToday ? 'text-blue-600' : 'text-gray-900'}`}>
+                          {day.getDate()}
+                        </div>
+                        <div className="space-y-1">
+                          {daySchedules.slice(0, 2).map((schedule) => (
+                            <div
+                              key={schedule.id}
+                              className={`text-xs p-1 rounded text-white truncate ${getCalendarStatusColor(schedule.status)}`}
+                              title={`${schedule.lesson_titles ? schedule.lesson_titles.join(', ') : 'No lessons'} at ${schedule.school_name} - ${schedule.scheduled_time} (${formatDate(schedule.scheduled_date)})`}
+                            >
+                              {schedule.scheduled_time}
+                            </div>
+                          ))}
+                          {daySchedules.length > 2 && (
+                            <div className="text-xs text-gray-500">
+                              +{daySchedules.length - 2}
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    )}
                   </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {schedule.lesson_titles && schedule.lesson_titles.length > 0 
-                    ? schedule.lesson_titles.join(', ') 
-                    : 'No lessons'}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {schedule.school_name || 'N/A'}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {schedule.teacher_names && schedule.teacher_names.length > 0 
-                    ? schedule.teacher_names.join(', ') 
-                    : 'Not assigned'}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {schedule.duration_minutes} min
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(schedule.status)}`}>
-                    {schedule.status}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <button
-                    onClick={() => handleEdit(schedule)}
-                    className="text-blue-600 hover:text-blue-900 mr-3"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(schedule.id)}
-                    className="text-red-600 hover:text-red-900"
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Legend */}
+          <div className="px-4 pb-4 border-t">
+            <h4 className="text-sm font-semibold text-gray-800 mb-2">Legend</h4>
+            <div className="flex flex-wrap gap-3 text-xs">
+              <div className="flex items-center">
+                <div className="w-3 h-3 bg-blue-500 rounded mr-1"></div>
+                <span className="text-gray-600">Scheduled</span>
+              </div>
+              <div className="flex items-center">
+                <div className="w-3 h-3 bg-green-500 rounded mr-1"></div>
+                <span className="text-gray-600">Completed</span>
+              </div>
+              <div className="flex items-center">
+                <div className="w-3 h-3 bg-red-500 rounded mr-1"></div>
+                <span className="text-gray-600">Cancelled</span>
+              </div>
+              <div className="flex items-center">
+                <div className="w-3 h-3 bg-yellow-500 rounded mr-1"></div>
+                <span className="text-gray-600">Rescheduled</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Schedules Table - Now takes 3/4 of the width */}
+        <div className="lg:col-span-3 bg-white rounded-lg shadow-md">
+          <div className="p-4 border-b">
+            <h3 className="text-lg font-semibold text-gray-800">All Schedules</h3>
+            <p className="text-sm text-gray-500 mt-1">Click on date, lesson, or school to view details in calendar</p>
+          </div>
+          <div className="overflow-hidden">
+            {schedules.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Date & Time
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Lessons
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        School
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Teachers
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Duration
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200 max-h-[500px] overflow-y-auto">
+                    {schedules.map((schedule) => (
+                      <tr key={schedule.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                          <div 
+                            className="cursor-pointer hover:text-blue-600 transition-colors"
+                            onClick={() => navigateToDate(schedule.scheduled_date)}
+                            title="Click to view this date in calendar"
+                          >
+                            <div className="font-medium">
+                              {formatDate(schedule.scheduled_date)}
+                            </div>
+                            <div className="text-gray-500">{schedule.scheduled_time || 'N/A'}</div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-900">
+                          <div 
+                            className="max-w-xs truncate cursor-pointer hover:text-blue-600 transition-colors"
+                            onClick={() => navigateToDate(schedule.scheduled_date)}
+                            title="Click to view this date in calendar"
+                          >
+                            {schedule.lesson_titles && schedule.lesson_titles.length > 0 
+                              ? schedule.lesson_titles.join(', ') 
+                              : 'No lessons'}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                          <div 
+                            className="cursor-pointer hover:text-blue-600 transition-colors"
+                            onClick={() => navigateToDate(schedule.scheduled_date)}
+                            title="Click to view this date in calendar"
+                          >
+                            {schedule.school_name || 'N/A'}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-500">
+                          <div className="max-w-xs truncate">
+                            {schedule.teacher_names && schedule.teacher_names.length > 0 
+                              ? schedule.teacher_names.join(', ') 
+                              : 'Not assigned'}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                          {schedule.duration_minutes} min
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(schedule.status)}`}>
+                            {schedule.status}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm font-medium">
+                          <button
+                            onClick={() => handleEdit(schedule)}
+                            className="text-blue-600 hover:text-blue-900 mr-3"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDelete(schedule.id)}
+                            className="text-red-600 hover:text-red-900"
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="p-8 text-center text-gray-500">
+                No schedules found.
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
+      {/* Selected Date Details - Show below the main grid */}
+      {selectedDate && getSchedulesForDate(selectedDate).length > 0 && (
+        <div className="mt-6 bg-white rounded-lg shadow-md">
+          <div className="p-4 border-b">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-semibold text-gray-800">
+                Schedules for {selectedDate.toLocaleDateString()}
+              </h3>
+              <button
+                onClick={() => setSelectedDate(null)}
+                className="text-sm text-gray-500 hover:text-gray-700 underline"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+          <div className="p-4">
+            <div className="space-y-4">
+              {getSchedulesForDate(selectedDate).map((schedule) => (
+                <div key={schedule.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(schedule.status)}`}>
+                          {schedule.status}
+                        </span>
+                        <span className="text-sm font-medium text-gray-900">
+                          {schedule.scheduled_time || 'N/A'}
+                        </span>
+                        <span className="text-sm text-gray-500">
+                          ({schedule.duration_minutes} min)
+                        </span>
+                      </div>
+                      <h4 className="font-medium text-gray-900 mb-2">
+                        {schedule.lesson_titles && schedule.lesson_titles.length > 0 
+                          ? schedule.lesson_titles.join(', ') 
+                          : 'No lessons'}
+                      </h4>
+                      <p className="text-sm text-gray-600 mb-1">
+                        <span className="font-medium">School:</span> {schedule.school_name}
+                      </p>
+                      <p className="text-sm text-gray-600 mb-1">
+                        <span className="font-medium">Teachers:</span> {schedule.teacher_names && schedule.teacher_names.length > 0 
+                          ? schedule.teacher_names.join(', ') 
+                          : 'Not assigned'}
+                      </p>
+                      {schedule.notes && (
+                        <p className="text-sm text-gray-600 mt-2">
+                          <span className="font-medium">Notes:</span> {schedule.notes}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex items-center space-x-2 ml-4">
+                      <button
+                        onClick={() => handleEdit(schedule)}
+                        className="text-blue-600 hover:text-blue-900 text-sm"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDelete(schedule.id)}
+                        className="text-red-600 hover:text-red-900 text-sm"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal */}
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
