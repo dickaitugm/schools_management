@@ -8,6 +8,8 @@ const StudentProfile = () => {
   const [school, setSchool] = useState(null);
   const [teachers, setTeachers] = useState([]);
   const [classmates, setClassmates] = useState([]);
+  const [schedules, setSchedules] = useState([]);
+  const [lessons, setLessons] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -36,12 +38,37 @@ const StudentProfile = () => {
         // Fetch classmates (students from same school, excluding current student)
         const classmateData = await window.electronAPI.getStudents(studentData.school_id);
         setClassmates(classmateData.filter(s => s.id !== parseInt(id)));
+
+        // Fetch schedules from the same school
+        const scheduleData = await window.electronAPI.getSchedules({ school_id: studentData.school_id });
+        setSchedules(scheduleData);
+
+        // Get unique lessons from schedules
+        const allLessons = await window.electronAPI.getLessons();
+        const lessonIds = new Set();
+        scheduleData.forEach(schedule => {
+          if (schedule.lesson_ids) {
+            schedule.lesson_ids.split(',').forEach(id => lessonIds.add(parseInt(id)));
+          }
+        });
+        const schoolLessons = allLessons.filter(lesson => lessonIds.has(lesson.id));
+        setLessons(schoolLessons);
       }
       
       setLoading(false);
     } catch (error) {
       console.error('Error fetching student data:', error);
       setLoading(false);
+    }
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'scheduled': return 'bg-blue-100 text-blue-800';
+      case 'completed': return 'bg-green-100 text-green-800';
+      case 'cancelled': return 'bg-red-100 text-red-800';
+      case 'rescheduled': return 'bg-yellow-100 text-yellow-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -133,6 +160,57 @@ const StudentProfile = () => {
             <p className="mt-1 text-gray-900">
               {student.created_at ? new Date(student.created_at).toLocaleDateString() : 'N/A'}
             </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Statistics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="flex items-center">
+            <div className="p-3 rounded-full bg-green-100 text-green-600 mr-4">
+              <span className="text-2xl">👨‍🏫</span>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-600">Teachers</p>
+              <p className="text-2xl font-bold text-gray-900">{teachers.length}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="flex items-center">
+            <div className="p-3 rounded-full bg-purple-100 text-purple-600 mr-4">
+              <span className="text-2xl">👥</span>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-600">Classmates</p>
+              <p className="text-2xl font-bold text-gray-900">{classmates.length}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="flex items-center">
+            <div className="p-3 rounded-full bg-indigo-100 text-indigo-600 mr-4">
+              <span className="text-2xl">📚</span>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-600">Lessons</p>
+              <p className="text-2xl font-bold text-gray-900">{lessons.length}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="flex items-center">
+            <div className="p-3 rounded-full bg-blue-100 text-blue-600 mr-4">
+              <span className="text-2xl">📅</span>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-600">Schedules</p>
+              <p className="text-2xl font-bold text-gray-900">{schedules.length}</p>
+            </div>
           </div>
         </div>
       </div>
