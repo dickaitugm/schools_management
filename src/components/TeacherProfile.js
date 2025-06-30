@@ -48,7 +48,12 @@ const TeacherProfile = () => {
         const lessonIds = new Set();
         scheduleData.forEach(schedule => {
           if (schedule.lesson_ids) {
-            schedule.lesson_ids.split(',').forEach(id => lessonIds.add(parseInt(id)));
+            // Handle both string and array formats
+            if (typeof schedule.lesson_ids === 'string') {
+              schedule.lesson_ids.split(',').forEach(id => lessonIds.add(parseInt(id)));
+            } else if (Array.isArray(schedule.lesson_ids)) {
+              schedule.lesson_ids.forEach(id => lessonIds.add(parseInt(id)));
+            }
           }
         });
         const teacherLessons = allLessons.filter(lesson => lessonIds.has(lesson.id));
@@ -107,61 +112,35 @@ const TeacherProfile = () => {
         <h1 className="text-3xl font-bold text-gray-800">Teacher Profile</h1>
       </div>
 
-      {/* Teacher Details Card */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <div className="flex items-center mb-4">
-          <div className="p-3 rounded-full bg-green-100 text-green-600 mr-4">
-            <span className="text-2xl">👨‍🏫</span>
+      {/* Teacher Details Card - Simplified */}
+      <div className="bg-white rounded-lg shadow-md p-4 mb-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <div className="p-2 rounded-full bg-green-100 text-green-600 mr-3">
+              <span className="text-xl">👨‍🏫</span>
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">{teacher.name}</h2>
+              <p className="text-sm text-gray-600">{teacher.subject || 'Subject not specified'}</p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">{teacher.name}</h2>
-            <p className="text-gray-600">{teacher.subject || 'Subject not specified'}</p>
-          </div>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Schools</label>
-            <div className="mt-1">
+          <div className="text-right">
+            <p className="text-sm text-gray-600">{teacher.phone || 'No phone'}</p>
+            <p className="text-xs text-gray-500">{teacher.email || 'No email'}</p>
+            <p className="text-xs text-gray-400">
               {schools.length > 0 ? (
                 schools.map((school, index) => (
-                  <div key={school.id}>
+                  <span key={school.id}>
                     <button
                       onClick={() => navigate(`/schools/${school.id}`)}
                       className="text-blue-600 hover:text-blue-800 hover:underline"
                     >
                       {school.name}
                     </button>
-                    {index < schools.length - 1 && <span className="text-gray-500">, </span>}
-                  </div>
+                    {index < schools.length - 1 && ', '}
+                  </span>
                 ))
-              ) : (
-                <span className="text-gray-900">No schools assigned</span>
-              )}
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Subject</label>
-            <p className="mt-1 text-gray-900">{teacher.subject || 'N/A'}</p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Phone</label>
-            <p className="mt-1 text-gray-900">{teacher.phone || 'N/A'}</p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Email</label>
-            <p className="mt-1 text-gray-900">{teacher.email || 'N/A'}</p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Hire Date</label>
-            <p className="mt-1 text-gray-900">
-              {teacher.hire_date ? new Date(teacher.hire_date).toLocaleDateString() : 'N/A'}
-            </p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Created</label>
-            <p className="mt-1 text-gray-900">
-              {teacher.created_at ? new Date(teacher.created_at).toLocaleDateString() : 'N/A'}
+              ) : 'No schools assigned'}
             </p>
           </div>
         </div>

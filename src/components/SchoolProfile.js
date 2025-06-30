@@ -41,7 +41,12 @@ const SchoolProfile = () => {
       const lessonIds = new Set();
       scheduleData.forEach(schedule => {
         if (schedule.lesson_ids) {
-          schedule.lesson_ids.split(',').forEach(id => lessonIds.add(parseInt(id)));
+          // Handle both string and array formats
+          if (typeof schedule.lesson_ids === 'string') {
+            schedule.lesson_ids.split(',').forEach(id => lessonIds.add(parseInt(id)));
+          } else if (Array.isArray(schedule.lesson_ids)) {
+            schedule.lesson_ids.forEach(id => lessonIds.add(parseInt(id)));
+          }
         }
       });
       const schoolLessons = allLessons.filter(lesson => lessonIds.has(lesson.id));
@@ -126,36 +131,21 @@ const SchoolProfile = () => {
         <h1 className="text-3xl font-bold text-gray-800">School Profile</h1>
       </div>
 
-      {/* School Details Card */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <div className="flex items-center mb-4">
-          <div className="p-3 rounded-full bg-blue-100 text-blue-600 mr-4">
-            <span className="text-2xl">🏫</span>
+      {/* School Details Card - Simplified */}
+      <div className="bg-white rounded-lg shadow-md p-4 mb-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <div className="p-2 rounded-full bg-blue-100 text-blue-600 mr-3">
+              <span className="text-xl">🏫</span>
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">{school.name}</h2>
+              <p className="text-sm text-gray-600">{school.address || 'Address not specified'}</p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">{school.name}</h2>
-            <p className="text-gray-600">School Information</p>
-          </div>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Address</label>
-            <p className="mt-1 text-gray-900">{school.address || 'N/A'}</p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Phone</label>
-            <p className="mt-1 text-gray-900">{school.phone || 'N/A'}</p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Email</label>
-            <p className="mt-1 text-gray-900">{school.email || 'N/A'}</p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Created</label>
-            <p className="mt-1 text-gray-900">
-              {school.created_at ? new Date(school.created_at).toLocaleDateString() : 'N/A'}
-            </p>
+          <div className="text-right">
+            <p className="text-sm text-gray-600">{school.phone || 'No phone'}</p>
+            <p className="text-xs text-gray-500">{school.email || 'No email'}</p>
           </div>
         </div>
       </div>

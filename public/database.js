@@ -767,7 +767,7 @@ class Database {
   }
 
   // Student Attendance operations
-  getStudentAttendance(scheduleId, studentId = null) {
+  getStudentAttendance(scheduleId = null, studentId = null) {
     return new Promise((resolve, reject) => {
       let query = `
         SELECT sa.*, s.name as student_name, s.grade, sch.scheduled_date, sch.scheduled_time, 
@@ -801,8 +801,11 @@ class Database {
       query += ' GROUP BY sa.id ORDER BY sch.scheduled_date DESC, sch.scheduled_time DESC';
       
       this.db.all(query, params, (err, rows) => {
-        if (err) reject(err);
-        else resolve(rows);
+        if (err) {
+          reject(err);
+        } else {
+          resolve(rows);
+        }
       });
     });
   }
