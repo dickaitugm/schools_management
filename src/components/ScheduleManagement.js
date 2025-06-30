@@ -532,6 +532,14 @@ const ScheduleManagement = () => {
                           >
                             Edit
                           </button>
+                          {schedule.status === 'completed' && (
+                            <button
+                              onClick={() => navigate(`/attendance/${schedule.id}`)}
+                              className="text-green-600 hover:text-green-900 mr-3"
+                            >
+                              Attendance
+                            </button>
+                          )}
                           <button
                             onClick={() => handleDelete(schedule.id)}
                             className="text-red-600 hover:text-red-900"
@@ -612,6 +620,14 @@ const ScheduleManagement = () => {
                       >
                         Edit
                       </button>
+                      {schedule.status === 'completed' && (
+                        <button
+                          onClick={() => navigate(`/attendance/${schedule.id}`)}
+                          className="text-green-600 hover:text-green-900 text-sm"
+                        >
+                          Attendance
+                        </button>
+                      )}
                       <button
                         onClick={() => handleDelete(schedule.id)}
                         className="text-red-600 hover:text-red-900 text-sm"

@@ -110,6 +110,23 @@ class Database {
       )
     `;
 
+    const createStudentAttendanceTable = `
+      CREATE TABLE IF NOT EXISTS student_attendance (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        schedule_id INTEGER,
+        student_id INTEGER,
+        attendance_status TEXT DEFAULT 'present', -- present, absent, late
+        knowledge_score INTEGER, -- 0-100
+        participation_score INTEGER, -- 0-100
+        notes TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (schedule_id) REFERENCES schedules (id) ON DELETE CASCADE,
+        FOREIGN KEY (student_id) REFERENCES students (id) ON DELETE CASCADE,
+        UNIQUE(schedule_id, student_id)
+      )
+    `;
+
     this.db.serialize(() => {
       this.db.run(createSchoolsTable);
       this.db.run(createTeachersTable);
@@ -119,6 +136,7 @@ class Database {
       this.db.run(createSchedulesTable);
       this.db.run(createScheduleTeachersTable);
       this.db.run(createScheduleLessonsTable);
+      this.db.run(createStudentAttendanceTable);
     });
   }
 
@@ -744,6 +762,109 @@ class Database {
             });
           });
         });
+      });
+    });
+  }
+
+  // Student Attendance operations
+  getStudentAttendance(scheduleId, studentId = null) {
+    return new Promise((resolve, reject) => {
+      let query = `
+        SELECT sa.*, s.name as student_name, s.grade, sch.scheduled_date, sch.scheduled_time, 
+               sch.status as schedule_status, school.name as school_name,
+               GROUP_CONCAT(DISTINCT l.title) as lesson_titles
+        FROM student_attendance sa
+        LEFT JOIN students s ON sa.student_id = s.id
+        LEFT JOIN schedules sch ON sa.schedule_id = sch.id
+        LEFT JOIN schools school ON sch.school_id = school.id
+        LEFT JOIN schedule_lessons sl ON sch.id = sl.schedule_id
+        LEFT JOIN lessons l ON sl.lesson_id = l.id
+      `;
+      
+      const conditions = [];
+      const params = [];
+      
+      if (scheduleId) {
+        conditions.push('sa.schedule_id = ?');
+        params.push(scheduleId);
+      }
+      
+      if (studentId) {
+        conditions.push('sa.student_id = ?');
+        params.push(studentId);
+      }
+      
+      if (conditions.length > 0) {
+        query += ' WHERE ' + conditions.join(' AND ');
+      }
+      
+      query += ' GROUP BY sa.id ORDER BY sch.scheduled_date DESC, sch.scheduled_time DESC';
+      
+      this.db.all(query, params, (err, rows) => {
+        if (err) reject(err);
+        else resolve(rows);
+      });
+    });
+  }
+
+  addStudentAttendance(attendance) {
+    return new Promise((resolve, reject) => {
+      const { schedule_id, student_id, attendance_status, knowledge_score, participation_score, notes } = attendance;
+      this.db.run(
+        `INSERT INTO student_attendance 
+         (schedule_id, student_id, attendance_status, knowledge_score, participation_score, notes) 
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [schedule_id, student_id, attendance_status, knowledge_score, participation_score, notes],
+        function(err) {
+          if (err) reject(err);
+          else resolve({ id: this.lastID });
+        }
+      );
+    });
+  }
+
+  updateStudentAttendance(id, attendance) {
+    return new Promise((resolve, reject) => {
+      const { attendance_status, knowledge_score, participation_score, notes } = attendance;
+      this.db.run(
+        `UPDATE student_attendance 
+         SET attendance_status = ?, knowledge_score = ?, participation_score = ?, notes = ?, 
+             updated_at = CURRENT_TIMESTAMP 
+         WHERE id = ?`,
+        [attendance_status, knowledge_score, participation_score, notes, id],
+        function(err) {
+          if (err) reject(err);
+          else resolve({ updated: this.changes > 0 });
+        }
+      );
+    });
+  }
+
+  deleteStudentAttendance(id) {
+    return new Promise((resolve, reject) => {
+      this.db.run('DELETE FROM student_attendance WHERE id = ?', [id], function(err) {
+        if (err) reject(err);
+        else resolve({ deleted: this.changes > 0 });
+      });
+    });
+  }
+
+  // Get students for a specific schedule (to manage attendance)
+  getStudentsForSchedule(scheduleId) {
+    return new Promise((resolve, reject) => {
+      const query = `
+        SELECT s.*, sa.id as attendance_id, sa.attendance_status, sa.knowledge_score, 
+               sa.participation_score, sa.notes as attendance_notes
+        FROM students s
+        LEFT JOIN schedules sch ON s.school_id = sch.school_id
+        LEFT JOIN student_attendance sa ON s.id = sa.student_id AND sa.schedule_id = ?
+        WHERE sch.id = ?
+        ORDER BY s.name
+      `;
+      
+      this.db.all(query, [scheduleId, scheduleId], (err, rows) => {
+        if (err) reject(err);
+        else resolve(rows);
       });
     });
   }

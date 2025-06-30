@@ -44,6 +44,33 @@ const LessonProfile = () => {
     }
   };
 
+  const formatTeacherNames = (teacherNames) => {
+    if (!teacherNames) return 'Not assigned';
+    
+    // Jika sudah berupa array, join dengan koma
+    if (Array.isArray(teacherNames)) {
+      return teacherNames.join(', ');
+    }
+    
+    if (typeof teacherNames !== 'string') {
+      return teacherNames;
+    }
+    
+    // Coba split dengan koma dulu
+    if (teacherNames.includes(',')) {
+      return teacherNames.split(',').map(name => name.trim()).join(', ');
+    }
+    
+    // Jika tidak ada koma, coba split berdasarkan huruf kapital
+    const splitByCapital = teacherNames.split(/(?=[A-Z])/).filter(name => name.trim());
+    if (splitByCapital.length > 1) {
+      return splitByCapital.join(', ');
+    }
+    
+    // Jika tidak bisa split, return as is
+    return teacherNames;
+  };
+
   if (loading) {
     return (
       <div className="p-6 flex items-center justify-center">
@@ -210,7 +237,7 @@ const LessonProfile = () => {
                           <strong>Time:</strong> {schedule.scheduled_time} ({schedule.duration_minutes} min)
                         </div>
                         <div>
-                          <strong>Teacher:</strong> {schedule.teacher_name || 'Not assigned'}
+                          <strong>Teachers:</strong> {formatTeacherNames(schedule.teacher_names)}
                         </div>
                       </div>
                       {schedule.notes && (

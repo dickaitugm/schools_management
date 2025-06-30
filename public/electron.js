@@ -126,3 +126,24 @@ ipcMain.handle('update-schedule', async (event, id, schedule) => {
 ipcMain.handle('delete-schedule', async (event, id) => {
   return await db.deleteSchedule(id);
 });
+
+// Student Attendance operations
+ipcMain.handle('get-student-attendance', async (event, scheduleId, studentId) => {
+  return await db.getStudentAttendance(scheduleId, studentId);
+});
+
+ipcMain.handle('add-student-attendance', async (event, attendance) => {
+  return await db.addStudentAttendance(attendance);
+});
+
+ipcMain.handle('update-student-attendance', async (event, id, attendance) => {
+  return await db.updateStudentAttendance(id, attendance);
+});
+
+ipcMain.handle('delete-student-attendance', async (event, id) => {
+  return await db.deleteStudentAttendance(id);
+});
+
+ipcMain.handle('get-students-for-schedule', async (event, scheduleId) => {
+  return await db.getStudentsForSchedule(scheduleId);
+});

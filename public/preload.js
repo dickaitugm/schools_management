@@ -29,5 +29,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getSchedules: (filters) => ipcRenderer.invoke('get-schedules', filters),
   addSchedule: (schedule) => ipcRenderer.invoke('add-schedule', schedule),
   updateSchedule: (id, schedule) => ipcRenderer.invoke('update-schedule', id, schedule),
-  deleteSchedule: (id) => ipcRenderer.invoke('delete-schedule', id)
+  deleteSchedule: (id) => ipcRenderer.invoke('delete-schedule', id),
+
+  // Student Attendance operations
+  getStudentAttendance: (scheduleId, studentId) => ipcRenderer.invoke('get-student-attendance', scheduleId, studentId),
+  addStudentAttendance: (attendance) => ipcRenderer.invoke('add-student-attendance', attendance),
+  updateStudentAttendance: (id, attendance) => ipcRenderer.invoke('update-student-attendance', id, attendance),
+  deleteStudentAttendance: (id) => ipcRenderer.invoke('delete-student-attendance', id),
+  getStudentsForSchedule: (scheduleId) => ipcRenderer.invoke('get-students-for-schedule', scheduleId)
 });

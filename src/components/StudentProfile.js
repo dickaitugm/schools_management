@@ -10,6 +10,7 @@ const StudentProfile = () => {
   const [classmates, setClassmates] = useState([]);
   const [schedules, setSchedules] = useState([]);
   const [lessons, setLessons] = useState([]);
+  const [attendanceHistory, setAttendanceHistory] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -53,6 +54,10 @@ const StudentProfile = () => {
         });
         const schoolLessons = allLessons.filter(lesson => lessonIds.has(lesson.id));
         setLessons(schoolLessons);
+
+        // Fetch attendance history for this student
+        const attendanceData = await window.electronAPI.getStudentAttendance(null, parseInt(id));
+        setAttendanceHistory(attendanceData);
       }
       
       setLoading(false);
@@ -283,6 +288,136 @@ const StudentProfile = () => {
               >
                 View All Teachers →
               </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Attendance History and Performance */}
+      <div className="bg-white rounded-lg shadow-md mb-6">
+        <div className="p-6 border-b">
+          <h3 className="text-lg font-semibold text-gray-800 flex items-center">
+            <span className="text-xl mr-2">📊</span>
+            Attendance & Performance History ({attendanceHistory.length})
+          </h3>
+        </div>
+        <div className="p-6">
+          {attendanceHistory.length > 0 ? (
+            <>
+              {/* Performance Summary */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div className="bg-green-50 rounded-lg p-4">
+                  <div className="flex items-center">
+                    <div className="p-2 rounded-full bg-green-100 text-green-600 mr-3">
+                      <span className="text-lg">✅</span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Present</p>
+                      <p className="text-xl font-bold text-green-600">
+                        {attendanceHistory.filter(a => a.attendance_status === 'present').length}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-blue-50 rounded-lg p-4">
+                  <div className="flex items-center">
+                    <div className="p-2 rounded-full bg-blue-100 text-blue-600 mr-3">
+                      <span className="text-lg">🧠</span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Avg Knowledge</p>
+                      <p className="text-xl font-bold text-blue-600">
+                        {attendanceHistory.filter(a => a.knowledge_score).length > 0 
+                          ? Math.round(attendanceHistory.reduce((sum, a) => sum + (a.knowledge_score || 0), 0) / attendanceHistory.filter(a => a.knowledge_score).length)
+                          : '-'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-purple-50 rounded-lg p-4">
+                  <div className="flex items-center">
+                    <div className="p-2 rounded-full bg-purple-100 text-purple-600 mr-3">
+                      <span className="text-lg">🎯</span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-600">Avg Participation</p>
+                      <p className="text-xl font-bold text-purple-600">
+                        {attendanceHistory.filter(a => a.participation_score).length > 0 
+                          ? Math.round(attendanceHistory.reduce((sum, a) => sum + (a.participation_score || 0), 0) / attendanceHistory.filter(a => a.participation_score).length)
+                          : '-'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Detailed History */}
+              <div className="space-y-4">
+                {attendanceHistory
+                  .sort((a, b) => new Date(b.scheduled_date) - new Date(a.scheduled_date))
+                  .map((record) => (
+                  <div key={record.id} className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-3 mb-2">
+                          <h4 className="font-medium text-gray-900">
+                            {record.lesson_titles || 'No lesson assigned'}
+                          </h4>
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(record.attendance_status)}`}>
+                            {record.attendance_status}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm text-gray-600 mb-2">
+                          <div>
+                            <strong>School:</strong> {record.school_name || 'Not assigned'}
+                          </div>
+                          <div>
+                            <strong>Date:</strong> {new Date(record.scheduled_date).toLocaleDateString()}
+                          </div>
+                          <div>
+                            <strong>Time:</strong> {record.scheduled_time}
+                          </div>
+                          <div>
+                            <strong>Status:</strong> {record.schedule_status}
+                          </div>
+                        </div>
+                        {(record.knowledge_score || record.participation_score) && (
+                          <div className="flex items-center space-x-4 mb-2">
+                            {record.knowledge_score && (
+                              <div className="flex items-center">
+                                <span className="text-sm font-medium text-gray-600 mr-1">Knowledge:</span>
+                                <span className={`text-sm font-bold ${getScoreColor(record.knowledge_score)}`}>
+                                  {record.knowledge_score}/100
+                                </span>
+                              </div>
+                            )}
+                            {record.participation_score && (
+                              <div className="flex items-center">
+                                <span className="text-sm font-medium text-gray-600 mr-1">Participation:</span>
+                                <span className={`text-sm font-bold ${getScoreColor(record.participation_score)}`}>
+                                  {record.participation_score}/100
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        {record.notes && (
+                          <p className="text-sm text-gray-500 mt-2">
+                            <strong>Notes:</strong> {record.notes}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : (
+            <div className="text-gray-500 text-center py-8">
+              <p>No attendance records found for this student yet.</p>
+              <p className="text-sm mt-2">Attendance will be recorded after lessons are completed.</p>
             </div>
           )}
         </div>
