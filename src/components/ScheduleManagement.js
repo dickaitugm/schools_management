@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { format, parseISO, startOfMonth, addMonths, subMonths, getDaysInMonth as getDaysInMonthFn } from 'date-fns';
 import Modal from './Modal';
 
 const ScheduleManagement = () => {
@@ -15,7 +16,7 @@ const ScheduleManagement = () => {
   const [filters, setFilters] = useState({
     school_id: '',
     date_from: '',
-    date_to: ''
+    date_to: '',
   });
   const [formData, setFormData] = useState({
     lesson_ids: [],
@@ -25,8 +26,10 @@ const ScheduleManagement = () => {
     scheduled_time: '',
     duration_minutes: 60,
     status: 'scheduled',
-    notes: ''
+    notes: '',
   });
+  const [scheduleStats, setScheduleStats] = useState({});
+  const [allScheduleStats, setAllScheduleStats] = useState({});
 
   useEffect(() => {
     fetchData();
@@ -36,10 +39,16 @@ const ScheduleManagement = () => {
     fetchSchedules();
   }, [filters]);
 
-  // Update filters when changing calendar month
   useEffect(() => {
-    // Don't auto-set date filters, let user manually set them if needed
-  }, [currentDate]);
+    if (schedules.length > 0 && !selectedDate) {
+      const nearestSchedule = findNearestUpcomingSchedule();
+      if (nearestSchedule) {
+        const scheduleDate = parseISO(nearestSchedule.scheduled_date);
+        setSelectedDate(scheduleDate);
+        loadStatsForDate(scheduleDate);
+      }
+    }
+  }, [schedules]);
 
   const fetchData = async () => {
     try {
@@ -47,13 +56,12 @@ const ScheduleManagement = () => {
         window.electronAPI.getSchedules(),
         window.electronAPI.getLessons(),
         window.electronAPI.getSchools(),
-        window.electronAPI.getTeachers()
+        window.electronAPI.getTeachers(),
       ]);
-      
-      setSchedules(scheduleList);
-      setLessons(lessonList);
-      setSchools(schoolList);
-      setTeachers(teacherList);
+      setSchedules(scheduleList || []);
+      setLessons(lessonList || []);
+      setSchools(schoolList || []);
+      setTeachers(teacherList || []);
     } catch (error) {
       console.error('Error fetching data:', error);
     }
@@ -65,44 +73,122 @@ const ScheduleManagement = () => {
       if (filters.school_id) filterObj.school_id = filters.school_id;
       if (filters.date_from) filterObj.date_from = filters.date_from;
       if (filters.date_to) filterObj.date_to = filters.date_to;
-      
       const scheduleList = await window.electronAPI.getSchedules(filterObj);
-      setSchedules(scheduleList);
+      setSchedules(scheduleList || []);
+      loadAllScheduleStats(scheduleList || []);
     } catch (error) {
       console.error('Error fetching schedules:', error);
     }
   };
 
+  const loadAllScheduleStats = async (scheduleList) => {
+    const completedSchedules = scheduleList.filter(schedule => schedule.status === 'completed');
+    const stats = {};
+    for (const schedule of completedSchedules) {
+      const scheduleStats = await fetchScheduleStats(schedule.id);
+      if (scheduleStats) {
+        stats[schedule.id] = scheduleStats;
+      }
+    }
+    setAllScheduleStats(stats);
+  };
+
+  const fetchScheduleStats = async (scheduleId) => {
+    try {
+      const attendanceData = await window.electronAPI.getStudentAttendance(scheduleId);
+      if (attendanceData && attendanceData.length > 0) {
+        const studentCount = attendanceData.length;
+        const knowledgeScores = attendanceData
+          .filter(record => record.knowledge_score != null)
+          .map(record => record.knowledge_score);
+        const avgKnowledge = knowledgeScores.length > 0
+          ? (knowledgeScores.reduce((sum, score) => sum + score, 0) / knowledgeScores.length).toFixed(1)
+          : 0;
+        const participationScores = attendanceData
+          .filter(record => record.participation_score != null)
+          .map(record => record.participation_score);
+        const avgParticipation = participationScores.length > 0
+          ? (participationScores.reduce((sum, score) => sum + score, 0) / participationScores.length).toFixed(1)
+          : 0;
+        const presentCount = attendanceData.filter(record => record.attendance_status === 'present').length;
+        const lateCount = attendanceData.filter(record => record.attendance_status === 'late').length;
+        const absentCount = attendanceData.filter(record => record.attendance_status === 'absent').length;
+        return {
+          studentCount,
+          avgKnowledge: parseFloat(avgKnowledge),
+          avgParticipation: parseFloat(avgParticipation),
+          presentCount,
+          lateCount,
+          absentCount,
+          attendanceRate: studentCount > 0 ? ((presentCount + lateCount) / studentCount * 100).toFixed(1) : 0,
+        };
+      }
+      return null;
+    } catch (error) {
+      console.error('Error fetching schedule stats:', error);
+      return null;
+    }
+  };
+
+  const loadStatsForDate = async (date) => {
+    const daySchedules = getSchedulesForDate(date);
+    const completedSchedules = daySchedules.filter(schedule => schedule.status === 'completed');
+    const stats = {};
+    for (const schedule of completedSchedules) {
+      const scheduleStats = await fetchScheduleStats(schedule.id);
+      if (scheduleStats) {
+        stats[schedule.id] = scheduleStats;
+      }
+    }
+    setScheduleStats(stats);
+  };
+
+  const formatTeacherNames = (teacherNames) => {
+    if (!teacherNames) return 'Not assigned';
+    if (Array.isArray(teacherNames)) return teacherNames.join(', ');
+    if (typeof teacherNames !== 'string') return String(teacherNames);
+    if (teacherNames.includes(',')) {
+      return teacherNames.split(',').map(name => name.trim()).join(', ');
+    }
+    const splitByCapital = teacherNames.split(/(?=[A-Z])/).filter(name => name.trim());
+    return splitByCapital.length > 1 ? splitByCapital.join(', ') : teacherNames;
+  };
+
+  const findNearestUpcomingSchedule = () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const upcomingSchedules = schedules
+      .filter(schedule => {
+        const scheduleDate = parseISO(schedule.scheduled_date);
+        scheduleDate.setHours(0, 0, 0, 0);
+        return scheduleDate >= today;
+      })
+      .sort((a, b) => parseISO(a.scheduled_date) - parseISO(b.scheduled_date));
+    return upcomingSchedules.length > 0 ? upcomingSchedules[0] : null;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Validate at least one lesson is selected
     if (formData.lesson_ids.length === 0) {
       alert('Please select at least one lesson');
       return;
     }
-    
-    // Validate at least one teacher is selected
     if (formData.teacher_ids.length === 0) {
       alert('Please select at least one teacher');
       return;
     }
-    
-    // Validate school is selected
     if (!formData.school_id) {
       alert('Please select a school');
       return;
     }
-    
     try {
       const scheduleData = {
         ...formData,
         lesson_ids: formData.lesson_ids.map(id => parseInt(id)),
         school_id: parseInt(formData.school_id),
         teacher_ids: formData.teacher_ids.map(id => parseInt(id)),
-        duration_minutes: parseInt(formData.duration_minutes)
+        duration_minutes: parseInt(formData.duration_minutes),
       };
-      
       if (editingSchedule) {
         await window.electronAPI.updateSchedule(editingSchedule.id, scheduleData);
       } else {
@@ -126,7 +212,7 @@ const ScheduleManagement = () => {
       scheduled_time: '',
       duration_minutes: 60,
       status: 'scheduled',
-      notes: ''
+      notes: '',
     });
   };
 
@@ -140,7 +226,7 @@ const ScheduleManagement = () => {
       scheduled_time: schedule.scheduled_time || '',
       duration_minutes: schedule.duration_minutes || 60,
       status: schedule.status || 'scheduled',
-      notes: schedule.notes || ''
+      notes: schedule.notes || '',
     });
     setIsModalOpen(true);
   };
@@ -167,22 +253,18 @@ const ScheduleManagement = () => {
   };
 
   const handleTeacherChange = (teacherId) => {
-    // Ensure teacherId is integer
     const id = parseInt(teacherId);
     const updatedTeacherIds = formData.teacher_ids.includes(id)
       ? formData.teacher_ids.filter(existingId => existingId !== id)
       : [...formData.teacher_ids, id];
-    
     setFormData({ ...formData, teacher_ids: updatedTeacherIds });
   };
 
   const handleLessonChange = (lessonId) => {
-    // Ensure lessonId is integer
     const id = parseInt(lessonId);
     const updatedLessonIds = formData.lesson_ids.includes(id)
       ? formData.lesson_ids.filter(existingId => existingId !== id)
       : [...formData.lesson_ids, id];
-    
     setFormData({ ...formData, lesson_ids: updatedLessonIds });
   };
 
@@ -200,63 +282,49 @@ const ScheduleManagement = () => {
     }
   };
 
-  // Calendar functions
   const getDaysInMonth = (date) => {
-    const year = date.getFullYear();
-    const month = date.getMonth();
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    const daysInMonth = lastDay.getDate();
-    const startingDayOfWeek = firstDay.getDay();
-
     const days = [];
-    
-    // Add empty cells for days before the first day of the month
+    const firstDay = startOfMonth(date);
+    const daysInMonth = getDaysInMonthFn(date);
+    const startingDayOfWeek = firstDay.getDay();
     for (let i = 0; i < startingDayOfWeek; i++) {
       days.push(null);
     }
-    
-    // Add all days of the month
     for (let day = 1; day <= daysInMonth; day++) {
-      days.push(new Date(year, month, day));
+      days.push(new Date(date.getFullYear(), date.getMonth(), day));
     }
-    
     return days;
   };
 
   const getSchedulesForDate = (date) => {
     if (!date) return [];
-    // Use local date string to avoid timezone issues
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const dateStr = `${year}-${month}-${day}`;
+    const dateStr = format(date, 'yyyy-MM-dd');
     return schedules.filter(schedule => schedule.scheduled_date === dateStr);
   };
 
   const navigateMonth = (direction) => {
-    const newDate = new Date(currentDate);
-    newDate.setMonth(currentDate.getMonth() + direction);
+    const newDate = direction > 0 ? addMonths(currentDate, 1) : subMonths(currentDate, 1);
     setCurrentDate(newDate);
   };
 
-  // Function to navigate to specific date and select it
   const navigateToDate = (dateString) => {
     if (!dateString) return;
-    const date = new Date(dateString + 'T00:00:00'); // Add time to avoid timezone issues
-    setCurrentDate(new Date(date.getFullYear(), date.getMonth(), 1)); // Set calendar to that month
-    
-    // Small delay to allow calendar to update, then select the date
+    const date = parseISO(dateString);
+    setCurrentDate(startOfMonth(date));
     setTimeout(() => {
-      setSelectedDate(date); // Select the specific date
+      setSelectedDate(date);
+      loadStatsForDate(date);
     }, 100);
   };
 
-  // Helper function to format date consistently
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
-    const date = new Date(dateString + 'T00:00:00');
-    return date.toLocaleDateString();
+    try {
+      return format(parseISO(dateString), 'PPP');
+    } catch (error) {
+      console.error('Invalid date format:', dateString);
+      return 'Invalid Date';
+    }
   };
 
   const getCalendarStatusColor = (status) => {
@@ -296,7 +364,7 @@ const ScheduleManagement = () => {
               <option value="">All Schools</option>
               {schools.map((school) => (
                 <option key={school.id} value={school.id}>
-                  {school.name}
+                  {school.name || 'Unnamed School'}
                 </option>
               ))}
             </select>
@@ -324,11 +392,10 @@ const ScheduleManagement = () => {
         </div>
       </div>
 
-      {/* Main Content Grid - Calendar and Table side by side */}
+      {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Calendar View */}
         <div className="bg-white rounded-lg shadow-md">
-          {/* Calendar Header */}
           <div className="flex justify-between items-center p-4 border-b">
             <button
               onClick={() => navigateMonth(-1)}
@@ -337,10 +404,7 @@ const ScheduleManagement = () => {
               ←
             </button>
             <h2 className="text-lg font-semibold text-gray-800">
-              {new Date(currentDate.getFullYear(), currentDate.getMonth()).toLocaleDateString('en-US', { 
-                month: 'long', 
-                year: 'numeric' 
-              })}
+              {format(currentDate, 'MMMM yyyy')}
             </h2>
             <button
               onClick={() => navigateMonth(1)}
@@ -349,10 +413,7 @@ const ScheduleManagement = () => {
               →
             </button>
           </div>
-
-          {/* Calendar Grid */}
           <div className="p-4">
-            {/* Day Headers */}
             <div className="grid grid-cols-7 gap-1 mb-2">
               {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
                 <div key={day} className="p-2 text-center font-medium text-gray-600 text-sm">
@@ -360,29 +421,25 @@ const ScheduleManagement = () => {
                 </div>
               ))}
             </div>
-
-            {/* Calendar Days */}
             <div className="grid grid-cols-7 gap-1">
               {getDaysInMonth(currentDate).map((day, index) => {
                 const daySchedules = day ? getSchedulesForDate(day) : [];
                 const isToday = day && day.toDateString() === new Date().toDateString();
                 const isSelected = selectedDate && day && day.toDateString() === selectedDate.toDateString();
-
                 return (
                   <div
                     key={index}
                     className={`min-h-[80px] border border-gray-200 p-1 cursor-pointer hover:bg-gray-50 ${
                       day ? 'bg-white' : 'bg-gray-50'
-                    } ${isToday ? 'ring-2 ring-blue-500' : ''} ${
-                      isSelected ? 'bg-blue-50' : ''
-                    }`}
+                    } ${isToday ? 'ring-2 ring-blue-500' : ''} ${isSelected ? 'bg-blue-50' : ''}`}
                     onClick={() => {
                       if (day) {
-                        // If clicking the same date, clear selection
-                        if (selectedDate && day.toDateString() === selectedDate.toDateString()) {
+                        if (isSelected) {
                           setSelectedDate(null);
+                          setScheduleStats({});
                         } else {
                           setSelectedDate(day);
+                          loadStatsForDate(day);
                         }
                       }
                     }}
@@ -397,9 +454,9 @@ const ScheduleManagement = () => {
                             <div
                               key={schedule.id}
                               className={`text-xs p-1 rounded text-white truncate ${getCalendarStatusColor(schedule.status)}`}
-                              title={`${schedule.lesson_titles ? schedule.lesson_titles.join(', ') : 'No lessons'} at ${schedule.school_name} - ${schedule.scheduled_time} (${formatDate(schedule.scheduled_date)})`}
+                              title={`${schedule.lesson_titles?.join(', ') || 'No lessons'} at ${schedule.school_name || 'N/A'} - ${schedule.scheduled_time || 'N/A'} (${formatDate(schedule.scheduled_date)})`}
                             >
-                              {schedule.scheduled_time}
+                              {schedule.scheduled_time || 'N/A'}
                             </div>
                           ))}
                           {daySchedules.length > 2 && (
@@ -415,8 +472,6 @@ const ScheduleManagement = () => {
               })}
             </div>
           </div>
-
-          {/* Legend */}
           <div className="px-4 pb-4 border-t">
             <h4 className="text-sm font-semibold text-gray-800 mb-2">Legend</h4>
             <div className="flex flex-wrap gap-3 text-xs">
@@ -440,208 +495,416 @@ const ScheduleManagement = () => {
           </div>
         </div>
 
-        {/* Schedules Table - Now takes 3/4 of the width */}
+        {/* Selected Date/Schedule Details */}
         <div className="lg:col-span-3 bg-white rounded-lg shadow-md">
           <div className="p-4 border-b">
-            <h3 className="text-lg font-semibold text-gray-800">All Schedules</h3>
-            <p className="text-sm text-gray-500 mt-1">Click on date, lesson, or school to view details in calendar</p>
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-semibold text-gray-800">
+                {selectedDate
+                  ? `Schedule Details for ${format(selectedDate, 'PPP')}`
+                  : 'Upcoming Schedule Details'}
+              </h3>
+              {selectedDate && (
+                <button
+                  onClick={() => {
+                    setSelectedDate(null);
+                    setScheduleStats({});
+                    const nearestSchedule = findNearestUpcomingSchedule();
+                    if (nearestSchedule) {
+                      const scheduleDate = parseISO(nearestSchedule.scheduled_date);
+                      setSelectedDate(scheduleDate);
+                      loadStatsForDate(scheduleDate);
+                    }
+                  }}
+                  className="text-sm text-gray-500 hover:text-gray-700 underline"
+                >
+                  Reset to Upcoming
+                </button>
+              )}
+            </div>
           </div>
-          <div className="overflow-hidden">
-            {schedules.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Date & Time
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Lessons
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        School
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Teachers
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Duration
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Status
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200 max-h-[500px] overflow-y-auto">
-                    {schedules.map((schedule) => (
-                      <tr key={schedule.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
-                          <div 
-                            className="cursor-pointer hover:text-blue-600 transition-colors"
-                            onClick={() => navigateToDate(schedule.scheduled_date)}
-                            title="Click to view this date in calendar"
-                          >
-                            <div className="font-medium">
-                              {formatDate(schedule.scheduled_date)}
-                            </div>
-                            <div className="text-gray-500">{schedule.scheduled_time || 'N/A'}</div>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-900">
-                          <div 
-                            className="max-w-xs truncate cursor-pointer hover:text-blue-600 transition-colors"
-                            onClick={() => navigateToDate(schedule.scheduled_date)}
-                            title="Click to view this date in calendar"
-                          >
-                            {schedule.lesson_titles && schedule.lesson_titles.length > 0 
-                              ? schedule.lesson_titles.join(', ') 
-                              : 'No lessons'}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-                          <div 
-                            className="cursor-pointer hover:text-blue-600 transition-colors"
-                            onClick={() => navigateToDate(schedule.scheduled_date)}
-                            title="Click to view this date in calendar"
-                          >
-                            {schedule.school_name || 'N/A'}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-500">
-                          <div className="max-w-xs truncate">
-                            {schedule.teacher_names && schedule.teacher_names.length > 0 
-                              ? schedule.teacher_names.join(', ') 
-                              : 'Not assigned'}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-                          {schedule.duration_minutes} min
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap">
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(schedule.status)}`}>
+          <div className="p-6">
+            {selectedDate && getSchedulesForDate(selectedDate).length > 0 ? (
+              <div className="space-y-6">
+                {getSchedulesForDate(selectedDate).map((schedule) => (
+                  <div key={schedule.id} className="border border-gray-200 rounded-lg p-6">
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-3 mb-3">
+                          <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${getStatusColor(schedule.status)}`}>
                             {schedule.status}
                           </span>
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap text-sm font-medium">
+                          <span className="text-lg font-medium text-gray-900">
+                            {schedule.scheduled_time || 'N/A'}
+                          </span>
+                          <span className="text-sm text-gray-500">
+                            ({schedule.duration_minutes} min)
+                          </span>
+                        </div>
+                        <h4 className="text-xl font-medium text-gray-900 mb-3">
+                          {schedule.lesson_titles?.join(', ') || 'No lessons'}
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600 mb-4">
+                          <p>
+                            <span className="font-medium">School:</span> {schedule.school_name || 'N/A'}
+                          </p>
+                          <p>
+                            <span className="font-medium">Teachers:</span> {formatTeacherNames(schedule.teacher_names)}
+                          </p>
+                        </div>
+                        {schedule.notes && (
+                          <p className="text-sm text-gray-600 mb-4">
+                            <span className="font-medium">Notes:</span> {schedule.notes}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex items-center space-x-2 ml-4">
+                        <button
+                          onClick={() => handleEdit(schedule)}
+                          className="text-blue-600 hover:text-blue-900 p-2 rounded hover:bg-blue-50"
+                          title="Edit"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                        </button>
+                        {schedule.status === 'completed' && (
                           <button
-                            onClick={() => handleEdit(schedule)}
-                            className="text-blue-600 hover:text-blue-900 mr-3"
+                            onClick={() => navigate(`/attendance/${schedule.id}`)}
+                            className="text-green-600 hover:text-green-900 p-2 rounded hover:bg-green-50"
+                            title="View Attendance"
                           >
-                            Edit
+                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
                           </button>
-                          {schedule.status === 'completed' && (
-                            <button
-                              onClick={() => navigate(`/attendance/${schedule.id}`)}
-                              className="text-green-600 hover:text-green-900 mr-3"
-                            >
-                              Attendance
-                            </button>
-                          )}
-                          <button
-                            onClick={() => handleDelete(schedule.id)}
-                            className="text-red-600 hover:text-red-900"
-                          >
-                            Delete
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                        )}
+                        <button
+                          onClick={() => handleDelete(schedule.id)}
+                          className="text-red-600 hover:text-red-900 p-2 rounded hover:bg-red-50"
+                          title="Delete"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                    {schedule.status === 'completed' && scheduleStats[schedule.id] && (
+                      <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                        <h5 className="text-lg font-medium text-gray-800 mb-4 flex items-center">
+                          <span className="text-xl mr-2">📊</span>
+                          Class Statistics & Performance
+                        </h5>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                          <div className="text-center p-3 bg-white rounded-lg border">
+                            <div className="text-2xl font-bold text-blue-600">
+                              {scheduleStats[schedule.id].studentCount}
+                            </div>
+                            <div className="text-sm text-gray-500">Total Students</div>
+                          </div>
+                          <div className="text-center p-3 bg-white rounded-lg border">
+                            <div className="text-2xl font-bold text-green-600">
+                              {scheduleStats[schedule.id].attendanceRate}%
+                            </div>
+                            <div className="text-sm text-gray-500">Attendance Rate</div>
+                          </div>
+                          <div className="text-center p-3 bg-white rounded-lg border">
+                            <div className="text-2xl font-bold text-purple-600">
+                              {scheduleStats[schedule.id].avgKnowledge || 'N/A'}
+                            </div>
+                            <div className="text-sm text-gray-500">Avg Knowledge</div>
+                          </div>
+                          <div className="text-center p-3 bg-white rounded-lg border">
+                            <div className="text-2xl font-bold text-orange-600">
+                              {scheduleStats[schedule.id].avgParticipation || 'N/A'}
+                            </div>
+                            <div className="text-sm text-gray-500">Avg Participation</div>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                          <div className="bg-white rounded-lg p-4 border">
+                            <h6 className="text-md font-medium text-gray-800 mb-3">Attendance Breakdown</h6>
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center">
+                                  <div className="w-4 h-4 bg-green-500 rounded mr-2"></div>
+                                  <span className="text-sm font-medium">Present ({scheduleStats[schedule.id].presentCount})</span>
+                                </div>
+                                <span className="text-sm text-gray-600">
+                                  {scheduleStats[schedule.id].studentCount > 0
+                                    ? ((scheduleStats[schedule.id].presentCount / scheduleStats[schedule.id].studentCount) * 100).toFixed(1)
+                                    : 0}%
+                                </span>
+                              </div>
+                              <div className="w-full bg-gray-200 rounded-full h-2">
+                                <div
+                                  className="bg-green-500 h-2 rounded-full transition-all duration-500"
+                                  style={{
+                                    width: `${scheduleStats[schedule.id].studentCount > 0
+                                      ? (scheduleStats[schedule.id].presentCount / scheduleStats[schedule.id].studentCount) * 100
+                                      : 0}%`,
+                                  }}
+                                ></div>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center">
+                                  <div className="w-4 h-4 bg-yellow-500 rounded mr-2"></div>
+                                  <span className="text-sm font-medium">Late ({scheduleStats[schedule.id].lateCount})</span>
+                                </div>
+                                <span className="text-sm text-gray-600">
+                                  {scheduleStats[schedule.id].studentCount > 0
+                                    ? ((scheduleStats[schedule.id].lateCount / scheduleStats[schedule.id].studentCount) * 100).toFixed(1)
+                                    : 0}%
+                                </span>
+                              </div>
+                              <div className="w-full bg-gray-200 rounded-full h-2">
+                                <div
+                                  className="bg-yellow-500 h-2 rounded-full transition-all duration-500"
+                                  style={{
+                                    width: `${scheduleStats[schedule.id].studentCount > 0
+                                      ? (scheduleStats[schedule.id].lateCount / scheduleStats[schedule.id].studentCount) * 100
+                                      : 0}%`,
+                                  }}
+                                ></div>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center">
+                                  <div className="w-4 h-4 bg-red-500 rounded mr-2"></div>
+                                  <span className="text-sm font-medium">Absent ({scheduleStats[schedule.id].absentCount})</span>
+                                </div>
+                                <span className="text-sm text-gray-600">
+                                  {scheduleStats[schedule.id].studentCount > 0
+                                    ? ((scheduleStats[schedule.id].absentCount / scheduleStats[schedule.id].studentCount) * 100).toFixed(1)
+                                    : 0}%
+                                </span>
+                              </div>
+                              <div className="w-full bg-gray-200 rounded-full h-2">
+                                <div
+                                  className="bg-red-500 h-2 rounded-full transition-all duration-500"
+                                  style={{
+                                    width: `${scheduleStats[schedule.id].studentCount > 0
+                                      ? (scheduleStats[schedule.id].absentCount / scheduleStats[schedule.id].studentCount) * 100
+                                      : 0}%`,
+                                  }}
+                                ></div>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="bg-white rounded-lg p-4 border">
+                            <h6 className="text-md font-medium text-gray-800 mb-3">Performance Distribution</h6>
+                            <div className="space-y-4">
+                              <div className="text-center">
+                                <div className="text-3xl font-bold text-purple-600 mb-1">
+                                  {scheduleStats[schedule.id].avgKnowledge || 'N/A'}
+                                </div>
+                                <div className="text-sm text-gray-500">Average Knowledge Score</div>
+                                {scheduleStats[schedule.id].avgKnowledge && (
+                                  <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                                    <div
+                                      className="bg-purple-500 h-2 rounded-full transition-all duration-500"
+                                      style={{ width: `${scheduleStats[schedule.id].avgKnowledge}%` }}
+                                    ></div>
+                                  </div>
+                                )}
+                              </div>
+                              <div className="text-center">
+                                <div className="text-3xl font-bold text-orange-600 mb-1">
+                                  {scheduleStats[schedule.id].avgParticipation || 'N/A'}
+                                </div>
+                                <div className="text-sm text-gray-500">Average Participation Score</div>
+                                {scheduleStats[schedule.id].avgParticipation && (
+                                  <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                                    <div
+                                      className="bg-orange-500 h-2 rounded-full transition-all duration-500"
+                                      style={{ width: `${scheduleStats[schedule.id].avgParticipation}%` }}
+                                    ></div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             ) : (
-              <div className="p-8 text-center text-gray-500">
-                No schedules found.
+              <div className="text-gray-500 text-center py-12">
+                <div className="text-4xl mb-4">📅</div>
+                <p className="text-lg mb-2">No schedules found for this date</p>
+                <p className="text-sm">Select a date from the calendar or check the schedule table below</p>
               </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* Selected Date Details - Show below the main grid */}
-      {selectedDate && getSchedulesForDate(selectedDate).length > 0 && (
-        <div className="mt-6 bg-white rounded-lg shadow-md">
-          <div className="p-4 border-b">
-            <div className="flex justify-between items-center">
-              <h3 className="text-lg font-semibold text-gray-800">
-                Schedules for {selectedDate.toLocaleDateString()}
-              </h3>
-              <button
-                onClick={() => setSelectedDate(null)}
-                className="text-sm text-gray-500 hover:text-gray-700 underline"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-          <div className="p-4">
-            <div className="space-y-4">
-              {getSchedulesForDate(selectedDate).map((schedule) => (
-                <div key={schedule.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-2">
+      {/* All Schedules Table */}
+      <div className="mt-6 bg-white rounded-lg shadow-md">
+        <div className="p-4 border-b">
+          <h3 className="text-lg font-semibold text-gray-800">All Schedules</h3>
+          <p className="text-sm text-gray-500 mt-1">Click on date to view details above</p>
+        </div>
+        <div className="overflow-hidden">
+          {schedules.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Date & Time
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Lessons
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      School
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Teachers
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Duration
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Students
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Performance
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200 max-h-[500px] overflow-y-auto">
+                  {schedules.map((schedule) => (
+                    <tr key={schedule.id} className="hover:bg-gray-50">
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                        <div
+                          className="cursor-pointer hover:text-blue-600 transition-colors"
+                          onClick={() => navigateToDate(schedule.scheduled_date)}
+                          title="Click to view this date in calendar"
+                        >
+                          <div className="font-medium">{formatDate(schedule.scheduled_date)}</div>
+                          <div className="text-gray-500">{schedule.scheduled_time || 'N/A'}</div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-900">
+                        <div
+                          className="max-w-xs truncate cursor-pointer hover:text-blue-600 transition-colors"
+                          onClick={() => navigateToDate(schedule.scheduled_date)}
+                          title="Click to view this date in calendar"
+                        >
+                          {schedule.lesson_titles?.join(', ') || 'No lessons'}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                        <div
+                          className="cursor-pointer hover:text-blue-600 transition-colors"
+                          onClick={() => navigateToDate(schedule.scheduled_date)}
+                          title="Click to view this date in calendar"
+                        >
+                          {schedule.school_name || 'N/A'}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-500">
+                        <div className="max-w-xs truncate">{formatTeacherNames(schedule.teacher_names)}</div>
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                        {schedule.duration_minutes} min
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap">
                         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(schedule.status)}`}>
                           {schedule.status}
                         </span>
-                        <span className="text-sm font-medium text-gray-900">
-                          {schedule.scheduled_time || 'N/A'}
-                        </span>
-                        <span className="text-sm text-gray-500">
-                          ({schedule.duration_minutes} min)
-                        </span>
-                      </div>
-                      <h4 className="font-medium text-gray-900 mb-2">
-                        {schedule.lesson_titles && schedule.lesson_titles.length > 0 
-                          ? schedule.lesson_titles.join(', ') 
-                          : 'No lessons'}
-                      </h4>
-                      <p className="text-sm text-gray-600 mb-1">
-                        <span className="font-medium">School:</span> {schedule.school_name}
-                      </p>
-                      <p className="text-sm text-gray-600 mb-1">
-                        <span className="font-medium">Teachers:</span> {schedule.teacher_names && schedule.teacher_names.length > 0 
-                          ? schedule.teacher_names.join(', ') 
-                          : 'Not assigned'}
-                      </p>
-                      {schedule.notes && (
-                        <p className="text-sm text-gray-600 mt-2">
-                          <span className="font-medium">Notes:</span> {schedule.notes}
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex items-center space-x-2 ml-4">
-                      <button
-                        onClick={() => handleEdit(schedule)}
-                        className="text-blue-600 hover:text-blue-900 text-sm"
-                      >
-                        Edit
-                      </button>
-                      {schedule.status === 'completed' && (
-                        <button
-                          onClick={() => navigate(`/attendance/${schedule.id}`)}
-                          className="text-green-600 hover:text-green-900 text-sm"
-                        >
-                          Attendance
-                        </button>
-                      )}
-                      <button
-                        onClick={() => handleDelete(schedule.id)}
-                        className="text-red-600 hover:text-red-900 text-sm"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                        {schedule.status === 'completed' && allScheduleStats[schedule.id] ? (
+                          <div className="text-center">
+                            <div className="text-lg font-bold text-blue-600">
+                              {allScheduleStats[schedule.id].studentCount}
+                            </div>
+                            <div className="text-xs text-gray-400">
+                              {allScheduleStats[schedule.id].attendanceRate}% present
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="text-gray-400">-</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                        {schedule.status === 'completed' && allScheduleStats[schedule.id] ? (
+                          <div className="text-center">
+                            <div className="flex space-x-2 text-xs">
+                              <div>
+                                <div className="font-bold text-purple-600">
+                                  {allScheduleStats[schedule.id].avgKnowledge || 'N/A'}
+                                </div>
+                                <div className="text-gray-400">Knowledge</div>
+                              </div>
+                              <div>
+                                <div className="font-bold text-orange-600">
+                                  {allScheduleStats[schedule.id].avgParticipation || 'N/A'}
+                                </div>
+                                <div className="text-gray-400">Participation</div>
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="text-gray-400">-</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm font-medium">
+                        <div className="flex items-center space-x-2">
+                          <button
+                            onClick={() => handleEdit(schedule)}
+                            className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50"
+                            title="Edit"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                          </button>
+                          {schedule.status === 'completed' && (
+                            <button
+                              onClick={() => navigate(`/attendance/${schedule.id}`)}
+                              className="text-green-600 hover:text-green-900 p-1 rounded hover:bg-green-50"
+                              title="View Attendance"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleDelete(schedule.id)}
+                            className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50"
+                            title="Delete"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          </div>
+          ) : (
+            <div className="p-8 text-center text-gray-500">
+              No schedules found.
+            </div>
+          )}
         </div>
-      )}
+      </div>
 
       {/* Modal */}
       <Modal
@@ -662,7 +925,7 @@ const ScheduleManagement = () => {
               <option value="">Select a school</option>
               {schools.map((school) => (
                 <option key={school.id} value={school.id}>
-                  {school.name}
+                  {school.name || 'Unnamed School'}
                 </option>
               ))}
             </select>
@@ -678,7 +941,7 @@ const ScheduleManagement = () => {
                     onChange={() => handleLessonChange(lesson.id)}
                     className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
                   />
-                  <span className="ml-2 text-sm text-gray-700">{lesson.title}</span>
+                  <span className="ml-2 text-sm text-gray-700">{lesson.title || 'Untitled Lesson'}</span>
                 </label>
               ))}
             </div>
@@ -690,16 +953,16 @@ const ScheduleManagement = () => {
             <label className="block text-sm font-medium text-gray-700 mb-2">Teachers</label>
             <div className="space-y-2 max-h-40 overflow-y-auto border border-gray-300 rounded-md p-3">
               {teachers
-                .filter(teacher => {
+                .filter((teacher) => {
                   if (!formData.school_id) return true;
-                  
-                  // Handle both string and array formats for school_ids
                   if (typeof teacher.school_ids === 'string') {
-                    return teacher.school_ids.split(',').map(id => parseInt(id.trim())).includes(parseInt(formData.school_id));
+                    return teacher.school_ids
+                      .split(',')
+                      .map(id => parseInt(id.trim()))
+                      .includes(parseInt(formData.school_id));
                   } else if (Array.isArray(teacher.school_ids)) {
                     return teacher.school_ids.includes(parseInt(formData.school_id));
                   }
-                  
                   return false;
                 })
                 .map((teacher) => (
@@ -710,7 +973,7 @@ const ScheduleManagement = () => {
                       onChange={() => handleTeacherChange(teacher.id)}
                       className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
                     />
-                    <span className="ml-2 text-sm text-gray-700">{teacher.name}</span>
+                    <span className="ml-2 text-sm text-gray-700">{teacher.name || 'Unnamed Teacher'}</span>
                   </label>
                 ))}
             </div>
