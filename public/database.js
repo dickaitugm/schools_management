@@ -5,8 +5,43 @@ const { app } = require('electron');
 class Database {
   constructor() {
     const dbPath = path.join(app.getPath('userData'), 'school_management.db');
+    const fs = require('fs');
+    
+    // Log database path for debugging
+    console.log('📍 Database Path Info:');
+    console.log('   App UserData Path:', app.getPath('userData'));
+    console.log('   Full Database Path:', dbPath);
+    console.log('   Database exists before init:', fs.existsSync(dbPath));
+    
+    if (fs.existsSync(dbPath)) {
+      const stats = fs.statSync(dbPath);
+      console.log('   Database file size:', stats.size, 'bytes');
+      console.log('   Database last modified:', stats.mtime.toLocaleString());
+    }
+    
     this.db = new sqlite3.Database(dbPath);
     this.initTables();
+    
+    // Log after initialization
+    console.log('✅ Database initialized at:', dbPath);
+    
+    // Check if we have any data
+    this.checkDataCount();
+  }
+
+  checkDataCount() {
+    const tables = ['schools', 'teachers', 'students', 'lessons', 'schedules', 'student_attendance'];
+    
+    console.log('📊 Checking data counts:');
+    tables.forEach(table => {
+      this.db.get(`SELECT COUNT(*) as count FROM ${table}`, (err, row) => {
+        if (err) {
+          console.log(`   ${table}: Error - ${err.message}`);
+        } else {
+          console.log(`   ${table}: ${row.count} records`);
+        }
+      });
+    });
   }
 
   initTables() {
