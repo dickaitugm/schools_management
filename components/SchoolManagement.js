@@ -1,12 +1,13 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import Modal from './Modal';
 
 const SchoolManagement = ({ onSchoolSelect, selectedSchoolId }) => {
-  const navigate = useNavigate();
   const [schools, setSchools] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSchool, setEditingSchool] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     name: '',
     address: '',
@@ -20,27 +21,45 @@ const SchoolManagement = ({ onSchoolSelect, selectedSchoolId }) => {
 
   const fetchSchools = async () => {
     try {
-      const schoolList = await window.electronAPI.getSchools();
+      setLoading(true);
+      const response = await fetch('/api/schools');
+      if (!response.ok) throw new Error('Failed to fetch schools');
+      const schoolList = await response.json();
       setSchools(schoolList);
     } catch (error) {
       console.error('Error fetching schools:', error);
+      alert('Error fetching schools: ' + error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      if (editingSchool) {
-        await window.electronAPI.updateSchool(editingSchool.id, formData);
-      } else {
-        await window.electronAPI.addSchool(formData);
+      const url = editingSchool ? `/api/schools/${editingSchool.id}` : '/api/schools';
+      const method = editingSchool ? 'PUT' : 'POST';
+      
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to save school');
       }
+      
       setIsModalOpen(false);
       setEditingSchool(null);
       setFormData({ name: '', address: '', phone: '', email: '' });
       fetchSchools();
     } catch (error) {
       console.error('Error saving school:', error);
+      alert('Error saving school: ' + error.message);
     }
   };
 
@@ -58,10 +77,19 @@ const SchoolManagement = ({ onSchoolSelect, selectedSchoolId }) => {
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this school?')) {
       try {
-        await window.electronAPI.deleteSchool(id);
+        const response = await fetch(`/api/schools/${id}`, {
+          method: 'DELETE',
+        });
+        
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Failed to delete school');
+        }
+        
         fetchSchools();
       } catch (error) {
         console.error('Error deleting school:', error);
+        alert('Error deleting school: ' + error.message);
       }
     }
   };
@@ -75,6 +103,14 @@ const SchoolManagement = ({ onSchoolSelect, selectedSchoolId }) => {
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
+
+  if (loading) {
+    return (
+      <div className="p-6 flex items-center justify-center">
+        <div className="text-gray-500 text-xl">Loading schools...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6">
@@ -119,15 +155,9 @@ const SchoolManagement = ({ onSchoolSelect, selectedSchoolId }) => {
                 onClick={() => onSchoolSelect(school.id)}
               >
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate(`/schools/${school.id}`);
-                    }}
-                    className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
-                  >
+                  <span className="text-blue-600 font-medium">
                     {school.name}
-                  </button>
+                  </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {school.address || 'N/A'}
@@ -139,15 +169,6 @@ const SchoolManagement = ({ onSchoolSelect, selectedSchoolId }) => {
                   {school.email || 'N/A'}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate(`/schools/${school.id}`);
-                    }}
-                    className="text-green-600 hover:text-green-900 mr-3"
-                  >
-                    View
-                  </button>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -171,6 +192,19 @@ const SchoolManagement = ({ onSchoolSelect, selectedSchoolId }) => {
             ))}
           </tbody>
         </table>
+        
+        {schools.length === 0 && (
+          <div className="text-center py-8 text-gray-500">
+            <span className="text-4xl block mb-2">🏫</span>
+            <p>No schools found</p>
+            <button
+              onClick={handleAddNew}
+              className="mt-2 text-blue-600 hover:text-blue-800 text-sm"
+            >
+              Add your first school →
+            </button>
+          </div>
+        )}
       </div>
 
       <Modal
@@ -187,7 +221,7 @@ const SchoolManagement = ({ onSchoolSelect, selectedSchoolId }) => {
               value={formData.name}
               onChange={handleInputChange}
               required
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
             />
           </div>
           <div>
@@ -197,7 +231,7 @@ const SchoolManagement = ({ onSchoolSelect, selectedSchoolId }) => {
               value={formData.address}
               onChange={handleInputChange}
               rows="3"
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
             />
           </div>
           <div>
@@ -207,7 +241,7 @@ const SchoolManagement = ({ onSchoolSelect, selectedSchoolId }) => {
               name="phone"
               value={formData.phone}
               onChange={handleInputChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
             />
           </div>
           <div>
@@ -217,7 +251,7 @@ const SchoolManagement = ({ onSchoolSelect, selectedSchoolId }) => {
               name="email"
               value={formData.email}
               onChange={handleInputChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
             />
           </div>
           <div className="flex justify-end space-x-3">
