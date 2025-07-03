@@ -42,14 +42,14 @@ async function seedDatabase() {
 
     // Insert sample students
     const studentsResult = await client.query(`
-      INSERT INTO students (school_id, name, grade, age, phone, email, enrollment_date) VALUES 
-      (1, 'Andi Wijaya', 'Kelas 5', 11, '081234567895', 'andi@student.com', '2023-07-15'),
-      (1, 'Bella Putri', 'Kelas 4', 10, '081234567896', 'bella@student.com', '2023-07-15'),
-      (1, 'Citra Sari', 'Kelas 6', 12, '081234567897', 'citra@student.com', '2022-07-15'),
-      (2, 'Doni Pratama', 'Kelas 8', 14, '081234567898', 'doni@student.com', '2023-07-15'),
-      (2, 'Eka Saputra', 'Kelas 7', 13, '081234567899', 'eka@student.com', '2023-07-15'),
-      (3, 'Fira Ningsih', 'Kelas 11', 17, '081234567800', 'fira@student.com', '2023-07-15'),
-      (3, 'Gilang Ramadan', 'Kelas 12', 18, '081234567801', 'gilang@student.com', '2022-07-15')
+      INSERT INTO students (school_id, name, grade, phone, email, enrollment_date) VALUES 
+      (1, 'Andi Wijaya', 'Kelas 5', '081234567895', 'andi@student.com', '2023-07-15'),
+      (1, 'Bella Putri', 'Kelas 4', '081234567896', 'bella@student.com', '2023-07-15'),
+      (1, 'Citra Sari', 'Kelas 6', '081234567897', 'citra@student.com', '2022-07-15'),
+      (2, 'Doni Pratama', 'Kelas 8', '081234567898', 'doni@student.com', '2023-07-15'),
+      (2, 'Eka Saputra', 'Kelas 7', '081234567899', 'eka@student.com', '2023-07-15'),
+      (3, 'Fira Ningsih', 'Kelas 11', '081234567800', 'fira@student.com', '2023-07-15'),
+      (3, 'Gilang Ramadan', 'Kelas 12', '081234567801', 'gilang@student.com', '2022-07-15')
       RETURNING id, name, school_id
     `);
     
