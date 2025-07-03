@@ -57,6 +57,17 @@ async function createTables() {
       )
     `);
 
+    // Student-Teachers relationship table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS student_teachers (
+        id SERIAL PRIMARY KEY,
+        student_id INTEGER REFERENCES students(id) ON DELETE CASCADE,
+        teacher_id INTEGER REFERENCES teachers(id) ON DELETE CASCADE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(student_id, teacher_id)
+      )
+    `);
+
     // Lessons table
     await client.query(`
       CREATE TABLE IF NOT EXISTS lessons (

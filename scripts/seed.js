@@ -40,6 +40,8 @@ async function seedDatabase() {
       (5, 2), (5, 3)   -- Rina teaches at SMP Tunas Muda and SMA Cerdas Berkarya
     `);
 
+    console.log('✅ Teacher-School relationships created');
+
     // Insert sample students
     const studentsResult = await client.query(`
       INSERT INTO students (school_id, name, grade, phone, email, enrollment_date) VALUES 
@@ -52,6 +54,22 @@ async function seedDatabase() {
       (3, 'Gilang Ramadan', 'Kelas 12', '081234567801', 'gilang@student.com', '2022-07-15')
       RETURNING id, name, school_id
     `);
+    
+    console.log('✅ Students seeded:', studentsResult.rows.map(s => `${s.name} (School ${s.school_id})`));
+
+    // Assign students to teachers (many-to-many relationship)
+    await client.query(`
+      INSERT INTO student_teachers (student_id, teacher_id) VALUES 
+      (1, 1), (1, 2),  -- Andi learns from Budi (Math) and Sari (Indonesian)
+      (2, 1), (2, 4),  -- Bella learns from Budi (Math) and Maya (Social Studies)
+      (3, 1), (3, 2),  -- Citra learns from Budi (Math) and Sari (Indonesian)
+      (4, 3), (4, 5),  -- Doni learns from Ahmad (Science) and Rina (English)
+      (5, 3), (5, 5),  -- Eka learns from Ahmad (Science) and Rina (English)
+      (6, 3), (6, 5),  -- Fira learns from Ahmad (Science) and Rina (English)
+      (7, 2), (7, 5)   -- Gilang learns from Sari (Indonesian) and Rina (English)
+    `);
+
+    console.log('✅ Student-Teacher relationships created');
     
     console.log('✅ Students seeded:', studentsResult.rows.map(s => `${s.name} (School ${s.school_id})`));
 
