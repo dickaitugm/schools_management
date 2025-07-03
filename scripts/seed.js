@@ -86,6 +86,18 @@ async function seedDatabase() {
     
     console.log('✅ Lessons seeded:', lessonsResult.rows.map(l => l.title));
 
+    // Assign lessons to teachers (many-to-many relationship)
+    await client.query(`
+      INSERT INTO lesson_teachers (lesson_id, teacher_id) VALUES 
+      (1, 2), (1, 4),  -- Pengenalan Alkitab: Sari (Indonesian) and Maya (Social Studies)
+      (2, 2), (2, 5),  -- Doa dan Ibadah: Sari (Indonesian) and Rina (English)
+      (3, 2), (3, 4),  -- Sejarah Kekristenan: Sari (Indonesian) and Maya (Social Studies)
+      (4, 2), (4, 4), (4, 5),  -- Karakter Kristiani: Sari, Maya, and Rina
+      (5, 5)           -- Musik Rohani: Rina (English)
+    `);
+
+    console.log('✅ Lesson-Teacher relationships created');
+
     console.log('🎉 Database seeding completed successfully!');
     
   } catch (error) {

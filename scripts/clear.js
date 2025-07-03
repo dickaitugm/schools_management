@@ -11,6 +11,8 @@ async function clearDatabase() {
     await client.query('DROP TABLE IF EXISTS schedule_lessons CASCADE');
     await client.query('DROP TABLE IF EXISTS schedule_teachers CASCADE');
     await client.query('DROP TABLE IF EXISTS schedules CASCADE');
+    await client.query('DROP TABLE IF EXISTS lesson_teachers CASCADE');
+    await client.query('DROP TABLE IF EXISTS student_teachers CASCADE');
     await client.query('DROP TABLE IF EXISTS teacher_schools CASCADE');
     await client.query('DROP TABLE IF EXISTS lessons CASCADE');
     await client.query('DROP TABLE IF EXISTS students CASCADE');
