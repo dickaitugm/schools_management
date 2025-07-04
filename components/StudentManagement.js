@@ -251,7 +251,7 @@ const StudentManagement = ({ selectedSchoolId, onViewProfile }) => {
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">BB Society - Students</h1>
+          <h1 className="text-3xl font-bold text-gray-800">BB for Society - Students</h1>
           {selectedSchoolId && (
             <p className="text-sm text-gray-600 mt-1">
               Filtered by: {getSchoolName(selectedSchoolId)}

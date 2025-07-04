@@ -403,7 +403,7 @@ const ScheduleManagement = ({ selectedSchoolId, onViewProfile, onViewAssessment 
     <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-800">BB Society - Schedules</h1>
+        <h1 className="text-3xl font-bold text-gray-800">BB for Society - Schedules</h1>
         <button
           onClick={() => openModal('create')}
           className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors"
@@ -656,6 +656,14 @@ const ScheduleManagement = ({ selectedSchoolId, onViewProfile, onViewAssessment 
                 >
                   Edit
                 </button>
+                {displaySchedule.status === 'completed' && (
+                  <button
+                    onClick={() => handleViewScheduleAssessment(displaySchedule.id)}
+                    className="flex-1 bg-green-600 text-white px-3 py-2 rounded text-sm hover:bg-green-700"
+                  >
+                    Assessment
+                  </button>
+                )}
                 <button
                   onClick={() => handleDelete(displaySchedule)}
                   className="flex-1 bg-red-600 text-white px-3 py-2 rounded text-sm hover:bg-red-700"
@@ -898,6 +906,18 @@ const ScheduleManagement = ({ selectedSchoolId, onViewProfile, onViewAssessment 
                           >
                             Edit
                           </button>
+                          {schedule.status === 'completed' && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleViewScheduleAssessment(schedule.id);
+                              }}
+                              className="text-green-600 hover:text-green-900 mr-3"
+                              title="View Assessment"
+                            >
+                              Assessment
+                            </button>
+                          )}
                           <button
                             onClick={(e) => {
                               e.stopPropagation();

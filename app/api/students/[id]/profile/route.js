@@ -78,8 +78,38 @@ export async function GET(request, { params }) {
         (SELECT COUNT(*) FROM student_attendance WHERE student_id = $1 AND attendance_status = 'absent') as absent_count,
         (SELECT ROUND(AVG(knowledge_score), 2) FROM student_attendance WHERE student_id = $1 AND knowledge_score IS NOT NULL) as avg_knowledge_score,
         (SELECT ROUND(AVG(participation_score), 2) FROM student_attendance WHERE student_id = $1 AND participation_score IS NOT NULL) as avg_participation_score,
+        (SELECT ROUND(AVG(personal_development_level), 2) FROM student_attendance WHERE student_id = $1 AND personal_development_level IS NOT NULL) as avg_personal_development,
+        (SELECT ROUND(AVG(critical_thinking_level), 2) FROM student_attendance WHERE student_id = $1 AND critical_thinking_level IS NOT NULL) as avg_critical_thinking,
+        (SELECT ROUND(AVG(team_work_level), 2) FROM student_attendance WHERE student_id = $1 AND team_work_level IS NOT NULL) as avg_team_work,
+        (SELECT ROUND(AVG(academic_knowledge_level), 2) FROM student_attendance WHERE student_id = $1 AND academic_knowledge_level IS NOT NULL) as avg_academic_knowledge,
         (SELECT COUNT(*) FROM schedules s WHERE s.school_id = $2 AND s.scheduled_date >= CURRENT_DATE) as upcoming_schedules
     `, [id, student.school_id]);
+
+    // Get recent assessments with detailed scores
+    const assessmentsResult = await client.query(`
+      SELECT sa.*, s.scheduled_date, s.scheduled_time,
+        sch.name as school_name,
+        array_agg(DISTINCT t.name) as teacher_names,
+        array_agg(DISTINCT l.title) as lesson_titles
+      FROM student_attendance sa
+      JOIN schedules s ON sa.schedule_id = s.id
+      JOIN schools sch ON s.school_id = sch.id
+      LEFT JOIN schedule_teachers st ON s.id = st.schedule_id
+      LEFT JOIN teachers t ON st.teacher_id = t.id
+      LEFT JOIN schedule_lessons sl ON s.id = sl.schedule_id
+      LEFT JOIN lessons l ON sl.lesson_id = l.id
+      WHERE sa.student_id = $1 AND (
+        sa.knowledge_score IS NOT NULL OR 
+        sa.participation_score IS NOT NULL OR 
+        sa.personal_development_level IS NOT NULL OR 
+        sa.critical_thinking_level IS NOT NULL OR 
+        sa.team_work_level IS NOT NULL OR 
+        sa.academic_knowledge_level IS NOT NULL
+      )
+      GROUP BY sa.id, s.id, sch.name
+      ORDER BY s.scheduled_date DESC, s.scheduled_time DESC
+      LIMIT 10
+    `, [id]);
     
     client.release();
     
@@ -92,6 +122,7 @@ export async function GET(request, { params }) {
       student,
       teachers: teachersResult.rows,
       attendance_records: attendanceResult.rows,
+      assessments: assessmentsResult.rows,
       upcoming_schedules: upcomingSchedulesResult.rows,
       statistics: {
         ...stats,

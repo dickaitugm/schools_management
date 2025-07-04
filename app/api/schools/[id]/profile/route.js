@@ -36,6 +36,17 @@ export async function GET(request, { params }) {
       ORDER BY name
     `, [id]);
     
+    // Get lessons associated with this school through schedules
+    const lessonsResult = await client.query(`
+      SELECT DISTINCT l.*, COUNT(sl.schedule_id) as usage_count
+      FROM lessons l
+      JOIN schedule_lessons sl ON l.id = sl.lesson_id
+      JOIN schedules s ON sl.schedule_id = s.id
+      WHERE s.school_id = $1
+      GROUP BY l.id
+      ORDER BY usage_count DESC, l.title
+    `, [id]);
+    
     // Get schedules for this school
     const schedulesResult = await client.query(`
       SELECT s.*, 
@@ -57,6 +68,10 @@ export async function GET(request, { params }) {
       SELECT 
         (SELECT COUNT(*) FROM students WHERE school_id = $1) as total_students,
         (SELECT COUNT(*) FROM teacher_schools WHERE school_id = $1) as total_teachers,
+        (SELECT COUNT(DISTINCT l.id) FROM lessons l 
+         JOIN schedule_lessons sl ON l.id = sl.lesson_id 
+         JOIN schedules s ON sl.schedule_id = s.id 
+         WHERE s.school_id = $1) as total_lessons,
         (SELECT COUNT(*) FROM schedules WHERE school_id = $1) as total_schedules,
         (SELECT COUNT(*) FROM schedules WHERE school_id = $1 AND scheduled_date >= CURRENT_DATE) as upcoming_schedules
     `, [id]);
@@ -67,6 +82,7 @@ export async function GET(request, { params }) {
       school,
       teachers: teachersResult.rows,
       students: studentsResult.rows,
+      lessons: lessonsResult.rows,
       recent_schedules: schedulesResult.rows,
       statistics: statsResult.rows[0]
     };

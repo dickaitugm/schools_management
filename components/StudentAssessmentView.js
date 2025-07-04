@@ -141,6 +141,8 @@ const StudentAssessmentView = ({ scheduleId, onBack }) => {
       const assessments = students.map(student => ({
         student_id: student.id,
         attendance_status: student.assessment?.attendance_status || 'present',
+        knowledge_score: student.assessment?.knowledge_score || null,
+        participation_score: student.assessment?.participation_score || null,
         personal_development_level: student.assessment?.personal_development_level || null,
         critical_thinking_level: student.assessment?.critical_thinking_level || null,
         team_work_level: student.assessment?.team_work_level || null,
@@ -153,14 +155,17 @@ const StudentAssessmentView = ({ scheduleId, onBack }) => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ assessments }),
+        body: JSON.stringify(assessments),
       });
 
       const data = await response.json();
 
       if (data.success) {
         setSuccess('Assessments saved successfully!');
-        setTimeout(() => setSuccess(null), 3000);
+        // Redirect back to schedule management after a short delay
+        setTimeout(() => {
+          onBack();
+        }, 1500);
       } else {
         setError(data.error || 'Failed to save assessments');
       }

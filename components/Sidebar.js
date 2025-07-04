@@ -68,7 +68,7 @@ const Sidebar = ({ currentPage, onPageChange, collapsed = false, onToggle }) => 
         <div className="p-4 border-b border-blue-700">
           <div className="flex items-center justify-between">
             {!collapsed && (
-              <h1 className="text-lg font-bold">BB Society</h1>
+              <h1 className="text-lg font-bold">BB for Society</h1>
             )}
             <button
               onClick={toggleSidebar}

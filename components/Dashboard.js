@@ -60,7 +60,7 @@ const Dashboard = () => {
   return (
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-800">BB Society Dashboard</h1>
+        <h1 className="text-3xl font-bold text-gray-800">BB for Society Dashboard</h1>
       </div>
       
       {/* Stats Cards */}
@@ -128,7 +128,7 @@ const Dashboard = () => {
 
       {/* Welcome Message */}
       <div className="bg-white rounded-lg shadow-md p-6">
-        <h2 className="text-xl font-bold text-gray-800 mb-4">Welcome to BB Society Information System</h2>
+        <h2 className="text-xl font-bold text-gray-800 mb-4">Welcome to BB for Society Information System</h2>
         <p className="text-gray-600 mb-4">
           Manage your schools, teachers, students, lessons, and schedules all in one place.
         </p>

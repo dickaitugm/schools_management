@@ -1,4 +1,4 @@
-# 🚀 Quick Setup Guide for BB Society Information System
+# 🚀 Quick Setup Guide for BB for Society Information System
 
 ## 📋 Prerequisites
 1. Install Node.js (v18+): https://nodejs.org/

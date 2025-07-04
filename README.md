@@ -1,4 +1,4 @@
-# BB Society Information System (Next.js Web Version)
+# BB for Society Information System (Next.js Web Version)
 
 A comprehensive web application for managing schools, teachers, and students built with Next.js, React, TailwindCSS, and PostgreSQL.
 
