@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
+import ProfileView from './ProfileView';
 
 const TeacherManagement = ({ selectedSchoolId }) => {
   const [teachers, setTeachers] = useState([]);
@@ -15,6 +16,8 @@ const TeacherManagement = ({ selectedSchoolId }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [pagination, setPagination] = useState({});
+  const [showProfile, setShowProfile] = useState(false);
+  const [selectedProfileId, setSelectedProfileId] = useState(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -82,6 +85,16 @@ const TeacherManagement = ({ selectedSchoolId }) => {
       hire_date: '',
       school_ids: []
     });
+  };
+
+  const handleViewProfile = (teacherId) => {
+    setSelectedProfileId(teacherId);
+    setShowProfile(true);
+  };
+
+  const handleCloseProfile = () => {
+    setShowProfile(false);
+    setSelectedProfileId(null);
   };
 
   const openModal = (type, teacher = null) => {
@@ -314,6 +327,12 @@ const TeacherManagement = ({ selectedSchoolId }) => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <button
+                          onClick={() => handleViewProfile(teacher.id)}
+                          className="text-green-600 hover:text-green-900 mr-3"
+                        >
+                          View Profile
+                        </button>
+                        <button
                           onClick={() => openModal('edit', teacher)}
                           className="text-blue-600 hover:text-blue-900 mr-3"
                         >
@@ -511,6 +530,15 @@ const TeacherManagement = ({ selectedSchoolId }) => {
           </form>
         </div>
       </Modal>
+
+      {/* Profile View */}
+      {showProfile && (
+        <ProfileView 
+          entityType="teachers" 
+          entityId={selectedProfileId} 
+          onClose={handleCloseProfile} 
+        />
+      )}
     </div>
   );
 };

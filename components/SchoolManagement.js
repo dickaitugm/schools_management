@@ -2,12 +2,15 @@
 
 import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
+import ProfileView from './ProfileView';
 
 const SchoolManagement = ({ onSchoolSelect, selectedSchoolId }) => {
   const [schools, setSchools] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSchool, setEditingSchool] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showProfile, setShowProfile] = useState(false);
+  const [selectedProfileId, setSelectedProfileId] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     address: '',
@@ -104,6 +107,16 @@ const SchoolManagement = ({ onSchoolSelect, selectedSchoolId }) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const handleViewProfile = (schoolId) => {
+    setSelectedProfileId(schoolId);
+    setShowProfile(true);
+  };
+
+  const handleCloseProfile = () => {
+    setShowProfile(false);
+    setSelectedProfileId(null);
+  };
+
   if (loading) {
     return (
       <div className="p-6 flex items-center justify-center">
@@ -149,12 +162,14 @@ const SchoolManagement = ({ onSchoolSelect, selectedSchoolId }) => {
             {schools.map((school) => (
               <tr 
                 key={school.id}
-                className={`hover:bg-gray-50 cursor-pointer ${
+                className={`hover:bg-gray-50 ${
                   selectedSchoolId === school.id ? 'bg-blue-50' : ''
                 }`}
-                onClick={() => onSchoolSelect(school.id)}
               >
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                <td 
+                  className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 cursor-pointer"
+                  onClick={() => onSchoolSelect(school.id)}
+                >
                   <span className="text-blue-600 font-medium">
                     {school.name}
                   </span>
@@ -169,6 +184,15 @@ const SchoolManagement = ({ onSchoolSelect, selectedSchoolId }) => {
                   {school.email || 'N/A'}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleViewProfile(school.id);
+                    }}
+                    className="text-green-600 hover:text-green-900 mr-3"
+                  >
+                    View Profile
+                  </button>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -271,6 +295,15 @@ const SchoolManagement = ({ onSchoolSelect, selectedSchoolId }) => {
           </div>
         </form>
       </Modal>
+
+      {/* Profile View */}
+      {showProfile && (
+        <ProfileView 
+          entityType="schools" 
+          entityId={selectedProfileId} 
+          onClose={handleCloseProfile} 
+        />
+      )}
     </div>
   );
 };

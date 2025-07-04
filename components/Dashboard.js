@@ -20,17 +20,27 @@ const Dashboard = () => {
     try {
       setLoading(true);
       
-      // Fetch schools count
-      const schoolsResponse = await fetch('/api/schools');
+      // Fetch all data concurrently
+      const [schoolsResponse, teachersResponse, studentsResponse, lessonsResponse, schedulesResponse] = await Promise.all([
+        fetch('/api/schools'),
+        fetch('/api/teachers'),
+        fetch('/api/students'),
+        fetch('/api/lessons'),
+        fetch('/api/schedules?limit=1000') // Get all schedules for count
+      ]);
+
       const schools = schoolsResponse.ok ? await schoolsResponse.json() : [];
+      const teachers = teachersResponse.ok ? await teachersResponse.json() : [];
+      const students = studentsResponse.ok ? await studentsResponse.json() : [];
+      const lessons = lessonsResponse.ok ? await lessonsResponse.json() : [];
+      const schedulesData = schedulesResponse.ok ? await schedulesResponse.json() : { data: [] };
       
-      // TODO: Add other API calls when they're ready
       setStats({
-        schools: schools.length,
-        teachers: 0, // Will be updated when teachers API is ready
-        students: 0, // Will be updated when students API is ready
-        lessons: 0,  // Will be updated when lessons API is ready
-        schedules: 0, // Will be updated when schedules API is ready
+        schools: Array.isArray(schools) ? schools.length : 0,
+        teachers: Array.isArray(teachers) ? teachers.length : 0,
+        students: Array.isArray(students) ? students.length : 0,
+        lessons: Array.isArray(lessons) ? lessons.length : 0,
+        schedules: schedulesData.data ? schedulesData.data.length : 0,
       });
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
