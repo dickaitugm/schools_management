@@ -98,6 +98,41 @@ async function seedDatabase() {
 
     console.log('✅ Lesson-Teacher relationships created');
 
+    // Insert sample schedules
+    const schedulesResult = await client.query(`
+      INSERT INTO schedules (school_id, scheduled_date, scheduled_time, duration_minutes, status, notes) VALUES 
+      (1, '2025-01-10', '09:00:00', 90, 'scheduled', 'Matematika dasar untuk kelas 5'),
+      (1, '2025-01-12', '10:30:00', 60, 'scheduled', 'Bahasa Indonesia - membaca dan menulis'),
+      (2, '2025-01-15', '08:00:00', 120, 'scheduled', 'IPA - eksperimen sederhana'),
+      (2, '2025-01-18', '13:30:00', 90, 'completed', 'IPS - sejarah Indonesia'),
+      (3, '2025-01-20', '11:00:00', 90, 'scheduled', 'Bahasa Inggris - conversation practice')
+      RETURNING id, school_id, scheduled_date
+    `);
+    
+    console.log('✅ Schedules seeded:', schedulesResult.rows.length, 'schedules created');
+
+    // Assign teachers to schedules
+    await client.query(`
+      INSERT INTO schedule_teachers (schedule_id, teacher_id) VALUES 
+      (1, 1),  -- Budi teaches schedule 1 (Math)
+      (2, 2),  -- Sari teaches schedule 2 (Indonesian)
+      (3, 3),  -- Ahmad teaches schedule 3 (Science)
+      (4, 4),  -- Maya teaches schedule 4 (Social Studies)
+      (5, 5)   -- Rina teaches schedule 5 (English)
+    `);
+
+    // Assign lessons to schedules
+    await client.query(`
+      INSERT INTO schedule_lessons (schedule_id, lesson_id) VALUES 
+      (1, 1),  -- Math lesson in schedule 1
+      (2, 2),  -- Indonesian lesson in schedule 2
+      (3, 1),  -- Math lesson also in schedule 3
+      (4, 2),  -- Indonesian lesson also in schedule 4
+      (5, 1)   -- Math lesson also in schedule 5
+    `);
+
+    console.log('✅ Schedule assignments created');
+
     console.log('🎉 Database seeding completed successfully!');
     
   } catch (error) {

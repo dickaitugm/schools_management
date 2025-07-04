@@ -461,6 +461,219 @@ const ProfileView = ({ entityType, id, onBack }) => {
             )}
           </div>
         )}
+
+        {/* Schedule Profile */}
+        {entityType === 'schedules' && (
+          <div>
+            {/* Basic Info */}
+            <div className="bg-orange-50 rounded-lg p-6 mb-6">
+              <h3 className="text-2xl font-semibold mb-4 text-orange-800">
+                Schedule at {profile.data.school_name}
+              </h3>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <p><strong>Date:</strong> {formatDate(profile.data.scheduled_date)}</p>
+                  <p><strong>Time:</strong> {profile.data.scheduled_time?.slice(0, 5) || 'N/A'}</p>
+                  <p><strong>Duration:</strong> {profile.data.duration_minutes} minutes</p>
+                  <p><strong>Status:</strong> 
+                    <span className={`ml-2 px-2 py-1 text-xs font-semibold rounded-full ${
+                      profile.data.status === 'completed' ? 'bg-green-100 text-green-800' :
+                      profile.data.status === 'in-progress' ? 'bg-yellow-100 text-yellow-800' :
+                      profile.data.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                      'bg-blue-100 text-blue-800'
+                    }`}>
+                      {profile.data.status.charAt(0).toUpperCase() + profile.data.status.slice(1)}
+                    </span>
+                  </p>
+                </div>
+                <div>
+                  <p><strong>School:</strong> {profile.data.school_name}</p>
+                  <p><strong>Address:</strong> {profile.data.school_address || 'N/A'}</p>
+                  <p><strong>School Phone:</strong> {profile.data.school_phone || 'N/A'}</p>
+                  <p><strong>School Email:</strong> {profile.data.school_email || 'N/A'}</p>
+                </div>
+              </div>
+              {profile.data.notes && (
+                <div className="mt-4">
+                  <p><strong>Notes:</strong> {profile.data.notes}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Statistics */}
+            <div className="grid md:grid-cols-4 gap-4 mb-6">
+              <div className="bg-blue-100 p-4 rounded-lg text-center">
+                <h4 className="text-blue-800 font-semibold">Teachers</h4>
+                <p className="text-2xl font-bold text-blue-600">{profile.data.stats.total_teachers}</p>
+              </div>
+              <div className="bg-green-100 p-4 rounded-lg text-center">
+                <h4 className="text-green-800 font-semibold">Lessons</h4>
+                <p className="text-2xl font-bold text-green-600">{profile.data.stats.total_lessons}</p>
+              </div>
+              <div className="bg-purple-100 p-4 rounded-lg text-center">
+                <h4 className="text-purple-800 font-semibold">Students</h4>
+                <p className="text-2xl font-bold text-purple-600">{profile.data.stats.total_students}</p>
+              </div>
+              <div className="bg-yellow-100 p-4 rounded-lg text-center">
+                <h4 className="text-yellow-800 font-semibold">Attendance Rate</h4>
+                <p className="text-2xl font-bold text-yellow-600">{profile.data.stats.attendance_rate}%</p>
+              </div>
+            </div>
+
+            {/* Teachers Section */}
+            {profile.data.teachers && profile.data.teachers.length > 0 && (
+              <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h4 className="text-lg font-semibold mb-4">Assigned Teachers</h4>
+                <div className="grid md:grid-cols-2 gap-4">
+                  {profile.data.teachers.map(teacher => (
+                    <div key={teacher.id} className="border border-gray-200 rounded-lg p-4">
+                      <h5 className="font-medium text-gray-900">{teacher.name}</h5>
+                      <p className="text-sm text-gray-600">{teacher.subject}</p>
+                      <div className="mt-2 text-sm text-gray-500">
+                        <p>Email: {teacher.email || 'N/A'}</p>
+                        <p>Phone: {teacher.phone || 'N/A'}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Lessons Section */}
+            {profile.data.lessons && profile.data.lessons.length > 0 && (
+              <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h4 className="text-lg font-semibold mb-4">Assigned Lessons</h4>
+                <div className="grid md:grid-cols-2 gap-4">
+                  {profile.data.lessons.map(lesson => (
+                    <div key={lesson.id} className="border border-gray-200 rounded-lg p-4">
+                      <h5 className="font-medium text-gray-900">{lesson.title}</h5>
+                      <p className="text-sm text-gray-600 mt-1">{lesson.description}</p>
+                      <p className="text-sm text-gray-500 mt-2">Duration: {lesson.duration} minutes</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Students Section */}
+            {profile.data.students && profile.data.students.length > 0 && (
+              <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h4 className="text-lg font-semibold mb-4">Enrolled Students</h4>
+                <div className="grid md:grid-cols-3 gap-4">
+                  {profile.data.students.map(student => (
+                    <div key={student.id} className="border border-gray-200 rounded-lg p-4">
+                      <h5 className="font-medium text-gray-900">{student.name}</h5>
+                      <p className="text-sm text-gray-600">Class: {student.class_level}</p>
+                      <p className="text-sm text-gray-500">Age: {student.age}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Attendance Section */}
+            {profile.data.attendance && profile.data.attendance.length > 0 && (
+              <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h4 className="text-lg font-semibold mb-4">Attendance Records</h4>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Student
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Status
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Date
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Notes
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {profile.data.attendance.slice(0, 10).map((record, index) => (
+                        <tr key={index}>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {record.student_name}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                              record.attendance_status === 'present' ? 'bg-green-100 text-green-800' :
+                              record.attendance_status === 'absent' ? 'bg-red-100 text-red-800' :
+                              'bg-yellow-100 text-yellow-800'
+                            }`}>
+                              {record.attendance_status}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {formatDate(record.created_at)}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-500">
+                            {record.notes || 'N/A'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* Assessments Section */}
+            {profile.data.assessments && profile.data.assessments.length > 0 && (
+              <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h4 className="text-lg font-semibold mb-4">Student Assessments</h4>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Student
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Knowledge Score
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Participation Score
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Date
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Notes
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {profile.data.assessments.slice(0, 10).map((assessment, index) => (
+                        <tr key={index}>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {assessment.student_name}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {assessment.knowledge_score}/10
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {assessment.participation_score}/10
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {formatDate(assessment.created_at)}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-500">
+                            {assessment.notes || 'N/A'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
     </div>
   );
 };
