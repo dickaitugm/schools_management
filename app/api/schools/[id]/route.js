@@ -11,16 +11,19 @@ export async function GET(request, { params }) {
     
     if (result.rows.length === 0) {
       return NextResponse.json(
-        { error: 'School not found' },
+        { success: false, error: 'School not found' },
         { status: 404 }
       );
     }
     
-    return NextResponse.json(result.rows[0]);
+    return NextResponse.json({
+      success: true,
+      data: result.rows[0]
+    });
   } catch (error) {
     console.error('Error fetching school:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch school' },
+      { success: false, error: 'Failed to fetch school' },
       { status: 500 }
     );
   }
@@ -34,7 +37,7 @@ export async function PUT(request, { params }) {
     
     if (!name) {
       return NextResponse.json(
-        { error: 'School name is required' },
+        { success: false, error: 'School name is required' },
         { status: 400 }
       );
     }
@@ -48,16 +51,20 @@ export async function PUT(request, { params }) {
     
     if (result.rows.length === 0) {
       return NextResponse.json(
-        { error: 'School not found' },
+        { success: false, error: 'School not found' },
         { status: 404 }
       );
     }
     
-    return NextResponse.json(result.rows[0]);
+    return NextResponse.json({
+      success: true,
+      message: 'School updated successfully',
+      data: result.rows[0]
+    });
   } catch (error) {
     console.error('Error updating school:', error);
     return NextResponse.json(
-      { error: 'Failed to update school' },
+      { success: false, error: 'Failed to update school' },
       { status: 500 }
     );
   }
@@ -73,16 +80,19 @@ export async function DELETE(request, { params }) {
     
     if (result.rows.length === 0) {
       return NextResponse.json(
-        { error: 'School not found' },
+        { success: false, error: 'School not found' },
         { status: 404 }
       );
     }
     
-    return NextResponse.json({ message: 'School deleted successfully' });
+    return NextResponse.json({
+      success: true,
+      message: 'School deleted successfully'
+    });
   } catch (error) {
     console.error('Error deleting school:', error);
     return NextResponse.json(
-      { error: 'Failed to delete school' },
+      { success: false, error: 'Failed to delete school' },
       { status: 500 }
     );
   }
