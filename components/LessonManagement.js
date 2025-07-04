@@ -2,9 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
-import ProfileView from './ProfileView';
 
-const LessonManagement = () => {
+const LessonManagement = ({ onViewProfile }) => {
   const [lessons, setLessons] = useState([]);
   const [teachers, setTeachers] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -16,8 +15,6 @@ const LessonManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [pagination, setPagination] = useState({});
-  const [showProfile, setShowProfile] = useState(false);
-  const [selectedProfileId, setSelectedProfileId] = useState(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -83,14 +80,10 @@ const LessonManagement = () => {
     });
   };
 
-  const handleViewProfile = (lessonId) => {
-    setSelectedProfileId(lessonId);
-    setShowProfile(true);
-  };
-
-  const handleCloseProfile = () => {
-    setShowProfile(false);
-    setSelectedProfileId(null);
+  const handleViewLessonProfile = (lessonId) => {
+    if (onViewProfile) {
+      onViewProfile('lessons', lessonId);
+    }
   };
 
   const openModal = (type, lesson = null) => {
@@ -337,7 +330,7 @@ const LessonManagement = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <button
-                          onClick={() => handleViewProfile(lesson.id)}
+                          onClick={() => handleViewLessonProfile(lesson.id)}
                           className="text-green-600 hover:text-green-900 mr-3"
                         >
                           View Profile
@@ -545,15 +538,6 @@ const LessonManagement = () => {
           </form>
         </div>
       </Modal>
-
-      {/* Profile View */}
-      {showProfile && (
-        <ProfileView 
-          entityType="lessons" 
-          entityId={selectedProfileId} 
-          onClose={handleCloseProfile} 
-        />
-      )}
     </div>
   );
 };

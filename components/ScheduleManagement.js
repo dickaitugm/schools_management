@@ -2,10 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
-import ProfileView from './ProfileView';
-import StudentAssessmentModal from './StudentAssessmentModal';
 
-const ScheduleManagement = ({ selectedSchoolId }) => {
+const ScheduleManagement = ({ selectedSchoolId, onViewProfile, onViewAssessment }) => {
   const [schedules, setSchedules] = useState([]);
   const [schools, setSchools] = useState([]);
   const [teachers, setTeachers] = useState([]);
@@ -20,10 +18,6 @@ const ScheduleManagement = ({ selectedSchoolId }) => {
   const [statusFilter, setStatusFilter] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [pagination, setPagination] = useState({});
-  const [showProfile, setShowProfile] = useState(false);
-  const [selectedProfileId, setSelectedProfileId] = useState(null);
-  const [showAssessment, setShowAssessment] = useState(false);
-  const [assessmentScheduleId, setAssessmentScheduleId] = useState(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -118,24 +112,16 @@ const ScheduleManagement = ({ selectedSchoolId }) => {
     }
   };
 
-  const handleViewProfile = (scheduleId) => {
-    setSelectedProfileId(scheduleId);
-    setShowProfile(true);
+  const handleViewScheduleProfile = (scheduleId) => {
+    if (onViewProfile) {
+      onViewProfile('schedules', scheduleId);
+    }
   };
 
-  const handleCloseProfile = () => {
-    setShowProfile(false);
-    setSelectedProfileId(null);
-  };
-
-  const handleViewAssessment = (scheduleId) => {
-    setAssessmentScheduleId(scheduleId);
-    setShowAssessment(true);
-  };
-
-  const handleCloseAssessment = () => {
-    setShowAssessment(false);
-    setAssessmentScheduleId(null);
+  const handleViewScheduleAssessment = (scheduleId) => {
+    if (onViewAssessment) {
+      onViewAssessment(scheduleId);
+    }
   };
 
   const openModal = (type, schedule = null) => {
@@ -451,14 +437,14 @@ const ScheduleManagement = ({ selectedSchoolId }) => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <button
-                          onClick={() => handleViewProfile(schedule.id)}
+                          onClick={() => handleViewScheduleProfile(schedule.id)}
                           className="text-green-600 hover:text-green-900 mr-3"
                         >
                           View Profile
                         </button>
                         {schedule.status === 'completed' && (
                           <button
-                            onClick={() => handleViewAssessment(schedule.id)}
+                            onClick={() => handleViewScheduleAssessment(schedule.id)}
                             className="text-purple-600 hover:text-purple-900 mr-3"
                           >
                             Assessment
@@ -682,22 +668,6 @@ const ScheduleManagement = ({ selectedSchoolId }) => {
         </form>
       </Modal>
 
-      {/* Profile View */}
-      {showProfile && (
-        <ProfileView 
-          entityType="schedules" 
-          entityId={selectedProfileId} 
-          onClose={handleCloseProfile} 
-        />
-      )}
-
-      {/* Assessment Modal */}
-      {showAssessment && (
-        <StudentAssessmentModal
-          scheduleId={assessmentScheduleId}
-          onClose={handleCloseAssessment}
-        />
-      )}
     </div>
   );
 };

@@ -2,15 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
-import ProfileView from './ProfileView';
 
-const SchoolManagement = ({ onSchoolSelect, selectedSchoolId }) => {
+const SchoolManagement = ({ onSchoolSelect, selectedSchoolId, onViewProfile }) => {
   const [schools, setSchools] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSchool, setEditingSchool] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [showProfile, setShowProfile] = useState(false);
-  const [selectedProfileId, setSelectedProfileId] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     address: '',
@@ -107,14 +104,10 @@ const SchoolManagement = ({ onSchoolSelect, selectedSchoolId }) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleViewProfile = (schoolId) => {
-    setSelectedProfileId(schoolId);
-    setShowProfile(true);
-  };
-
-  const handleCloseProfile = () => {
-    setShowProfile(false);
-    setSelectedProfileId(null);
+  const handleViewSchoolProfile = (schoolId) => {
+    if (onViewProfile) {
+      onViewProfile('schools', schoolId);
+    }
   };
 
   if (loading) {
@@ -187,7 +180,7 @@ const SchoolManagement = ({ onSchoolSelect, selectedSchoolId }) => {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleViewProfile(school.id);
+                      handleViewSchoolProfile(school.id);
                     }}
                     className="text-green-600 hover:text-green-900 mr-3"
                   >
@@ -295,15 +288,6 @@ const SchoolManagement = ({ onSchoolSelect, selectedSchoolId }) => {
           </div>
         </form>
       </Modal>
-
-      {/* Profile View */}
-      {showProfile && (
-        <ProfileView 
-          entityType="schools" 
-          entityId={selectedProfileId} 
-          onClose={handleCloseProfile} 
-        />
-      )}
     </div>
   );
 };

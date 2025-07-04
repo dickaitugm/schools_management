@@ -2,9 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
-import ProfileView from './ProfileView';
 
-const StudentManagement = ({ selectedSchoolId }) => {
+const StudentManagement = ({ selectedSchoolId, onViewProfile }) => {
   const [students, setStudents] = useState([]);
   const [schools, setSchools] = useState([]);
   const [teachers, setTeachers] = useState([]);
@@ -17,8 +16,6 @@ const StudentManagement = ({ selectedSchoolId }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [pagination, setPagination] = useState({});
-  const [showProfile, setShowProfile] = useState(false);
-  const [selectedProfileId, setSelectedProfileId] = useState(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -116,15 +113,10 @@ const StudentManagement = ({ selectedSchoolId }) => {
     });
   };
 
-  const handleViewProfile = (studentId) => {
-    console.log('Viewing profile for student:', studentId);
-    setSelectedProfileId(studentId);
-    setShowProfile(true);
-  };
-
-  const handleCloseProfile = () => {
-    setShowProfile(false);
-    setSelectedProfileId(null);
+  const handleViewStudentProfile = (studentId) => {
+    if (onViewProfile) {
+      onViewProfile('students', studentId);
+    }
   };
 
   const openModal = (type, student = null) => {
@@ -384,7 +376,7 @@ const StudentManagement = ({ selectedSchoolId }) => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <button
-                          onClick={() => handleViewProfile(student.id)}
+                          onClick={() => handleViewStudentProfile(student.id)}
                           className="text-green-600 hover:text-green-900 mr-3"
                         >
                           View Profile
@@ -625,14 +617,6 @@ const StudentManagement = ({ selectedSchoolId }) => {
         </div>
       </Modal>
 
-      {/* Profile View */}
-      {showProfile && (
-        <ProfileView 
-          entityType="students" 
-          entityId={selectedProfileId} 
-          onClose={handleCloseProfile} 
-        />
-      )}
     </div>
   );
 };
