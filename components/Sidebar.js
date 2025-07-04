@@ -2,24 +2,13 @@
 
 import React, { useState, useEffect } from 'react';
 
-const Sidebar = ({ currentPage, onPageChange, collapsed, onToggle }) => {
-  const [isCollapsed, setIsCollapsed] = useState(collapsed || false);
+const Sidebar = ({ currentPage, onPageChange, collapsed = false, onToggle }) => {
   const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    if (collapsed !== undefined) {
-      setIsCollapsed(collapsed);
-    }
-  }, [collapsed]);
 
   useEffect(() => {
     const checkScreenSize = () => {
       const mobile = window.innerWidth < 768;
       setIsMobile(mobile);
-      // Auto-collapse on mobile
-      if (mobile) {
-        setIsCollapsed(true);
-      }
     };
 
     // Check on mount
@@ -40,50 +29,52 @@ const Sidebar = ({ currentPage, onPageChange, collapsed, onToggle }) => {
   ];
 
   const toggleSidebar = () => {
-    const newCollapsed = !isCollapsed;
-    setIsCollapsed(newCollapsed);
     if (onToggle) {
-      onToggle(newCollapsed);
+      onToggle(!collapsed);
     }
   };
 
   const handleMenuClick = (path) => {
     onPageChange(path);
     // Auto-close sidebar on mobile after selecting menu
-    if (isMobile) {
-      setIsCollapsed(true);
+    if (isMobile && onToggle) {
+      onToggle(true);
     }
   };
 
   return (
     <>
       {/* Mobile Overlay */}
-      {isMobile && !isCollapsed && (
+      {isMobile && !collapsed && (
         <div 
           className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
-          onClick={() => setIsCollapsed(true)}
+          onClick={() => onToggle && onToggle(true)}
         />
       )}
       
-      {/* Sidebar - Hide completely on mobile when collapsed */}
-      {(!isMobile || !isCollapsed) && (
-        <div className={`
-          ${isCollapsed ? 'w-16' : 'w-64'} 
-          ${isMobile ? 'fixed z-50 h-full' : 'relative'}
+      {/* Sidebar */}
+      <div 
+        className={`
           bg-blue-800 text-white transition-all duration-300 ease-in-out
-          ${isMobile ? 'shadow-lg' : ''}
-        `}>
+          ${isMobile ? 'fixed z-50 h-full shadow-lg' : 'relative'} 
+          ${collapsed ? (isMobile ? 'w-64' : 'w-16') : 'w-64'}
+        `}
+        style={{
+          left: isMobile ? (collapsed ? '-256px' : '0px') : 'auto',
+          position: isMobile ? 'fixed' : 'relative'
+        }}
+      >
         {/* Header */}
         <div className="p-4 border-b border-blue-700">
           <div className="flex items-center justify-between">
-            {!isCollapsed && (
+            {!collapsed && (
               <h1 className="text-lg font-bold">BB Society</h1>
             )}
             <button
               onClick={toggleSidebar}
               className="p-2 rounded-lg hover:bg-blue-700 transition-colors"
             >
-              {isCollapsed ? (
+              {collapsed ? (
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
@@ -106,15 +97,15 @@ const Sidebar = ({ currentPage, onPageChange, collapsed, onToggle }) => {
                   className={`
                     flex items-center p-3 rounded-lg transition-colors w-full text-left group
                     ${currentPage === item.path ? 'bg-blue-600' : 'hover:bg-blue-700'}
-                    ${isCollapsed ? 'justify-center' : 'space-x-3'}
+                    ${collapsed ? 'justify-center' : 'space-x-3'}
                   `}
-                  title={isCollapsed ? item.name : ''}
+                  title={collapsed ? item.name : ''}
                 >
                   <span className="text-xl">{item.icon}</span>
-                  {!isCollapsed && <span className="truncate">{item.name}</span>}
+                  {!collapsed && <span className="truncate">{item.name}</span>}
                   
                   {/* Tooltip for collapsed state */}
-                  {isCollapsed && (
+                  {collapsed && (
                     <div className="absolute left-16 bg-gray-800 text-white px-2 py-1 rounded text-sm opacity-0 group-hover:opacity-100 transition-opacity z-50 whitespace-nowrap">
                       {item.name}
                     </div>
@@ -124,8 +115,7 @@ const Sidebar = ({ currentPage, onPageChange, collapsed, onToggle }) => {
             ))}
           </ul>
         </nav>
-        </div>
-      )}
+      </div>
     </>
   );
 };
