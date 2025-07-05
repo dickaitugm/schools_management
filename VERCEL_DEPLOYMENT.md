@@ -11,9 +11,11 @@
 ```
 NODE_ENV=production
 USE_SUPABASE=true
-NEXT_PUBLIC_SUPABASE_URL=https://mewsbzbzeynwfncefcgi.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
-SUPABASE_DB_URL=postgresql://postgres:your-password@db.your-project-id.supabase.co:5432/postgres
+NODE_TLS_REJECT_UNAUTHORIZED=0
+POSTGRES_URL=postgres://postgres.xhbfiwrqbjokasjvuvbl:qoah5SnJSDWqlOAn@aws-0-us-east-1.pooler.supabase.com:6543/postgres?sslmode=require&supa=base-pooler.x
+POSTGRES_URL_NON_POOLING=postgres://postgres.xhbfiwrqbjokasjvuvbl:qoah5SnJSDWqlOAn@aws-0-us-east-1.pooler.supabase.com:5432/postgres?sslmode=require
+NEXT_PUBLIC_SUPABASE_URL=https://xhbfiwrqbjokasjvuvbl.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhoYmZpd3JxYmpva2FzanZ1dmJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE2ODY5MzQsImV4cCI6MjA2NzI2MjkzNH0.7Pya046lQv3UhYBuTFdyqer1y9FH49BENch5dmWedIk
 ```
 
 ### 2. Important Notes

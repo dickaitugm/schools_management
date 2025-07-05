@@ -1,12 +1,14 @@
 {
   "env": {
     "NODE_ENV": "production",
-    "USE_SUPABASE": "true"
+    "USE_SUPABASE": "true",
+    "NODE_TLS_REJECT_UNAUTHORIZED": "0"
   },
   "build": {
     "env": {
       "NODE_ENV": "production",
-      "USE_SUPABASE": "true"
+      "USE_SUPABASE": "true",
+      "NODE_TLS_REJECT_UNAUTHORIZED": "0"
     }
   },
   "functions": {
