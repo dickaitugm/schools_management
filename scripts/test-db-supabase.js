@@ -1,6 +1,9 @@
 // Load environment variables
 require('dotenv').config({ path: '.env.local' });
 
+// Disable SSL strict checking for development
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+
 const pool = require('../lib/db-supabase');
 
 async function testSupabaseConnection() {
@@ -205,7 +208,7 @@ function testEnvironmentVariables() {
   const requiredVars = [
     'NEXT_PUBLIC_SUPABASE_URL',
     'NEXT_PUBLIC_SUPABASE_ANON_KEY', 
-    'SUPABASE_DB_URL'
+    'POSTGRES_URL'
   ];
 
   const missingVars = [];
@@ -227,7 +230,7 @@ function testEnvironmentVariables() {
     console.log('\nExample .env.local file:');
     console.log('   NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co');
     console.log('   NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key');
-    console.log('   SUPABASE_DB_URL=postgresql://postgres:[password]@db.[project].supabase.co:5432/postgres');
+    console.log('   POSTGRES_URL=postgres://postgres.your-project:password@aws-0-region.pooler.supabase.com:6543/postgres?sslmode=require');
     return false;
   }
 

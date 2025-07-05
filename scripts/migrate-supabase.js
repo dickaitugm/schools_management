@@ -1,6 +1,9 @@
 // Load environment variables
 require('dotenv').config({ path: '.env.local' });
 
+// Disable SSL strict checking for development
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+
 const pool = require('../lib/db-supabase');
 
 async function createTablesSupabase() {
