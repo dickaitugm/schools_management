@@ -1,58 +1,59 @@
 {
-  "name": "bb-society-information-system",
-  "version": "1.0.0",
-  "description": "A web application for BB Society Information System with CRUD operations",
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint",
-    "db:migrate": "node scripts/migrate.js",
-    "db:seed": "node scripts/seed.js",
-    "db:migrate:supabase": "node scripts/migrate-supabase.js",
-    "db:seed:supabase": "node scripts/seed-supabase.js",
-    "db:test": "node scripts/test-db.js",
-    "db:test:supabase": "node scripts/test-db-supabase.js"
-  },
-  "dependencies": {
-    "@types/pg": "^8.10.7",
-    "bcryptjs": "^2.4.3",
-    "dotenv": "^17.0.1",
-    "jsonwebtoken": "^9.0.2",
-    "next": "^14.0.0",
-    "pg": "^8.11.3",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
-  },
-  "devDependencies": {
-    "autoprefixer": "^10.4.13",
-    "eslint": "^8.0.0",
-    "eslint-config-next": "^14.0.0",
-    "postcss": "^8.4.21",
-    "tailwindcss": "^3.2.4"
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
-  },
-  "build": {
-    "appId": "com.school.management",
-    "productName": "School Management System",
-    "directories": {
-      "output": "dist"
+    "name": "bb-society-information-system",
+    "version": "1.0.0",
+    "description": "A web application for BB Society Information System with CRUD operations",
+    "scripts": {
+        "dev": "next dev",
+        "build": "USE_SUPABASE=true next build",
+        "build:local": "next build",
+        "start": "next start",
+        "lint": "next lint",
+        "db:migrate": "node scripts/migrate.js",
+        "db:seed": "node scripts/seed.js",
+        "db:migrate:supabase": "node scripts/migrate-supabase.js",
+        "db:seed:supabase": "node scripts/seed-supabase.js",
+        "db:test": "node scripts/test-db.js",
+        "db:test:supabase": "node scripts/test-db-supabase.js"
     },
-    "files": [
-      "build/**/*",
-      "public/electron.js",
-      "node_modules/**/*"
-    ]
-  }
+    "dependencies": {
+        "@types/pg": "^8.10.7",
+        "bcryptjs": "^2.4.3",
+        "dotenv": "^17.0.1",
+        "jsonwebtoken": "^9.0.2",
+        "next": "^14.0.0",
+        "pg": "^8.11.3",
+        "react": "^18.2.0",
+        "react-dom": "^18.2.0"
+    },
+    "devDependencies": {
+        "autoprefixer": "^10.4.13",
+        "eslint": "^8.0.0",
+        "eslint-config-next": "^14.0.0",
+        "postcss": "^8.4.21",
+        "tailwindcss": "^3.2.4"
+    },
+    "browserslist": {
+        "production": [
+            ">0.2%",
+            "not dead",
+            "not op_mini all"
+        ],
+        "development": [
+            "last 1 chrome version",
+            "last 1 firefox version",
+            "last 1 safari version"
+        ]
+    },
+    "build": {
+        "appId": "com.school.management",
+        "productName": "School Management System",
+        "directories": {
+            "output": "dist"
+        },
+        "files": [
+            "build/**/*",
+            "public/electron.js",
+            "node_modules/**/*"
+        ]
+    }
 }
