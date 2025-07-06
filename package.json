@@ -3,17 +3,20 @@
     "version": "1.0.0",
     "description": "A web application for BB Society Information System with CRUD operations",
     "scripts": {
-        "dev": "next dev",
-        "build": "USE_SUPABASE=true next build",
-        "build:local": "next build",
-        "start": "next start",
+        "dev": "cross-env NODE_ENV=development USE_SUPABASE=false next dev",
+        "dev:supabase": "cross-env NODE_ENV=development USE_SUPABASE=true next dev",
+        "build": "cross-env NODE_ENV=production next build",
+        "build:local": "cross-env NODE_ENV=development USE_SUPABASE=false next build",
+        "start": "cross-env NODE_ENV=production next start",
+        "start:local": "cross-env NODE_ENV=development USE_SUPABASE=false next start",
         "lint": "next lint",
-        "db:migrate": "node scripts/migrate.js",
-        "db:seed": "node scripts/seed.js",
-        "db:migrate:supabase": "node scripts/migrate-supabase.js",
-        "db:seed:supabase": "node scripts/seed-supabase.js",
-        "db:test": "node scripts/test-db.js",
-        "db:test:supabase": "node scripts/test-db-supabase.js"
+        "setup:local": "node scripts/setup-local-db.js",
+        "db:migrate": "cross-env NODE_ENV=development USE_SUPABASE=false node scripts/migrate.js",
+        "db:seed": "cross-env NODE_ENV=development USE_SUPABASE=false node scripts/seed.js",
+        "db:migrate:supabase": "cross-env NODE_ENV=production node scripts/migrate-supabase.js",
+        "db:seed:supabase": "cross-env NODE_ENV=production node scripts/seed-supabase.js",
+        "db:test": "cross-env NODE_ENV=development USE_SUPABASE=false node scripts/test-db.js",
+        "db:test:supabase": "cross-env NODE_ENV=production node scripts/test-db-supabase.js"
     },
     "dependencies": {
         "@types/pg": "^8.10.7",
@@ -27,6 +30,7 @@
     },
     "devDependencies": {
         "autoprefixer": "^10.4.13",
+        "cross-env": "^7.0.3",
         "eslint": "^8.0.0",
         "eslint-config-next": "^14.0.0",
         "postcss": "^8.4.21",
