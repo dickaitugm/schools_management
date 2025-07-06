@@ -45,6 +45,14 @@ const StudentManagement = ({ selectedSchoolId, onViewProfile }) => {
     }
   }, [selectedSchoolId]);
 
+  // Debug schools state
+  useEffect(() => {
+    console.log('🏫 Schools state updated:', schools.length, 'schools');
+    if (schools.length > 0) {
+      console.log('🏫 Schools list:', schools.map(s => ({ id: s.id, name: s.name })));
+    }
+  }, [schools]);
+
   const fetchStudents = async () => {
     setLoading(true);
     try {
@@ -76,14 +84,30 @@ const StudentManagement = ({ selectedSchoolId, onViewProfile }) => {
 
   const fetchSchools = async () => {
     try {
+      console.log('🏫 Fetching schools...');
       const response = await fetch('/api/schools');
       const data = await response.json();
+      
+      console.log('🏫 Schools API Response:', data);
+      console.log('🏫 Data type:', typeof data);
+      console.log('🏫 Has success:', data.success);
+      console.log('🏫 Data.data type:', typeof data.data);
+      console.log('🏫 Is data.data array:', Array.isArray(data.data));
 
-      if (Array.isArray(data)) {
+      if (data.success && Array.isArray(data.data)) {
+        console.log('🏫 Setting schools:', data.data.length, 'schools');
+        setSchools(data.data);
+      } else if (Array.isArray(data)) {
+        // Fallback for direct array response
+        console.log('🏫 Setting schools (fallback):', data.length, 'schools');
         setSchools(data);
+      } else {
+        console.error('🏫 Schools API response format error:', data);
+        setSchools([]);
       }
     } catch (error) {
-      console.error('Failed to fetch schools:', error);
+      console.error('🏫 Failed to fetch schools:', error);
+      setSchools([]);
     }
   };
 
@@ -92,11 +116,15 @@ const StudentManagement = ({ selectedSchoolId, onViewProfile }) => {
       const response = await fetch('/api/teachers');
       const data = await response.json();
 
-      if (data.success) {
+      if (data.success && Array.isArray(data.data)) {
         setTeachers(data.data);
+      } else {
+        console.error('Teachers API response format error:', data);
+        setTeachers([]);
       }
     } catch (error) {
       console.error('Failed to fetch teachers:', error);
+      setTeachers([]);
     }
   };
 
@@ -493,6 +521,9 @@ const StudentManagement = ({ selectedSchoolId, onViewProfile }) => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 >
                   <option value="">Select a school</option>
+                  {schools.length === 0 && (
+                    <option disabled>No schools available</option>
+                  )}
                   {schools.map((school) => (
                     <option key={school.id} value={school.id}>
                       {school.name}
