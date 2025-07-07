@@ -25,12 +25,15 @@ export async function GET(request, { params }) {
     
     const student = studentResult.rows[0];
     
-    // Get teachers teaching this student
+    // Get teachers teaching this student through completed schedules
     const teachersResult = await client.query(`
-      SELECT t.*, st.created_at as association_date
+      SELECT DISTINCT t.*, MIN(s.scheduled_date) as association_date
       FROM teachers t
-      JOIN student_teachers st ON t.id = st.teacher_id
-      WHERE st.student_id = $1
+      JOIN schedule_teachers st ON t.id = st.teacher_id
+      JOIN schedules s ON st.schedule_id = s.id
+      JOIN student_attendance sa ON s.id = sa.schedule_id
+      WHERE sa.student_id = $1 AND s.status = 'completed'
+      GROUP BY t.id, t.name, t.subject, t.email, t.phone, t.hire_date, t.created_at
       ORDER BY t.name
     `, [id]);
     
@@ -72,7 +75,11 @@ export async function GET(request, { params }) {
     // Get statistics and performance
     const statsResult = await client.query(`
       SELECT 
-        (SELECT COUNT(*) FROM student_teachers WHERE student_id = $1) as total_teachers,
+        (SELECT COUNT(DISTINCT t.id) FROM teachers t
+         JOIN schedule_teachers st ON t.id = st.teacher_id
+         JOIN schedules s ON st.schedule_id = s.id
+         JOIN student_attendance sa ON s.id = sa.schedule_id
+         WHERE sa.student_id = $1 AND s.status = 'completed') as total_teachers,
         (SELECT COUNT(*) FROM student_attendance WHERE student_id = $1) as total_attendances,
         (SELECT COUNT(*) FROM student_attendance WHERE student_id = $1 AND attendance_status = 'present') as present_count,
         (SELECT COUNT(*) FROM student_attendance WHERE student_id = $1 AND attendance_status = 'absent') as absent_count,

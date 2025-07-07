@@ -6,7 +6,6 @@ import { formatDateIndonesian } from '../utils/dateUtils';
 
 const TeacherManagement = ({ selectedSchoolId, onViewProfile }) => {
   const [teachers, setTeachers] = useState([]);
-  const [schools, setSchools] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
@@ -23,13 +22,11 @@ const TeacherManagement = ({ selectedSchoolId, onViewProfile }) => {
     subject: '',
     phone: '',
     email: '',
-    hire_date: '',
-    school_ids: []
+    hire_date: ''
   });
 
   useEffect(() => {
     fetchTeachers();
-    fetchSchools();
   }, [currentPage, searchTerm]);
 
   const fetchTeachers = async () => {
@@ -57,28 +54,7 @@ const TeacherManagement = ({ selectedSchoolId, onViewProfile }) => {
     }
   };
 
-  const fetchSchools = async () => {
-    try {
-      const response = await fetch('/api/schools');
-      const data = await response.json();
 
-      // Check if response has success property and data array
-      if (data.success && Array.isArray(data.data)) {
-        setSchools(data.data);
-        console.log('Schools loaded:', data.data.length, 'schools');
-      } else if (Array.isArray(data)) {
-        // Fallback for direct array response
-        setSchools(data);
-        console.log('Schools loaded:', data.length, 'schools');
-      } else {
-        console.error('Unexpected schools API response format:', data);
-        setSchools([]);
-      }
-    } catch (error) {
-      console.error('Failed to fetch schools:', error);
-      setSchools([]);
-    }
-  };
 
   const resetForm = () => {
     setFormData({
@@ -86,8 +62,7 @@ const TeacherManagement = ({ selectedSchoolId, onViewProfile }) => {
       subject: '',
       phone: '',
       email: '',
-      hire_date: '',
-      school_ids: []
+      hire_date: ''
     });
   };
 
@@ -107,8 +82,7 @@ const TeacherManagement = ({ selectedSchoolId, onViewProfile }) => {
         subject: teacher.subject || '',
         phone: teacher.phone || '',
         email: teacher.email || '',
-        hire_date: teacher.hire_date ? teacher.hire_date.split('T')[0] : '',
-        school_ids: teacher.schools ? teacher.schools.map(s => s.id) : []
+        hire_date: teacher.hire_date ? teacher.hire_date.split('T')[0] : ''
       });
     } else {
       resetForm();
@@ -132,14 +106,7 @@ const TeacherManagement = ({ selectedSchoolId, onViewProfile }) => {
     }));
   };
 
-  const handleSchoolSelection = (schoolId) => {
-    setFormData(prev => ({
-      ...prev,
-      school_ids: prev.school_ids.includes(schoolId)
-        ? prev.school_ids.filter(id => id !== schoolId)
-        : [...prev.school_ids, schoolId]
-    }));
-  };
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -494,30 +461,6 @@ const TeacherManagement = ({ selectedSchoolId, onViewProfile }) => {
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
-              </div>
-            </div>
-
-            {/* School Selection */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Assigned Schools
-              </label>
-              <div className="border border-gray-300 rounded-md p-3 max-h-48 overflow-y-auto">
-                {schools.length === 0 ? (
-                  <p className="text-gray-500 text-sm">No schools available</p>
-                ) : (
-                  schools.map((school) => (
-                    <label key={school.id} className="flex items-center space-x-2 py-1">
-                      <input
-                        type="checkbox"
-                        checked={formData.school_ids.includes(school.id)}
-                        onChange={() => handleSchoolSelection(school.id)}
-                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                      />
-                      <span className="text-sm text-gray-700">{school.name}</span>
-                    </label>
-                  ))
-                )}
               </div>
             </div>
 

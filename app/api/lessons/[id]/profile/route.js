@@ -20,14 +20,15 @@ export async function GET(request, { params }) {
     
     const lesson = lessonResult.rows[0];
     
-    // Get teachers who teach this lesson
+    // Get teachers who teach this lesson with schools from completed schedules
     const teachersResult = await client.query(`
       SELECT t.*, lt.created_at as association_date,
         array_agg(DISTINCT s.name) as school_names
       FROM teachers t
       JOIN lesson_teachers lt ON t.id = lt.teacher_id
-      LEFT JOIN teacher_schools ts ON t.id = ts.teacher_id
-      LEFT JOIN schools s ON ts.school_id = s.id
+      LEFT JOIN schedule_teachers st ON t.id = st.teacher_id
+      LEFT JOIN schedules sch ON st.schedule_id = sch.id AND sch.status = 'completed'
+      LEFT JOIN schools s ON sch.school_id = s.id
       WHERE lt.lesson_id = $1
       GROUP BY t.id, lt.created_at
       ORDER BY t.name

@@ -19,21 +19,26 @@ export async function GET(request, { params }) {
     }
     
     const school = schoolResult.rows[0];
-    
-    // Get teachers associated with this school
+      // Get teachers associated with this school through completed schedules
     const teachersResult = await client.query(`
-      SELECT t.*, ts.created_at as association_date
+      SELECT DISTINCT t.*, MIN(s.scheduled_date) as association_date
       FROM teachers t
-      JOIN teacher_schools ts ON t.id = ts.teacher_id
-      WHERE ts.school_id = $1
+      JOIN schedule_teachers st ON t.id = st.teacher_id
+      JOIN schedules s ON st.schedule_id = s.id
+      WHERE s.school_id = $1 AND s.status = 'completed'
+      GROUP BY t.id, t.name, t.subject, t.email, t.phone, t.hire_date, t.created_at
       ORDER BY t.name
     `, [id]);
-    
-    // Get students in this school
+
+    // Get students in this school through completed schedules
     const studentsResult = await client.query(`
-      SELECT * FROM students 
-      WHERE school_id = $1 
-      ORDER BY name
+      SELECT DISTINCT s.*, MIN(sch.scheduled_date) as enrollment_date
+      FROM students s
+      JOIN student_attendance sa ON s.id = sa.student_id
+      JOIN schedules sch ON sa.schedule_id = sch.id
+      WHERE sch.school_id = $1 AND sch.status = 'completed' AND s.school_id = $1
+      GROUP BY s.id, s.name, s.email, s.phone, s.grade, s.age, s.school_id, s.created_at, s.enrollment_date
+      ORDER BY s.name
     `, [id]);
     
     // Get lessons associated with this school through schedules
@@ -66,8 +71,14 @@ export async function GET(request, { params }) {
     // Get statistics
     const statsResult = await client.query(`
       SELECT 
-        (SELECT COUNT(*) FROM students WHERE school_id = $1) as total_students,
-        (SELECT COUNT(*) FROM teacher_schools WHERE school_id = $1) as total_teachers,
+        (SELECT COUNT(DISTINCT s.id) FROM students s
+         JOIN student_attendance sa ON s.id = sa.student_id
+         JOIN schedules sch ON sa.schedule_id = sch.id
+         WHERE sch.school_id = $1 AND sch.status = 'completed' AND s.school_id = $1) as total_students,
+        (SELECT COUNT(DISTINCT t.id) FROM teachers t
+         JOIN schedule_teachers st ON t.id = st.teacher_id
+         JOIN schedules s ON st.schedule_id = s.id
+         WHERE s.school_id = $1 AND s.status = 'completed') as total_teachers,
         (SELECT COUNT(DISTINCT l.id) FROM lessons l 
          JOIN schedule_lessons sl ON l.id = sl.lesson_id 
          JOIN schedules s ON sl.schedule_id = s.id 

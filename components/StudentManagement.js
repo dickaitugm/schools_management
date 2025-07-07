@@ -7,7 +7,6 @@ import { formatDateIndonesian } from '../utils/dateUtils';
 const StudentManagement = ({ selectedSchoolId, onViewProfile }) => {
   const [students, setStudents] = useState([]);
   const [schools, setSchools] = useState([]);
-  const [teachers, setTeachers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
@@ -26,14 +25,12 @@ const StudentManagement = ({ selectedSchoolId, onViewProfile }) => {
     age: '',
     phone: '',
     email: '',
-    enrollment_date: '',
-    teacher_ids: []
+    enrollment_date: ''
   });
 
   useEffect(() => {
     fetchStudents();
     fetchSchools();
-    fetchTeachers();
   }, [currentPage, searchTerm, selectedSchoolId]);
 
   useEffect(() => {
@@ -112,23 +109,6 @@ const StudentManagement = ({ selectedSchoolId, onViewProfile }) => {
     }
   };
 
-  const fetchTeachers = async () => {
-    try {
-      const response = await fetch('/api/teachers');
-      const data = await response.json();
-
-      if (data.success && Array.isArray(data.data)) {
-        setTeachers(data.data);
-      } else {
-        console.error('Teachers API response format error:', data);
-        setTeachers([]);
-      }
-    } catch (error) {
-      console.error('Failed to fetch teachers:', error);
-      setTeachers([]);
-    }
-  };
-
   const resetForm = () => {
     setFormData({
       name: '',
@@ -137,8 +117,7 @@ const StudentManagement = ({ selectedSchoolId, onViewProfile }) => {
       age: '',
       phone: '',
       email: '',
-      enrollment_date: '',
-      teacher_ids: []
+      enrollment_date: ''
     });
   };
 
@@ -160,8 +139,7 @@ const StudentManagement = ({ selectedSchoolId, onViewProfile }) => {
         age: student.age || '',
         phone: student.phone || '',
         email: student.email || '',
-        enrollment_date: student.enrollment_date ? student.enrollment_date.split('T')[0] : '',
-        teacher_ids: student.teachers ? student.teachers.map(t => t.id) : []
+        enrollment_date: student.enrollment_date ? student.enrollment_date.split('T')[0] : ''
       });
     } else {
       resetForm();
@@ -182,15 +160,6 @@ const StudentManagement = ({ selectedSchoolId, onViewProfile }) => {
     setFormData(prev => ({
       ...prev,
       [name]: value
-    }));
-  };
-
-  const handleTeacherSelection = (teacherId) => {
-    setFormData(prev => ({
-      ...prev,
-      teacher_ids: prev.teacher_ids.includes(teacherId)
-        ? prev.teacher_ids.filter(id => id !== teacherId)
-        : [...prev.teacher_ids, teacherId]
     }));
   };
 
@@ -596,32 +565,6 @@ const StudentManagement = ({ selectedSchoolId, onViewProfile }) => {
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 />
-              </div>
-            </div>
-
-            {/* Teacher Selection */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Assigned Teachers
-              </label>
-              <div className="border border-gray-300 rounded-md p-3 max-h-48 overflow-y-auto">
-                {teachers.length === 0 ? (
-                  <p className="text-gray-500 text-sm">No teachers available</p>
-                ) : (
-                  teachers.map((teacher) => (
-                    <label key={teacher.id} className="flex items-center space-x-2 py-1">
-                      <input
-                        type="checkbox"
-                        checked={formData.teacher_ids.includes(teacher.id)}
-                        onChange={() => handleTeacherSelection(teacher.id)}
-                        className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
-                      />
-                      <span className="text-sm text-gray-700">
-                        {teacher.name} - {teacher.subject}
-                      </span>
-                    </label>
-                  ))
-                )}
               </div>
             </div>
 
