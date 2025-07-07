@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loading Indicators Test</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="p-8 bg-gray-100">
+  <div class="max-w-4xl mx-auto">
+    <h1 class="text-3xl font-bold mb-8">Loading Indicators Test Page</h1>
+    
+    <!-- Test Buttons -->
+    <div class="bg-white p-6 rounded-lg shadow mb-8">
+      <h2 class="text-xl font-semibold mb-4">Test Loading States</h2>
+      <div class="space-x-4">
+        <button id="testNormal" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+          Normal Button
+        </button>
+        
+        <button id="testLoading" class="px-4 py-2 bg-green-600 text-white rounded-md disabled:opacity-50 flex items-center" disabled>
+          <svg class="animate-spin -ml-1 mr-3 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          Saving...
+        </button>
+        
+        <button id="simulateLoading" class="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700">
+          Simulate Loading
+        </button>
+      </div>
+    </div>
+    
+    <!-- Test Form -->
+    <div class="bg-white p-6 rounded-lg shadow mb-8">
+      <h2 class="text-xl font-semibold mb-4">Test Form Loading</h2>
+      <form id="testForm" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium mb-1">Test Input</label>
+          <input type="text" class="w-full border border-gray-300 rounded px-3 py-2" placeholder="Enter something...">
+        </div>
+        <div class="flex space-x-3">
+          <button type="button" class="px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-50">
+            Cancel
+          </button>
+          <button type="submit" id="submitBtn" class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center">
+            Submit
+          </button>
+        </div>
+      </form>
+    </div>
+    
+    <!-- Console Output -->
+    <div class="bg-white p-6 rounded-lg shadow">
+      <h2 class="text-xl font-semibold mb-4">Console Output</h2>
+      <div id="console" class="bg-gray-100 p-4 rounded font-mono text-sm h-64 overflow-y-auto">
+        <div class="text-green-600">Loading indicators test page loaded...</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Console logger
+    const consoleDiv = document.getElementById('console');
+    const originalLog = console.log;
+    
+    console.log = function(...args) {
+      originalLog.apply(console, arguments);
+      const message = args.join(' ');
+      const div = document.createElement('div');
+      div.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+      div.className = 'text-blue-600 mb-1';
+      consoleDiv.appendChild(div);
+      consoleDiv.scrollTop = consoleDiv.scrollHeight;
+    };
+    
+    // Simulate loading function
+    function simulateLoadingState(button, duration = 2000) {
+      const originalText = button.textContent;
+      const isSubmitButton = button.type === 'submit';
+      
+      console.log(`Starting loading simulation for ${duration}ms`);
+      
+      // Set loading state
+      button.disabled = true;
+      button.className = button.className.replace('hover:bg-', 'disabled:opacity-50 disabled:cursor-not-allowed flex items-center hover:bg-');
+      
+      button.innerHTML = `
+        <svg class="animate-spin -ml-1 mr-3 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        ${isSubmitButton ? 'Saving...' : 'Loading...'}
+      `;
+      
+      // Reset after duration
+      setTimeout(() => {
+        button.disabled = false;
+        button.innerHTML = originalText;
+        button.className = button.className.replace('disabled:opacity-50 disabled:cursor-not-allowed flex items-center', '');
+        console.log('Loading simulation completed');
+      }, duration);
+    }
+    
+    // Event listeners
+    document.getElementById('simulateLoading').addEventListener('click', function() {
+      simulateLoadingState(this, 3000);
+    });
+    
+    document.getElementById('testForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const submitBtn = document.getElementById('submitBtn');
+      simulateLoadingState(submitBtn, 2500);
+    });
+    
+    console.log('Test page ready! Click buttons to test loading states.');
+  </script>
+</body>
+</html>

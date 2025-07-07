@@ -81,9 +81,10 @@ const StudentAssessmentModal = ({ scheduleId, onClose }) => {
 
       if (data.success) {
         setSchedule(data.data.schedule);
-        setStudents(data.data.students.map(student => ({
+        // Transform API data to match component structure with assessment object
+        const transformedStudents = data.data.students.map(student => ({
           ...student,
-          // Initialize assessment values if not exist
+          // Keep original fields for backward compatibility
           attendance_status: student.attendance_status || 'present',
           knowledge_score: student.knowledge_score || '',
           participation_score: student.participation_score || '',
@@ -91,9 +92,23 @@ const StudentAssessmentModal = ({ scheduleId, onClose }) => {
           critical_thinking_level: student.critical_thinking_level || '',
           team_work_level: student.team_work_level || '',
           academic_knowledge_level: student.academic_knowledge_level || '',
-          assessment_notes: student.assessment_notes || ''
-        })));
-        console.log('Students loaded successfully:', data.data.students.length);
+          assessment_notes: student.assessment_notes || '',
+          // Also create assessment object for consistency
+          assessment: {
+            attendance_status: student.attendance_status || 'present',
+            knowledge_score: student.knowledge_score || '',
+            participation_score: student.participation_score || '',
+            personal_development_level: student.personal_development_level || '',
+            critical_thinking_level: student.critical_thinking_level || '',
+            team_work_level: student.team_work_level || '',
+            academic_knowledge_level: student.academic_knowledge_level || '',
+            notes: student.assessment_notes || ''
+          }
+        }));
+        
+        console.log('Transformed students with assessment data:', transformedStudents);
+        setStudents(transformedStudents);
+        console.log('Students loaded successfully:', transformedStudents.length);
       } else {
         console.error('API Error:', data.error);
         setError(data.error);
@@ -107,16 +122,36 @@ const StudentAssessmentModal = ({ scheduleId, onClose }) => {
   };
 
   const handleStudentChange = (studentId, field, value) => {
-    setStudents(prev => prev.map(student => 
-      student.id === studentId 
-        ? { ...student, [field]: value }
-        : student
-    ));
+    setStudents(prev => prev.map(student => {
+      if (student.id === studentId) {
+        const updatedStudent = { ...student, [field]: value };
+        
+        // Sync with assessment object if it exists
+        if (student.assessment) {
+          updatedStudent.assessment = {
+            ...student.assessment,
+            [field]: value
+          };
+          
+          // Map field names for assessment object
+          if (field === 'assessment_notes') {
+            updatedStudent.assessment.notes = value;
+          }
+        }
+        
+        return updatedStudent;
+      }
+      return student;
+    }));
   };
 
   const handleSaveAssessments = async () => {
     try {
       setSaving(true);
+      console.log('Starting to save assessments...');
+      
+      // Add minimum delay to ensure loading indicator is visible
+      const startTime = Date.now();
       
       const assessments = students.map(student => ({
         student_id: student.id,
@@ -139,19 +174,32 @@ const StudentAssessmentModal = ({ scheduleId, onClose }) => {
       });
 
       const data = await response.json();
+      
+      // Ensure minimum loading time of 1 second to show spinner
+      const elapsedTime = Date.now() - startTime;
+      const remainingTime = Math.max(0, 1000 - elapsedTime);
+      
+      if (remainingTime > 0) {
+        console.log(`Adding ${remainingTime}ms delay to show loading indicator`);
+        await new Promise(resolve => setTimeout(resolve, remainingTime));
+      }
 
       if (data.success) {
         setSuccess('Student assessments saved successfully!');
+        console.log('Assessments saved successfully');
         setTimeout(() => {
           setSuccess(null);
           onClose();
         }, 2000);
       } else {
         setError(data.error);
+        console.error('Failed to save assessments:', data.error);
       }
     } catch (error) {
+      console.error('Error saving assessments:', error);
       setError('Failed to save assessments');
     } finally {
+      console.log('Saving completed, setting saving to false');
       setSaving(false);
     }
   };
@@ -352,9 +400,15 @@ const StudentAssessmentModal = ({ scheduleId, onClose }) => {
           <button
             onClick={handleSaveAssessments}
             disabled={saving}
-            className="px-4 py-2 bg-orange-600 text-white rounded-md text-sm font-medium hover:bg-orange-700 disabled:opacity-50"
+            className="px-4 py-2 bg-orange-600 text-white rounded-md text-sm font-medium hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
           >
-            {saving ? 'Saving...' : 'Save Assessments'}
+            {saving && (
+              <svg className="animate-spin -ml-1 mr-3 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            )}
+            {saving ? 'Saving Assessments...' : 'Save Assessments'}
           </button>
         </div>
       </div>
