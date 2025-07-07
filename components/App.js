@@ -10,10 +10,12 @@ import TeacherManagement from './TeacherManagement';
 import StudentManagement from './StudentManagement';
 import LessonManagement from './LessonManagement';
 import ScheduleManagement from './ScheduleManagement';
+import DonationManagement from './DonationManagement';
 import RoleManagement from './RoleManagement';
 import ProfileView from './ProfileView';
 import StudentAssessmentView from './StudentAssessmentView';
 import Sidebar from './Sidebar';
+import Footer from './Footer';
 
 const AppContent = () => {
   const [currentPage, setCurrentPage] = useState('dashboard');
@@ -124,6 +126,8 @@ const AppContent = () => {
             onViewAssessment={handleViewAssessment}
           />
         );
+      case 'donations':
+        return <DonationManagement />;
       case 'roles':
         return <RoleManagement />;
       case 'activity-logs':
@@ -165,7 +169,7 @@ const AppContent = () => {
         collapsed={sidebarCollapsed}
         onToggle={setSidebarCollapsed}
       />
-      <div className="flex-1 overflow-auto relative min-w-0 md:static">
+      <div className="flex-1 overflow-auto relative min-w-0 md:static flex flex-col">
         {/* Mobile Menu Button */}
         <button
           onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
@@ -201,8 +205,11 @@ const AppContent = () => {
         )}
         
         {/* Main Content */}
-        <div className="md:p-0 pt-16 md:pt-0 w-full">
-          {renderPage()}
+        <div className="md:p-0 pt-16 md:pt-0 w-full flex-1 flex flex-col">
+          <div className="flex-1">
+            {renderPage()}
+          </div>
+          <Footer />
         </div>
       </div>
     </div>

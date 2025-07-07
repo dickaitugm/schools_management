@@ -28,6 +28,7 @@ const Sidebar = ({ currentPage, onPageChange, collapsed = false, onToggle }) => 
     { path: 'students', name: 'Students', icon: '👨‍🎓', permission: 'read_students' },
     { path: 'lessons', name: 'Lessons', icon: '📚', permission: 'read_lessons' },
     { path: 'schedules', name: 'Schedules', icon: '📅', permission: 'read_schedules' },
+    { path: 'donations', name: 'Donations', icon: '💝', permission: 'read_donations' },
     { path: 'roles', name: 'Role Management', icon: '⚙️', permission: 'manage_roles' },
     { path: 'activity-logs', name: 'Activity Logs', icon: '📝', permission: 'manage_roles' }
   ];

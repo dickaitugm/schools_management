@@ -20,30 +20,37 @@ const Dashboard = () => {
     try {
       setLoading(true);
       
-      // Fetch all data concurrently
-      const [schoolsResponse, teachersResponse, studentsResponse, lessonsResponse, schedulesResponse] = await Promise.all([
-        fetch('/api/schools'),
-        fetch('/api/teachers'),
-        fetch('/api/students'),
-        fetch('/api/lessons'),
-        fetch('/api/schedules?limit=1000') // Get all schedules for count
-      ]);
-
-      const schools = schoolsResponse.ok ? await schoolsResponse.json() : [];
-      const teachers = teachersResponse.ok ? await teachersResponse.json() : [];
-      const students = studentsResponse.ok ? await studentsResponse.json() : [];
-      const lessons = lessonsResponse.ok ? await lessonsResponse.json() : [];
-      const schedulesData = schedulesResponse.ok ? await schedulesResponse.json() : { data: [] };
+      // Use optimized stats endpoint for better performance
+      const response = await fetch('/api/dashboard/stats');
       
-      setStats({
-        schools: Array.isArray(schools) ? schools.length : 0,
-        teachers: Array.isArray(teachers) ? teachers.length : 0,
-        students: Array.isArray(students) ? students.length : 0,
-        lessons: Array.isArray(lessons) ? lessons.length : 0,
-        schedules: schedulesData.data ? schedulesData.data.length : 0,
-      });
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          setStats(result.data);
+        } else {
+          console.error('Failed to fetch dashboard stats:', result.error);
+          // Set default stats on error
+          setStats({
+            schools: 0,
+            teachers: 0,
+            students: 0,
+            lessons: 0,
+            schedules: 0,
+          });
+        }
+      } else {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
+      // Set default stats on error
+      setStats({
+        schools: 0,
+        teachers: 0,
+        students: 0,
+        lessons: 0,
+        schedules: 0,
+      });
     } finally {
       setLoading(false);
     }
