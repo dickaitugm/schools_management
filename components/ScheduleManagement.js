@@ -6,7 +6,7 @@ import { useAuth } from './AuthContext';
 import { formatDateIndonesian, formatDateTimeIndonesian, formatTimeIndonesian } from '../utils/dateUtils';
 
 const ScheduleManagement = ({ selectedSchoolId, onViewProfile, onViewAssessment }) => {
-  const { hasPermission, logActivity } = useAuth();
+  const { hasPermission, logActivity, user } = useAuth();
   const [schedules, setSchedules] = useState([]);
   const [schools, setSchools] = useState([]);
   const [teachers, setTeachers] = useState([]);
@@ -655,7 +655,7 @@ const ScheduleManagement = ({ selectedSchoolId, onViewProfile, onViewAssessment 
                     Edit
                   </button>
                 )}
-                {displaySchedule.status === 'completed' && (
+                {displaySchedule.status === 'completed' && (hasPermission('update_schedules') || user.role === 'admin' || user.role === 'teacher') && (
                   <button
                     onClick={() => handleViewScheduleAssessment(displaySchedule.id)}
                     className="flex-1 bg-green-600 text-white px-3 py-2 rounded text-sm hover:bg-green-700"
@@ -909,7 +909,7 @@ const ScheduleManagement = ({ selectedSchoolId, onViewProfile, onViewAssessment 
                               Edit
                             </button>
                           )}
-                          {schedule.status === 'completed' && (
+                          {schedule.status === 'completed' && (hasPermission('update_schedules') || user.role === 'admin' || user.role === 'teacher') && (
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();

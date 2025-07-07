@@ -1,9 +1,11 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useAuth } from './AuthContext';
 import { formatDateIndonesian, formatDateTimeIndonesian } from '../utils/dateUtils';
 
 const ProfileView = ({ entityType, id, onBack }) => {
+  const { logActivity } = useAuth();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -32,6 +34,13 @@ const ProfileView = ({ entityType, id, onBack }) => {
       const data = await response.json();
       console.log('Profile data:', data);
       setProfile(data);
+      
+      // Log profile view activity
+      logActivity('profile_view', `Viewed ${entityType} profile`, {
+        entityType,
+        entityId: id,
+        entityName: data?.[entityType.slice(0, -1)]?.name || 'Unknown'
+      });
     } catch (error) {
       console.error(`Error fetching ${entityType} profile:`, error);
       setError(error.message);
@@ -955,7 +964,7 @@ const ProfileView = ({ entityType, id, onBack }) => {
                               </div>
                               <div className="flex-1">
                                 <div className="flex items-center justify-between mb-2">
-                                  <h5 className="font-semibold text-purple-800">
+                                  <h5 className="font-semibold text-purple-800 text-lg">
                                     📅 {formatDateTimeIndonesian(activity.scheduled_date, activity.scheduled_time)}
                                   </h5>
                                   <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-${statusColor}-100 text-${statusColor}-800`}>

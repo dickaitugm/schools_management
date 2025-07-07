@@ -48,37 +48,58 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
-  // Activity Logger
-  const logActivity = (action, description, metadata = {}) => {
+  // Activity Logger - Database version (no guest logging)
+  const logActivity = async (action, description, metadata = {}) => {
+    // Skip logging for guest users
+    if (!user || user.role === 'guest' || user.id === 'guest') {
+      console.log('Guest activity not logged:', { action, description });
+      return;
+    }
+
     const activity = {
-      id: Date.now(),
-      timestamp: new Date().toISOString(),
-      user: user ? {
-        id: user.id,
-        name: user.name,
-        role: user.role
-      } : { id: 'guest', name: 'Guest User', role: 'guest' },
+      user_id: user.id,
+      user_name: user.name,
+      user_role: user.role,
       action,
       description,
       metadata,
-      session: isGuest ? 'guest' : 'authenticated'
+      session_id: isGuest ? 'guest' : 'authenticated',
+      user_agent: typeof window !== 'undefined' ? window.navigator.userAgent : null
     };
 
-    // Get existing logs
+    try {
+      // Save to database via API
+      const response = await fetch('/api/activity-logs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(activity)
+      });
+
+      if (response.ok) {
+        console.log('Activity logged to database:', activity);
+      } else {
+        console.error('Failed to log activity to database:', await response.text());
+      }
+    } catch (error) {
+      console.error('Error logging activity to database:', error);
+    }
+
+    // Also keep in localStorage for quick access (but not for guest)
     const existingLogs = JSON.parse(localStorage.getItem('activityLogs') || '[]');
+    existingLogs.push({
+      ...activity,
+      id: Date.now(),
+      timestamp: new Date().toISOString(),
+    });
     
-    // Add new log
-    existingLogs.push(activity);
-    
-    // Keep only last 1000 logs to prevent localStorage overflow
-    if (existingLogs.length > 1000) {
-      existingLogs.splice(0, existingLogs.length - 1000);
+    // Keep only last 100 logs in localStorage to prevent overflow
+    if (existingLogs.length > 100) {
+      existingLogs.splice(0, existingLogs.length - 100);
     }
     
-    // Save to localStorage
     localStorage.setItem('activityLogs', JSON.stringify(existingLogs));
-    
-    console.log('Activity logged:', activity);
   };
 
   const login = (userData) => {
@@ -118,9 +139,31 @@ export const AuthProvider = ({ children }) => {
     return hasPermission(permission);
   };
 
-  const getActivityLogs = (limit = 100) => {
-    const logs = JSON.parse(localStorage.getItem('activityLogs') || '[]');
-    return logs.slice(-limit).reverse(); // Return latest first
+  const getActivityLogs = async (limit = 100) => {
+    // For guest users, return empty array
+    if (!user || user.role === 'guest' || user.id === 'guest') {
+      return [];
+    }
+
+    try {
+      // Fetch from database
+      const response = await fetch(`/api/activity-logs?limit=${limit}&page=1`);
+      
+      if (response.ok) {
+        const result = await response.json();
+        return result.success ? result.data : [];
+      } else {
+        console.error('Failed to fetch activity logs from database');
+        // Fallback to localStorage
+        const localLogs = JSON.parse(localStorage.getItem('activityLogs') || '[]');
+        return localLogs.slice(-limit).reverse();
+      }
+    } catch (error) {
+      console.error('Error fetching activity logs:', error);
+      // Fallback to localStorage
+      const localLogs = JSON.parse(localStorage.getItem('activityLogs') || '[]');
+      return localLogs.slice(-limit).reverse();
+    }
   };
 
   const value = {
