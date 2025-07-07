@@ -164,9 +164,9 @@ const ProfileView = ({ entityType, id, onBack }) => {
             <div className="bg-white rounded-lg shadow-md p-6 mb-6 hover:shadow-lg transition-shadow">
               <h4 className="text-xl font-semibold mb-4 flex items-center">
                 <span className="text-green-600 mr-2">👥</span>
-                Students ({profile.students.length})
+                Students ({profile.students?.length || 0})
               </h4>
-              {profile.students.length > 0 ? (
+              {(profile.students?.length || 0) > 0 ? (
                 <div className="grid md:grid-cols-3 gap-4">
                   {profile.students.slice(0, 9).map((student) => (
                     <div key={student.id} className="bg-green-50 p-4 rounded-lg border border-green-200 hover:shadow-md transition-shadow">
@@ -192,8 +192,8 @@ const ProfileView = ({ entityType, id, onBack }) => {
                   <p>No students enrolled yet</p>
                 </div>
               )}
-              {profile.students.length > 9 && (
-                <p className="text-sm text-gray-500 mt-3 text-center">... and {profile.students.length - 9} more students</p>
+              {(profile.students?.length || 0) > 9 && (
+                <p className="text-sm text-gray-500 mt-3 text-center">... and {(profile.students?.length || 0) - 9} more students</p>
               )}
             </div>
 
@@ -227,8 +227,8 @@ const ProfileView = ({ entityType, id, onBack }) => {
                   <p>No lessons scheduled yet</p>
                 </div>
               )}
-              {profile.lessons && profile.lessons.length > 8 && (
-                <p className="text-sm text-gray-500 mt-3 text-center">... and {profile.lessons.length - 8} more lessons</p>
+              {profile.lessons && (profile.lessons.length || 0) > 8 && (
+                <p className="text-sm text-gray-500 mt-3 text-center">... and {(profile.lessons?.length || 0) - 8} more lessons</p>
               )}
             </div>
 
@@ -236,9 +236,9 @@ const ProfileView = ({ entityType, id, onBack }) => {
             <div className="bg-white rounded-lg shadow-md p-6 mb-6 hover:shadow-lg transition-shadow">
               <h4 className="text-xl font-semibold mb-4 flex items-center">
                 <span className="text-blue-600 mr-2">👨‍🏫</span>
-                Teachers ({profile.teachers.length})
+                Teachers ({profile.teachers?.length || 0})
               </h4>
-              {profile.teachers.length > 0 ? (
+              {(profile.teachers?.length || 0) > 0 ? (
                 <div className="grid md:grid-cols-2 gap-4">
                   {profile.teachers.slice(0, 6).map((teacher) => (
                     <div key={teacher.id} className="bg-blue-50 p-4 rounded-lg border border-blue-200 hover:shadow-md transition-shadow">
@@ -264,8 +264,8 @@ const ProfileView = ({ entityType, id, onBack }) => {
                   <p>No teachers assigned yet</p>
                 </div>
               )}
-              {profile.teachers.length > 6 && (
-                <p className="text-sm text-gray-500 mt-3 text-center">... and {profile.teachers.length - 6} more teachers</p>
+              {(profile.teachers?.length || 0) > 6 && (
+                <p className="text-sm text-gray-500 mt-3 text-center">... and {(profile.teachers?.length || 0) - 6} more teachers</p>
               )}
             </div>
 
@@ -275,7 +275,7 @@ const ProfileView = ({ entityType, id, onBack }) => {
                 <span className="text-purple-600 mr-2">📅</span>
                 Recent Schedules
               </h4>
-              {profile.recent_schedules.length > 0 ? (
+              {(profile.recent_schedules?.length || 0) > 0 ? (
                 <div className="space-y-4">
                   {profile.recent_schedules.slice(0, 5).map((schedule) => {
                     const statusColor = {
@@ -346,8 +346,8 @@ const ProfileView = ({ entityType, id, onBack }) => {
                   <p>No recent schedules found</p>
                 </div>
               )}
-              {profile.recent_schedules.length > 5 && (
-                <p className="text-sm text-gray-500 mt-3 text-center">... and {profile.recent_schedules.length - 5} more schedules</p>
+              {(profile.recent_schedules?.length || 0) > 5 && (
+                <p className="text-sm text-gray-500 mt-3 text-center">... and {(profile.recent_schedules?.length || 0) - 5} more schedules</p>
               )}
             </div>
           </div>
@@ -405,42 +405,58 @@ const ProfileView = ({ entityType, id, onBack }) => {
 
             {/* Schools Section */}
             <div className="bg-white rounded-lg shadow-md p-6 mb-6 hover:shadow-lg transition-shadow">
-              <h4 className="text-xl font-semibold mb-4">Schools ({profile.schools.length})</h4>
-              <div className="grid md:grid-cols-2 gap-4">
-                {profile.schools.map((school) => (
-                  <div key={school.id} className="bg-gray-50 p-4 rounded-lg hover:shadow-md transition-shadow">
-                    <h5 className="font-semibold">{school.name}</h5>
-                    <p className="text-sm text-gray-600">{school.address || 'N/A'}</p>
-                    <p className="text-xs text-gray-500">Associated: {formatDateIndonesian(school.association_date)}</p>
-                  </div>
-                ))}
-              </div>
+              <h4 className="text-xl font-semibold mb-4">Schools ({profile.schools?.length || 0})</h4>
+              {(profile.schools?.length || 0) > 0 ? (
+                <div className="grid md:grid-cols-2 gap-4">
+                  {profile.schools.map((school) => (
+                    <div key={school.id} className="bg-gray-50 p-4 rounded-lg hover:shadow-md transition-shadow">
+                      <h5 className="font-semibold">{school.name}</h5>
+                      <p className="text-sm text-gray-600">{school.address || 'N/A'}</p>
+                      <p className="text-xs text-gray-500">Associated: {formatDateIndonesian(school.association_date)}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-lg">
+                  <span className="text-4xl block mb-2">🏫</span>
+                  <p>No schools associated yet</p>
+                </div>
+              )}
             </div>
 
             {/* Lessons Section */}
-            <div className="bg-white rounded-lg shadow-md p-6 mb-6 hover:shadow-lg transition-shadow">
-              <h4 className="text-xl font-semibold mb-4">Lessons ({profile.lessons.length})</h4>
-              <div className="grid md:grid-cols-2 gap-4">
-                {profile.lessons.slice(0, 4).map((lesson) => (
-                  <div key={lesson.id} className="bg-indigo-50 p-4 rounded-lg border border-indigo-200 hover:shadow-md transition-shadow">
-                    <div className="flex items-start">
-                      <div className="bg-indigo-100 p-2 rounded-full mr-3">
-                        <span className="text-indigo-600 text-sm font-semibold">📚</span>
+            {profile.lessons && (
+              <div className="bg-white rounded-lg shadow-md p-6 mb-6 hover:shadow-lg transition-shadow">
+                <h4 className="text-xl font-semibold mb-4">Lessons ({profile.lessons?.length || 0})</h4>
+                {profile.lessons.length > 0 ? (
+                  <div className="grid md:grid-cols-2 gap-4">
+                    {profile.lessons.slice(0, 4).map((lesson) => (
+                      <div key={lesson.id} className="bg-indigo-50 p-4 rounded-lg border border-indigo-200 hover:shadow-md transition-shadow">
+                        <div className="flex items-start">
+                          <div className="bg-indigo-100 p-2 rounded-full mr-3">
+                            <span className="text-indigo-600 text-sm font-semibold">📚</span>
+                          </div>
+                          <div className="flex-1">
+                            <h5 className="font-semibold text-indigo-800">{lesson.title}</h5>
+                            <p className="text-sm text-indigo-600">{lesson.description || 'No description'}</p>
+                            <p className="text-sm text-indigo-600">Duration: {lesson.duration_minutes} minutes</p>
+                            <p className="text-xs text-indigo-500">Target Grade: {lesson.target_grade || 'N/A'}</p>
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex-1">
-                        <h5 className="font-semibold text-indigo-800">{lesson.title}</h5>
-                        <p className="text-sm text-indigo-600">{lesson.description || 'No description'}</p>
-                        <p className="text-sm text-indigo-600">Duration: {lesson.duration_minutes} minutes</p>
-                        <p className="text-xs text-indigo-500">Target Grade: {lesson.target_grade || 'N/A'}</p>
-                      </div>
-                    </div>
+                    ))}
                   </div>
-                ))}
+                ) : (
+                  <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-lg">
+                    <span className="text-4xl block mb-2">📚</span>
+                    <p>No lessons assigned yet</p>
+                  </div>
+                )}
+                {(profile.lessons?.length || 0) > 4 && (
+                  <p className="text-sm text-gray-500 mt-3 text-center">... and {(profile.lessons?.length || 0) - 4} more lessons</p>
+                )}
               </div>
-              {profile.lessons.length > 4 && (
-                <p className="text-sm text-gray-500 mt-3 text-center">... and {profile.lessons.length - 4} more lessons</p>
-              )}
-            </div>
+            )}
 
             {/* Recent Schedules */}
             <div className="bg-white rounded-lg shadow-md p-6 mb-6 hover:shadow-lg transition-shadow">
@@ -519,8 +535,8 @@ const ProfileView = ({ entityType, id, onBack }) => {
                   <p>No recent schedules found</p>
                 </div>
               )}
-              {profile.recent_schedules && profile.recent_schedules.length > 5 && (
-                <p className="text-sm text-gray-500 mt-3 text-center">... and {profile.recent_schedules.length - 5} more schedules</p>
+              {profile.recent_schedules && (profile.recent_schedules.length || 0) > 5 && (
+                <p className="text-sm text-gray-500 mt-3 text-center">... and {(profile.recent_schedules?.length || 0) - 5} more schedules</p>
               )}
             </div>
           </div>
@@ -583,16 +599,23 @@ const ProfileView = ({ entityType, id, onBack }) => {
 
             {/* Teachers Section */}
             <div className="bg-white rounded-lg shadow-md p-6 mb-6 hover:shadow-lg transition-shadow">
-              <h4 className="text-xl font-semibold mb-4">Teachers ({profile.teachers.length})</h4>
-              <div className="grid md:grid-cols-2 gap-4">
-                {profile.teachers.map((teacher) => (
-                  <div key={teacher.id} className="bg-gray-50 p-4 rounded-lg hover:shadow-md transition-shadow">
-                    <h5 className="font-semibold">{teacher.name}</h5>
-                    <p className="text-sm text-gray-600">Subject: {teacher.subject || 'N/A'}</p>
-                    <p className="text-xs text-gray-500">Teaching since: {formatDateIndonesian(teacher.association_date)}</p>
-                  </div>
-                ))}
-              </div>
+              <h4 className="text-xl font-semibold mb-4">Teachers ({profile.teachers?.length || 0})</h4>
+              {(profile.teachers?.length || 0) > 0 ? (
+                <div className="grid md:grid-cols-2 gap-4">
+                  {profile.teachers.map((teacher) => (
+                    <div key={teacher.id} className="bg-gray-50 p-4 rounded-lg hover:shadow-md transition-shadow">
+                      <h5 className="font-semibold">{teacher.name}</h5>
+                      <p className="text-sm text-gray-600">Subject: {teacher.subject || 'N/A'}</p>
+                      <p className="text-xs text-gray-500">Teaching since: {formatDateIndonesian(teacher.association_date)}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-lg">
+                  <span className="text-4xl block mb-2">👨‍🏫</span>
+                  <p>No teachers associated yet</p>
+                </div>
+              )}
             </div>
 
             {/* Recent Attendance */}
@@ -632,8 +655,8 @@ const ProfileView = ({ entityType, id, onBack }) => {
                   </div>
                 ))}
               </div>
-              {profile.attendance_records.length > 5 && (
-                <p className="text-sm text-gray-500 mt-3 text-center">... and {profile.attendance_records.length - 5} more records</p>
+              {(profile.attendance_records?.length || 0) > 5 && (
+                <p className="text-sm text-gray-500 mt-3 text-center">... and {(profile.attendance_records?.length || 0) - 5} more records</p>
               )}
             </div>
 
@@ -729,29 +752,38 @@ const ProfileView = ({ entityType, id, onBack }) => {
             )}
 
             {/* Lessons Section */}
-            <div className="bg-white rounded-lg shadow-md p-6 mb-6 hover:shadow-lg transition-shadow">
-              <h4 className="text-xl font-semibold mb-4">Lessons ({profile.lessons.length})</h4>
-              <div className="grid md:grid-cols-2 gap-4">
-                {profile.lessons.slice(0, 4).map((lesson) => (
-                  <div key={lesson.id} className="bg-indigo-50 p-4 rounded-lg border border-indigo-200 hover:shadow-md transition-shadow">
-                    <div className="flex items-start">
-                      <div className="bg-indigo-100 p-2 rounded-full mr-3">
-                        <span className="text-indigo-600 text-sm font-semibold">📚</span>
+            {profile.lessons && (
+              <div className="bg-white rounded-lg shadow-md p-6 mb-6 hover:shadow-lg transition-shadow">
+                <h4 className="text-xl font-semibold mb-4">Lessons ({profile.lessons?.length || 0})</h4>
+                {(profile.lessons?.length || 0) > 0 ? (
+                  <div className="grid md:grid-cols-2 gap-4">
+                    {profile.lessons.slice(0, 4).map((lesson) => (
+                      <div key={lesson.id} className="bg-indigo-50 p-4 rounded-lg border border-indigo-200 hover:shadow-md transition-shadow">
+                        <div className="flex items-start">
+                          <div className="bg-indigo-100 p-2 rounded-full mr-3">
+                            <span className="text-indigo-600 text-sm font-semibold">📚</span>
+                          </div>
+                          <div className="flex-1">
+                            <h5 className="font-semibold text-indigo-800">{lesson.title}</h5>
+                            <p className="text-sm text-indigo-600">{lesson.description || 'No description'}</p>
+                            <p className="text-sm text-indigo-600">Duration: {lesson.duration_minutes} minutes</p>
+                            <p className="text-xs text-indigo-500">Target Grade: {lesson.target_grade || 'N/A'}</p>
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex-1">
-                        <h5 className="font-semibold text-indigo-800">{lesson.title}</h5>
-                        <p className="text-sm text-indigo-600">{lesson.description || 'No description'}</p>
-                        <p className="text-sm text-indigo-600">Duration: {lesson.duration_minutes} minutes</p>
-                        <p className="text-xs text-indigo-500">Target Grade: {lesson.target_grade || 'N/A'}</p>
-                      </div>
-                    </div>
+                    ))}
                   </div>
-                ))}
+                ) : (
+                  <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-lg">
+                    <span className="text-4xl block mb-2">📚</span>
+                    <p>No lessons assigned yet</p>
+                  </div>
+                )}
+                {(profile.lessons?.length || 0) > 4 && (
+                  <p className="text-sm text-gray-500 mt-3 text-center">... and {(profile.lessons?.length || 0) - 4} more lessons</p>
+                )}
               </div>
-              {profile.lessons.length > 4 && (
-                <p className="text-sm text-gray-500 mt-3 text-center">... and {profile.lessons.length - 4} more lessons</p>
-              )}
-            </div>
+            )}
 
             {/* Recent Schedules */}
             <div className="bg-white rounded-lg shadow-md p-6 mb-6 hover:shadow-lg transition-shadow">
