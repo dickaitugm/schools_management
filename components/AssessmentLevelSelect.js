@@ -2,6 +2,7 @@
 'use client';
 
 import React from 'react';
+import MultilineSelect from './MultilineSelect';
 
 const AssessmentLevelSelect = ({ 
   category, 
@@ -11,6 +12,11 @@ const AssessmentLevelSelect = ({
   className = "",
   showDescription = true 
 }) => {
+  const options = Object.entries(category.levels).map(([level, description]) => ({
+    value: level,
+    description: description
+  }));
+
   return (
     <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
       <h4 className="font-medium text-gray-900 mb-2">{category.title || category.name}</h4>
@@ -18,18 +24,13 @@ const AssessmentLevelSelect = ({
         {category.goal || category.description}
       </p>
       
-      <select
+      <MultilineSelect
         value={value || ''}
-        onChange={(e) => onChange(e.target.value)}
-        className={`w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm ${className}`}
-      >
-        <option value="">Select Level</option>
-        {Object.entries(category.levels).map(([level, description]) => (
-          <option key={level} value={level}>
-            Level {level}: {description.length > 60 ? description.substring(0, 60) + '...' : description}
-          </option>
-        ))}
-      </select>
+        onChange={onChange}
+        options={options}
+        placeholder="Select Level"
+        className={`w-full ${className}`}
+      />
       
       {/* Show selected level description */}
       {showDescription && value && (

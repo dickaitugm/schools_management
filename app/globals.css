@@ -15,3 +15,37 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+/* Custom styles for assessment dropdown */
+.assessment-select {
+  line-height: 1.4;
+}
+
+.assessment-select option {
+  padding: 8px 12px;
+  line-height: 1.5;
+  white-space: normal;
+  word-wrap: break-word;
+  min-height: 60px;
+  display: flex;
+  align-items: flex-start;
+}
+
+/* For better cross-browser support */
+.assessment-select option:checked {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.assessment-select option:hover {
+  background-color: #f3f4f6;
+}
+
+/* Custom multiline select option styles */
+.multiline-option {
+  white-space: pre-wrap !important;
+  word-wrap: break-word !important;
+  line-height: 1.4 !important;
+  padding: 8px 12px !important;
+  min-height: 50px !important;
+}

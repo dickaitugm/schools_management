@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
+import MultilineSelect from './MultilineSelect';
 
 const StudentAssessmentModal = ({ scheduleId, onClose }) => {
   const [students, setStudents] = useState([]);
@@ -299,18 +300,16 @@ const StudentAssessmentModal = ({ scheduleId, onClose }) => {
                         <p className="text-xs text-gray-600 mb-3 italic">
                           {category.goal}
                         </p>
-                        <select
+                        <MultilineSelect
                           value={student[`${key}_level`] || ''}
-                          onChange={(e) => handleStudentChange(student.id, `${key}_level`, e.target.value)}
-                          className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
-                        >
-                          <option value="">Select Level</option>
-                          {Object.entries(category.levels).map(([level, description]) => (
-                            <option key={level} value={level}>
-                              Level {level}: {description.length > 50 ? description.substring(0, 50) + '...' : description}
-                            </option>
-                          ))}
-                        </select>
+                          onChange={(value) => handleStudentChange(student.id, `${key}_level`, value)}
+                          options={Object.entries(category.levels).map(([level, description]) => ({
+                            value: level,
+                            description: description
+                          }))}
+                          placeholder="Select Level"
+                          className="w-full"
+                        />
                         
                         {/* Show selected level description */}
                         {student[`${key}_level`] && (

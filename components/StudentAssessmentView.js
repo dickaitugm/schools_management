@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import MultilineSelect from './MultilineSelect';
 
 const StudentAssessmentView = ({ scheduleId, onBack }) => {
   const [students, setStudents] = useState([]);
@@ -337,18 +338,16 @@ const StudentAssessmentView = ({ scheduleId, onBack }) => {
                     <h4 className="font-medium text-gray-900 mb-2">{category.name}</h4>
                     <p className="text-xs text-gray-600 mb-3 italic">{category.description}</p>
                     
-                    <select
+                    <MultilineSelect
                       value={student.assessment?.[`${categoryKey}_level`] || ''}
-                      onChange={(e) => handleAssessmentChange(student.id, categoryKey, parseInt(e.target.value) || '')}
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                    >
-                      <option value="">Select Level</option>
-                      {Object.entries(category.levels).map(([level, description]) => (
-                        <option key={level} value={level}>
-                          Level {level}: {description.length > 60 ? description.substring(0, 60) + '...' : description}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={(value) => handleAssessmentChange(student.id, categoryKey, parseInt(value) || '')}
+                      options={Object.entries(category.levels).map(([level, description]) => ({
+                        value: level,
+                        description: description
+                      }))}
+                      placeholder="Select Level"
+                      className="w-full"
+                    />
                     
                     {/* Show selected level description */}
                     {student.assessment?.[`${categoryKey}_level`] && (
