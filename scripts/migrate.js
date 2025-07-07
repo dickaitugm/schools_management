@@ -10,7 +10,7 @@ async function createTables() {
     await client.query(`
       CREATE TABLE IF NOT EXISTS schools (
         id SERIAL PRIMARY KEY,
-        name VARCHAR(255) NOT NULL,
+        name VARCHAR(255) NOT NULL UNIQUE,
         address TEXT,
         phone VARCHAR(50),
         email VARCHAR(255),

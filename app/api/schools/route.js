@@ -72,17 +72,20 @@ export async function POST(request) {
   try {
     const { name, address, phone, email } = await request.json();
     
-    if (!name) {
+    if (!name || name.trim() === '') {
       return NextResponse.json(
         { success: false, error: 'School name is required' },
         { status: 400 }
       );
     }
 
+    // Trim and validate name
+    const trimmedName = name.trim();
+
     const client = await pool.connect();
     const result = await client.query(
       'INSERT INTO schools (name, address, phone, email) VALUES ($1, $2, $3, $4) RETURNING *',
-      [name, address, phone, email]
+      [trimmedName, address?.trim(), phone?.trim(), email?.trim()]
     );
     client.release();
     
@@ -93,6 +96,15 @@ export async function POST(request) {
     }, { status: 201 });
   } catch (error) {
     console.error('Error creating school:', error);
+    
+    // Handle unique constraint violation
+    if (error.code === '23505' && error.constraint === 'schools_name_unique') {
+      return NextResponse.json(
+        { success: false, error: 'School name already exists. Please choose a different name.' },
+        { status: 409 }
+      );
+    }
+    
     return NextResponse.json(
       { success: false, error: 'Failed to create school' },
       { status: 500 }

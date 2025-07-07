@@ -61,7 +61,14 @@ const SchoolManagement = ({ onSchoolSelect, selectedSchoolId, onViewProfile }) =
     e.preventDefault();
     try {
       setSaving(true);
+      setError(null); // Clear previous errors
       console.log('Starting to save school...');
+      
+      // Validate school name
+      if (!formData.name || formData.name.trim() === '') {
+        setError('School name is required');
+        return;
+      }
       
       // Add minimum delay to ensure loading indicator is visible
       const startTime = Date.now();
@@ -69,17 +76,31 @@ const SchoolManagement = ({ onSchoolSelect, selectedSchoolId, onViewProfile }) =
       const url = editingSchool ? `/api/schools/${editingSchool.id}` : '/api/schools';
       const method = editingSchool ? 'PUT' : 'POST';
       
+      // Trim data before sending
+      const trimmedData = {
+        name: formData.name.trim(),
+        address: formData.address?.trim() || '',
+        phone: formData.phone?.trim() || '',
+        email: formData.email?.trim() || ''
+      };
+      
       const response = await fetch(url, {
         method,
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(trimmedData),
       });
       
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to save school');
+      const data = await response.json();
+      
+      if (!response.ok || !data.success) {
+        // Handle specific error cases
+        if (response.status === 409) {
+          throw new Error('School name already exists. Please choose a different name.');
+        } else {
+          throw new Error(data.error || 'Failed to save school');
+        }
       }
       
       // Ensure minimum loading time of 800ms to show spinner
@@ -94,13 +115,13 @@ const SchoolManagement = ({ onSchoolSelect, selectedSchoolId, onViewProfile }) =
       setIsModalOpen(false);
       setEditingSchool(null);
       setFormData({ name: '', address: '', phone: '', email: '' });
-      setSuccess(`School ${editingSchool ? 'updated' : 'created'} successfully!`);
+      setSuccess(data.message || `School ${editingSchool ? 'updated' : 'created'} successfully!`);
       console.log('School saved successfully');
       setTimeout(() => setSuccess(null), 3000);
       fetchSchools();
     } catch (error) {
       console.error('Error saving school:', error);
-      setError('Error saving school: ' + error.message);
+      setError(error.message);
     } finally {
       console.log('Saving completed, setting saving to false');
       setSaving(false);

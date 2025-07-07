@@ -35,17 +35,20 @@ export async function PUT(request, { params }) {
     const { id } = params;
     const { name, address, phone, email } = await request.json();
     
-    if (!name) {
+    if (!name || name.trim() === '') {
       return NextResponse.json(
         { success: false, error: 'School name is required' },
         { status: 400 }
       );
     }
 
+    // Trim and validate name
+    const trimmedName = name.trim();
+
     const client = await pool.connect();
     const result = await client.query(
       'UPDATE schools SET name = $1, address = $2, phone = $3, email = $4 WHERE id = $5 RETURNING *',
-      [name, address, phone, email, id]
+      [trimmedName, address?.trim(), phone?.trim(), email?.trim(), id]
     );
     client.release();
     
@@ -63,6 +66,15 @@ export async function PUT(request, { params }) {
     });
   } catch (error) {
     console.error('Error updating school:', error);
+    
+    // Handle unique constraint violation
+    if (error.code === '23505' && error.constraint === 'schools_name_unique') {
+      return NextResponse.json(
+        { success: false, error: 'School name already exists. Please choose a different name.' },
+        { status: 409 }
+      );
+    }
+    
     return NextResponse.json(
       { success: false, error: 'Failed to update school' },
       { status: 500 }
