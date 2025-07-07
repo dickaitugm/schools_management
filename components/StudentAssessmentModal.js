@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Modal from './Modal';
 import MultilineSelect from './MultilineSelect';
+import { formatDateIndonesian, formatDateTimeIndonesian } from '../utils/dateUtils';
 
 const StudentAssessmentModal = ({ scheduleId, onClose }) => {
   const [students, setStudents] = useState([]);
@@ -204,9 +205,7 @@ const StudentAssessmentModal = ({ scheduleId, onClose }) => {
     }
   };
 
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('id-ID');
-  };
+
 
   const formatTime = (timeString) => {
     return timeString ? timeString.slice(0, 5) : '';
@@ -249,7 +248,7 @@ const StudentAssessmentModal = ({ scheduleId, onClose }) => {
           {schedule && (
             <div className="bg-gray-50 p-4 rounded-lg">
               <p className="text-sm text-gray-600">
-                <strong>Schedule:</strong> {formatDate(schedule.scheduled_date)} at {formatTime(schedule.scheduled_time)}
+                <strong>Schedule:</strong> {formatDateTimeIndonesian(schedule.scheduled_date, schedule.scheduled_time)}
               </p>
               <p className="text-sm text-gray-600">
                 <strong>School:</strong> {schedule.school_name}

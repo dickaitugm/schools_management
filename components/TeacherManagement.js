@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
+import { formatDateIndonesian } from '../utils/dateUtils';
 
 const TeacherManagement = ({ selectedSchoolId, onViewProfile }) => {
   const [teachers, setTeachers] = useState([]);
@@ -203,10 +204,7 @@ const TeacherManagement = ({ selectedSchoolId, onViewProfile }) => {
     setCurrentPage(1);
   };
 
-  const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString('id-ID');
-  };
+
 
   return (
     <div className="p-6">
@@ -316,7 +314,7 @@ const TeacherManagement = ({ selectedSchoolId, onViewProfile }) => {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {formatDate(teacher.hire_date)}
+                        {formatDateIndonesian(teacher.hire_date)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <button

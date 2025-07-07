@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { formatDateIndonesian, formatDateTimeIndonesian } from '../utils/dateUtils';
 
 const ProfileView = ({ entityType, id, onBack }) => {
   const [profile, setProfile] = useState(null);
@@ -39,17 +40,7 @@ const ProfileView = ({ entityType, id, onBack }) => {
     }
   };
 
-  const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString('id-ID');
-  };
 
-  const formatDateTime = (dateString, timeString) => {
-    if (!dateString) return 'N/A';
-    const date = new Date(dateString).toLocaleDateString('id-ID');
-    const time = timeString ? timeString.slice(0, 5) : '';
-    return time ? `${date} ${time}` : date;
-  };
 
   if (loading) {
     return (
@@ -133,7 +124,7 @@ const ProfileView = ({ entityType, id, onBack }) => {
                     <p><strong>Email:</strong> {profile.school.email || 'N/A'}</p>
                   </div>
                   <div>
-                    <p><strong>Created:</strong> {formatDate(profile.school.created_at)}</p>
+                    <p><strong>Created:</strong> {formatDateIndonesian(profile.school.created_at)}</p>
                     <p><strong>Total Students:</strong> {profile.statistics.total_students}</p>
                     <p><strong>Total Teachers:</strong> {profile.statistics.total_teachers}</p>
                     <p><strong>Upcoming Schedules:</strong> {profile.statistics.upcoming_schedules}</p>
@@ -189,7 +180,7 @@ const ProfileView = ({ entityType, id, onBack }) => {
                           <h5 className="font-semibold text-green-800">{student.name}</h5>
                           <p className="text-sm text-green-600">Grade: {student.grade || 'N/A'}</p>
                           <p className="text-sm text-green-600">Email: {student.email || 'N/A'}</p>
-                          <p className="text-xs text-green-500">Enrolled: {formatDate(student.enrollment_date)}</p>
+                          <p className="text-xs text-green-500">Enrolled: {formatDateIndonesian(student.enrollment_date)}</p>
                         </div>
                       </div>
                     </div>
@@ -261,7 +252,7 @@ const ProfileView = ({ entityType, id, onBack }) => {
                           <h5 className="font-semibold text-blue-800">{teacher.name}</h5>
                           <p className="text-sm text-blue-600">Subject: {teacher.subject || 'N/A'}</p>
                           <p className="text-sm text-blue-600">Email: {teacher.email || 'N/A'}</p>
-                          <p className="text-xs text-blue-500">Associated: {formatDate(teacher.association_date)}</p>
+                          <p className="text-xs text-blue-500">Associated: {formatDateIndonesian(teacher.association_date)}</p>
                         </div>
                       </div>
                     </div>
@@ -300,7 +291,7 @@ const ProfileView = ({ entityType, id, onBack }) => {
                           <div className="flex-1">
                             <div className="flex items-center justify-between mb-2">
                               <h5 className="font-semibold text-purple-800 text-lg">
-                                📅 {formatDateTime(schedule.scheduled_date, schedule.scheduled_time)}
+                                📅 {formatDateTimeIndonesian(schedule.scheduled_date, schedule.scheduled_time)}
                               </h5>
                               <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-${statusColor}-100 text-${statusColor}-800 border border-${statusColor}-200`}>
                                 {schedule.status.charAt(0).toUpperCase() + schedule.status.slice(1)}
@@ -386,8 +377,8 @@ const ProfileView = ({ entityType, id, onBack }) => {
                     <p><strong>Email:</strong> {profile.teacher.email || 'N/A'}</p>
                   </div>
                   <div>
-                    <p><strong>Hire Date:</strong> {formatDate(profile.teacher.hire_date)}</p>
-                    <p><strong>Created:</strong> {formatDate(profile.teacher.created_at)}</p>
+                    <p><strong>Hire Date:</strong> {formatDateIndonesian(profile.teacher.hire_date)}</p>
+                    <p><strong>Created:</strong> {formatDateIndonesian(profile.teacher.created_at)}</p>
                     <p><strong>Schools:</strong> {profile.statistics.total_schools}</p>
                     <p><strong>Students:</strong> {profile.statistics.total_students}</p>
                   </div>
@@ -430,7 +421,7 @@ const ProfileView = ({ entityType, id, onBack }) => {
                   <div key={school.id} className="bg-gray-50 p-4 rounded-lg hover:shadow-md transition-shadow">
                     <h5 className="font-semibold">{school.name}</h5>
                     <p className="text-sm text-gray-600">{school.address || 'N/A'}</p>
-                    <p className="text-xs text-gray-500">Associated: {formatDate(school.association_date)}</p>
+                    <p className="text-xs text-gray-500">Associated: {formatDateIndonesian(school.association_date)}</p>
                   </div>
                 ))}
               </div>
@@ -479,7 +470,7 @@ const ProfileView = ({ entityType, id, onBack }) => {
                   </div>
                   <div>
                     <p><strong>Email:</strong> {profile.student.email || 'N/A'}</p>
-                    <p><strong>Enrollment Date:</strong> {formatDate(profile.student.enrollment_date)}</p>
+                    <p><strong>Enrollment Date:</strong> {formatDateIndonesian(profile.student.enrollment_date)}</p>
                     <p><strong>Attendance Rate:</strong> {profile.statistics.attendance_rate}%</p>
                     <p><strong>Teachers:</strong> {profile.statistics.total_teachers}</p>
                   </div>
@@ -526,7 +517,7 @@ const ProfileView = ({ entityType, id, onBack }) => {
                   <div key={teacher.id} className="bg-gray-50 p-4 rounded-lg hover:shadow-md transition-shadow">
                     <h5 className="font-semibold">{teacher.name}</h5>
                     <p className="text-sm text-gray-600">Subject: {teacher.subject || 'N/A'}</p>
-                    <p className="text-xs text-gray-500">Teaching since: {formatDate(teacher.association_date)}</p>
+                    <p className="text-xs text-gray-500">Teaching since: {formatDateIndonesian(teacher.association_date)}</p>
                   </div>
                 ))}
               </div>
@@ -546,7 +537,7 @@ const ProfileView = ({ entityType, id, onBack }) => {
                           </span>
                         </div>
                         <div>
-                          <p className="font-semibold text-yellow-800">{formatDateTime(record.scheduled_date, record.scheduled_time)}</p>
+                          <p className="font-semibold text-yellow-800">{formatDateTimeIndonesian(record.scheduled_date, record.scheduled_time)}</p>
                           <p className="text-sm text-yellow-600">Status: 
                             <span className={`ml-1 font-medium ${record.attendance_status === 'present' ? 'text-green-600' : 'text-red-600'}`}>
                               {record.attendance_status}
@@ -591,7 +582,7 @@ const ProfileView = ({ entityType, id, onBack }) => {
                           </div>
                           <div>
                             <h5 className="font-semibold text-indigo-800">
-                              📅 {formatDateTime(assessment.scheduled_date, assessment.scheduled_time)}
+                              📅 {formatDateTimeIndonesian(assessment.scheduled_date, assessment.scheduled_time)}
                             </h5>
                             <p className="text-sm text-indigo-600">
                               School: {assessment.school_name}
@@ -683,7 +674,7 @@ const ProfileView = ({ entityType, id, onBack }) => {
                     <p><strong>Target Grade:</strong> {profile.lesson.target_grade || 'N/A'}</p>
                   </div>
                   <div>
-                    <p><strong>Created:</strong> {formatDate(profile.lesson.created_at)}</p>
+                    <p><strong>Created:</strong> {formatDateIndonesian(profile.lesson.created_at)}</p>
                     <p><strong>Teachers:</strong> {profile.statistics.total_teachers}</p>
                     <p><strong>Students Taught:</strong> {profile.statistics.total_students_taught}</p>
                     <p><strong>Total Sessions:</strong> {profile.statistics.total_schedules}</p>
@@ -732,7 +723,7 @@ const ProfileView = ({ entityType, id, onBack }) => {
                     {teacher.school_names && teacher.school_names[0] && (
                       <p className="text-sm text-gray-600">Schools: {teacher.school_names.join(', ')}</p>
                     )}
-                    <p className="text-xs text-gray-500">Teaching since: {formatDate(teacher.association_date)}</p>
+                    <p className="text-xs text-gray-500">Teaching since: {formatDateIndonesian(teacher.association_date)}</p>
                   </div>
                 ))}
               </div>
@@ -777,7 +768,7 @@ const ProfileView = ({ entityType, id, onBack }) => {
                 </h3>
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
-                    <p><strong>Date:</strong> {formatDate(profile.data.scheduled_date)}</p>
+                    <p><strong>Date:</strong> {formatDateIndonesian(profile.data.scheduled_date)}</p>
                     <p><strong>Time:</strong> {profile.data.scheduled_time?.slice(0, 5) || 'N/A'}</p>
                     <p><strong>Duration:</strong> {profile.data.duration_minutes} minutes</p>
                     <p><strong>Status:</strong> 
@@ -919,7 +910,7 @@ const ProfileView = ({ entityType, id, onBack }) => {
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {formatDate(record.created_at)}
+                            {formatDateIndonesian(record.created_at)}
                           </td>
                           <td className="px-6 py-4 text-sm text-gray-500">
                             {record.notes || 'N/A'}
@@ -970,7 +961,7 @@ const ProfileView = ({ entityType, id, onBack }) => {
                             {assessment.participation_score}/10
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {formatDate(assessment.created_at)}
+                            {formatDateIndonesian(assessment.created_at)}
                           </td>
                           <td className="px-6 py-4 text-sm text-gray-500">
                             {assessment.notes || 'N/A'}

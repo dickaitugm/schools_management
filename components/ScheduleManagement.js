@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Modal from './Modal';
+import { formatDateIndonesian, formatDateTimeIndonesian, formatTimeIndonesian } from '../utils/dateUtils';
 
 const ScheduleManagement = ({ selectedSchoolId, onViewProfile, onViewAssessment }) => {
   const [schedules, setSchedules] = useState([]);
@@ -307,15 +308,7 @@ const ScheduleManagement = ({ selectedSchoolId, onViewProfile, onViewAssessment 
     }
   };
 
-  const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString('id-ID', {
-      weekday: 'short',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
+
 
   const formatTime = (timeString) => {
     if (!timeString) return 'N/A';
@@ -598,7 +591,7 @@ const ScheduleManagement = ({ selectedSchoolId, onViewProfile, onViewAssessment 
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <span className="font-medium text-gray-700">Date:</span>
-                  <p className="text-gray-600">{formatDate(displaySchedule.scheduled_date)}</p>
+                  <p className="text-gray-600">{formatDateIndonesian(displaySchedule.scheduled_date)}</p>
                 </div>
                 <div>
                   <span className="font-medium text-gray-700">Time:</span>
@@ -689,7 +682,7 @@ const ScheduleManagement = ({ selectedSchoolId, onViewProfile, onViewAssessment 
                     <div>
                       <p className="font-medium text-gray-900">{schedule.school_name}</p>
                       <p className="text-sm text-gray-600">
-                        {formatDate(schedule.scheduled_date)} at {formatTime(schedule.scheduled_time)}
+                        {formatDateTimeIndonesian(schedule.scheduled_date, schedule.scheduled_time)}
                       </p>
                     </div>
                     <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusClasses(schedule.status).bg} ${getStatusClasses(schedule.status).text}`}>
@@ -835,7 +828,7 @@ const ScheduleManagement = ({ selectedSchoolId, onViewProfile, onViewAssessment 
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div>
                             <div className="text-sm font-medium text-gray-900">
-                              {formatDate(schedule.scheduled_date)}
+                              {formatDateIndonesian(schedule.scheduled_date)}
                             </div>
                             <div className="text-sm text-gray-500">
                               {formatTime(schedule.scheduled_time)} ({schedule.duration_minutes} min)

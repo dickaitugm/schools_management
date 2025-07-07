@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import MultilineSelect from './MultilineSelect';
+import { formatDateTimeIndonesian } from '../utils/dateUtils';
 
 const StudentAssessmentView = ({ scheduleId, onBack }) => {
   const [students, setStudents] = useState([]);
@@ -297,7 +298,7 @@ const StudentAssessmentView = ({ scheduleId, onBack }) => {
         {schedule && (
           <div className="text-gray-600">
             <p className="font-medium">{schedule.school_name}</p>
-            <p>{new Date(schedule.scheduled_date).toLocaleDateString()} at {schedule.scheduled_time}</p>
+            <p>{formatDateTimeIndonesian(schedule.scheduled_date, schedule.scheduled_time)}</p>
             {schedule.teachers && schedule.teachers.length > 0 && (
               <p>Teachers: {schedule.teachers.map(t => t.name).join(', ')}</p>
             )}
