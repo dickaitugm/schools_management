@@ -1,9 +1,11 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useAuth } from './AuthContext';
 
 const Sidebar = ({ currentPage, onPageChange, collapsed = false, onToggle }) => {
   const [isMobile, setIsMobile] = useState(false);
+  const { user, hasPermission, logout } = useAuth();
 
   useEffect(() => {
     const checkScreenSize = () => {
@@ -19,14 +21,21 @@ const Sidebar = ({ currentPage, onPageChange, collapsed = false, onToggle }) => 
     return () => window.removeEventListener('resize', checkScreenSize);
   }, []);
 
-  const menuItems = [
-    { path: 'dashboard', name: 'Dashboard', icon: '📊' },
-    { path: 'schools', name: 'Schools', icon: '🏫' },
-    { path: 'teachers', name: 'Teachers', icon: '👨‍🏫' },
-    { path: 'students', name: 'Students', icon: '👨‍🎓' },
-    { path: 'lessons', name: 'Lessons', icon: '📚' },
-    { path: 'schedules', name: 'Schedules', icon: '📅' }
+  const allMenuItems = [
+    { path: 'dashboard', name: 'Dashboard', icon: '📊', permission: null },
+    { path: 'schools', name: 'Schools', icon: '🏫', permission: 'read_schools' },
+    { path: 'teachers', name: 'Teachers', icon: '👨‍🏫', permission: 'read_teachers' },
+    { path: 'students', name: 'Students', icon: '👨‍🎓', permission: 'read_students' },
+    { path: 'lessons', name: 'Lessons', icon: '📚', permission: 'read_lessons' },
+    { path: 'schedules', name: 'Schedules', icon: '📅', permission: 'read_schedules' },
+    { path: 'roles', name: 'Role Management', icon: '⚙️', permission: 'manage_roles' }
   ];
+
+  // Filter menu items based on user permissions
+  const menuItems = allMenuItems.filter(item => {
+    if (!item.permission) return true; // Dashboard is always accessible
+    return hasPermission(item.permission);
+  });
 
   const toggleSidebar = () => {
     if (onToggle) {
@@ -55,7 +64,7 @@ const Sidebar = ({ currentPage, onPageChange, collapsed = false, onToggle }) => 
       {/* Sidebar */}
       <div 
         className={`
-          bg-blue-800 text-white transition-all duration-300 ease-in-out
+          bg-blue-800 text-white transition-all duration-300 ease-in-out flex flex-col
           ${isMobile ? 'fixed z-50 h-full shadow-lg' : 'relative'} 
           ${collapsed ? (isMobile ? 'w-64' : 'w-16') : 'w-64'}
         `}
@@ -68,7 +77,14 @@ const Sidebar = ({ currentPage, onPageChange, collapsed = false, onToggle }) => 
         <div className="p-4 border-b border-blue-700">
           <div className="flex items-center justify-between">
             {!collapsed && (
-              <h1 className="text-lg font-bold">BB for Society</h1>
+              <div>
+                <h1 className="text-lg font-bold">BB for Society</h1>
+                {user && (
+                  <div className="text-xs text-blue-200 mt-1">
+                    {user.name} ({user.role})
+                  </div>
+                )}
+              </div>
             )}
             <button
               onClick={toggleSidebar}
@@ -88,7 +104,7 @@ const Sidebar = ({ currentPage, onPageChange, collapsed = false, onToggle }) => 
         </div>
 
         {/* Navigation */}
-        <nav className="p-4">
+        <nav className="p-4 flex-1">
           <ul className="space-y-2">
             {menuItems.map((item) => (
               <li key={item.path}>
@@ -115,6 +131,19 @@ const Sidebar = ({ currentPage, onPageChange, collapsed = false, onToggle }) => 
             ))}
           </ul>
         </nav>
+
+        {/* User Info & Logout */}
+        {!collapsed && user && (
+          <div className="p-4 border-t border-blue-700">
+            <button
+              onClick={logout}
+              className="flex items-center space-x-3 p-2 rounded-lg hover:bg-blue-700 transition-colors w-full text-left"
+            >
+              <span className="text-xl">🚪</span>
+              <span className="truncate">Logout</span>
+            </button>
+          </div>
+        )}
       </div>
     </>
   );

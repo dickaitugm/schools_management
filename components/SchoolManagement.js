@@ -2,9 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
+import { useAuth } from './AuthContext';
 import { formatDateIndonesian } from '../utils/dateUtils';
 
 const SchoolManagement = ({ onSchoolSelect, selectedSchoolId, onViewProfile }) => {
+  const { hasPermission } = useAuth();
   const [schools, setSchools] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSchool, setEditingSchool] = useState(null);
@@ -198,12 +200,14 @@ const SchoolManagement = ({ onSchoolSelect, selectedSchoolId, onViewProfile }) =
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-800">BB for Society - Schools</h1>
-        <button
-          onClick={handleAddNew}
-          className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
-        >
-          Add New School
-        </button>
+        {hasPermission('create_schools') && (
+          <button
+            onClick={handleAddNew}
+            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+          >
+            Add New School
+          </button>
+        )}
       </div>
 
       {/* Success/Error Messages */}
@@ -307,24 +311,28 @@ const SchoolManagement = ({ onSchoolSelect, selectedSchoolId, onViewProfile }) =
                         >
                           View Profile
                         </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEdit(school);
-                          }}
-                          className="text-blue-600 hover:text-blue-900 mr-3"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDelete(school);
-                          }}
-                          className="text-red-600 hover:text-red-900"
-                        >
-                          Delete
-                        </button>
+                        {hasPermission('update_schools') && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEdit(school);
+                            }}
+                            className="text-blue-600 hover:text-blue-900 mr-3"
+                          >
+                            Edit
+                          </button>
+                        )}
+                        {hasPermission('delete_schools') && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDelete(school);
+                            }}
+                            className="text-red-600 hover:text-red-900"
+                          >
+                            Delete
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}
