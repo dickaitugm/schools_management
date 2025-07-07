@@ -301,6 +301,9 @@ const ProfileView = ({ entityType, id, onBack }) => {
                             <div className="grid md:grid-cols-2 gap-4 mb-3">
                               <div>
                                 <p className="text-sm text-purple-600 mb-1">
+                                  <span className="font-medium">🏫 School:</span> {schedule.school_name}
+                                </p>
+                                <p className="text-sm text-purple-600 mb-1">
                                   <span className="font-medium">⏱️ Duration:</span> {schedule.duration_minutes} minutes
                                 </p>
                                 {schedule.notes && (
@@ -311,19 +314,6 @@ const ProfileView = ({ entityType, id, onBack }) => {
                               </div>
                               
                               <div>
-                                {schedule.teacher_names && schedule.teacher_names[0] && (
-                                  <div className="mb-2">
-                                    <p className="text-sm font-medium text-purple-700 mb-1">👨‍🏫 Teachers:</p>
-                                    <div className="flex flex-wrap gap-1">
-                                      {schedule.teacher_names.map((name, idx) => (
-                                        <span key={idx} className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
-                                          {name}
-                                        </span>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
-                                
                                 {schedule.lesson_titles && schedule.lesson_titles[0] && (
                                   <div>
                                     <p className="text-sm font-medium text-purple-700 mb-1">📚 Lessons:</p>
@@ -449,6 +439,88 @@ const ProfileView = ({ entityType, id, onBack }) => {
               </div>
               {profile.lessons.length > 4 && (
                 <p className="text-sm text-gray-500 mt-3 text-center">... and {profile.lessons.length - 4} more lessons</p>
+              )}
+            </div>
+
+            {/* Recent Schedules */}
+            <div className="bg-white rounded-lg shadow-md p-6 mb-6 hover:shadow-lg transition-shadow">
+              <h4 className="text-xl font-semibold mb-4 flex items-center">
+                <span className="text-purple-600 mr-2">📅</span>
+                Recent Schedules
+              </h4>
+              {profile.recent_schedules && profile.recent_schedules.length > 0 ? (
+                <div className="space-y-4">
+                  {profile.recent_schedules.slice(0, 5).map((schedule) => {
+                    const statusColor = {
+                      'scheduled': 'blue',
+                      'in-progress': 'yellow', 
+                      'completed': 'green',
+                      'cancelled': 'red'
+                    }[schedule.status] || 'gray';
+                    
+                    return (
+                      <div key={schedule.id} className="bg-gradient-to-r from-purple-50 to-pink-50 p-4 rounded-lg border border-purple-200 hover:shadow-lg transition-all duration-200">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between mb-2">
+                              <h5 className="font-semibold text-purple-800 text-lg">
+                                📅 {formatDateTimeIndonesian(schedule.scheduled_date, schedule.scheduled_time)}
+                              </h5>
+                              <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-${statusColor}-100 text-${statusColor}-800 border border-${statusColor}-200`}>
+                                {schedule.status.charAt(0).toUpperCase() + schedule.status.slice(1)}
+                              </span>
+                            </div>
+                            
+                            <div className="grid md:grid-cols-2 gap-4 mb-3">
+                              <div>
+                                <p className="text-sm text-purple-600 mb-1">
+                                  <span className="font-medium">🏫 School:</span> {schedule.school_name}
+                                </p>
+                                <p className="text-sm text-purple-600 mb-1">
+                                  <span className="font-medium">⏱️ Duration:</span> {schedule.duration_minutes} minutes
+                                </p>
+                                {schedule.notes && (
+                                  <p className="text-sm text-purple-600">
+                                    <span className="font-medium">📝 Notes:</span> {schedule.notes}
+                                  </p>
+                                )}
+                              </div>
+                              
+                              <div>
+                                {schedule.lesson_titles && schedule.lesson_titles[0] && (
+                                  <div>
+                                    <p className="text-sm font-medium text-purple-700 mb-1">📚 Lessons:</p>
+                                    <div className="flex flex-wrap gap-1">
+                                      {schedule.lesson_titles.map((title, idx) => (
+                                        <span key={idx} className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-indigo-100 text-indigo-800">
+                                          {title}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center text-xs text-purple-500">
+                              <span className="bg-purple-100 px-2 py-1 rounded">
+                                Schedule ID: {schedule.id}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-lg">
+                  <span className="text-4xl block mb-2">📅</span>
+                  <p>No recent schedules found</p>
+                </div>
+              )}
+              {profile.recent_schedules && profile.recent_schedules.length > 5 && (
+                <p className="text-sm text-gray-500 mt-3 text-center">... and {profile.recent_schedules.length - 5} more schedules</p>
               )}
             </div>
           </div>
@@ -656,7 +728,112 @@ const ProfileView = ({ entityType, id, onBack }) => {
               </div>
             )}
 
-            {/* ...existing code... */}
+            {/* Lessons Section */}
+            <div className="bg-white rounded-lg shadow-md p-6 mb-6 hover:shadow-lg transition-shadow">
+              <h4 className="text-xl font-semibold mb-4">Lessons ({profile.lessons.length})</h4>
+              <div className="grid md:grid-cols-2 gap-4">
+                {profile.lessons.slice(0, 4).map((lesson) => (
+                  <div key={lesson.id} className="bg-indigo-50 p-4 rounded-lg border border-indigo-200 hover:shadow-md transition-shadow">
+                    <div className="flex items-start">
+                      <div className="bg-indigo-100 p-2 rounded-full mr-3">
+                        <span className="text-indigo-600 text-sm font-semibold">📚</span>
+                      </div>
+                      <div className="flex-1">
+                        <h5 className="font-semibold text-indigo-800">{lesson.title}</h5>
+                        <p className="text-sm text-indigo-600">{lesson.description || 'No description'}</p>
+                        <p className="text-sm text-indigo-600">Duration: {lesson.duration_minutes} minutes</p>
+                        <p className="text-xs text-indigo-500">Target Grade: {lesson.target_grade || 'N/A'}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {profile.lessons.length > 4 && (
+                <p className="text-sm text-gray-500 mt-3 text-center">... and {profile.lessons.length - 4} more lessons</p>
+              )}
+            </div>
+
+            {/* Recent Schedules */}
+            <div className="bg-white rounded-lg shadow-md p-6 mb-6 hover:shadow-lg transition-shadow">
+              <h4 className="text-xl font-semibold mb-4 flex items-center">
+                <span className="text-purple-600 mr-2">📅</span>
+                Recent Schedules
+              </h4>
+              {profile.recent_schedules && profile.recent_schedules.length > 0 ? (
+                <div className="space-y-4">
+                  {profile.recent_schedules.slice(0, 5).map((schedule) => {
+                    const statusColor = {
+                      'scheduled': 'blue',
+                      'in-progress': 'yellow', 
+                      'completed': 'green',
+                      'cancelled': 'red'
+                    }[schedule.status] || 'gray';
+                    
+                    return (
+                      <div key={schedule.id} className="bg-gradient-to-r from-purple-50 to-pink-50 p-4 rounded-lg border border-purple-200 hover:shadow-lg transition-all duration-200">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between mb-2">
+                              <h5 className="font-semibold text-purple-800 text-lg">
+                                📅 {formatDateTimeIndonesian(schedule.scheduled_date, schedule.scheduled_time)}
+                              </h5>
+                              <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-${statusColor}-100 text-${statusColor}-800 border border-${statusColor}-200`}>
+                                {schedule.status.charAt(0).toUpperCase() + schedule.status.slice(1)}
+                              </span>
+                            </div>
+                            
+                            <div className="grid md:grid-cols-2 gap-4 mb-3">
+                              <div>
+                                <p className="text-sm text-purple-600 mb-1">
+                                  <span className="font-medium">🏫 School:</span> {schedule.school_name}
+                                </p>
+                                <p className="text-sm text-purple-600 mb-1">
+                                  <span className="font-medium">⏱️ Duration:</span> {schedule.duration_minutes} minutes
+                                </p>
+                                {schedule.notes && (
+                                  <p className="text-sm text-purple-600">
+                                    <span className="font-medium">📝 Notes:</span> {schedule.notes}
+                                  </p>
+                                )}
+                              </div>
+                              
+                              <div>
+                                {schedule.lesson_titles && schedule.lesson_titles[0] && (
+                                  <div>
+                                    <p className="text-sm font-medium text-purple-700 mb-1">📚 Lessons:</p>
+                                    <div className="flex flex-wrap gap-1">
+                                      {schedule.lesson_titles.map((title, idx) => (
+                                        <span key={idx} className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-indigo-100 text-indigo-800">
+                                          {title}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center text-xs text-purple-500">
+                              <span className="bg-purple-100 px-2 py-1 rounded">
+                                Schedule ID: {schedule.id}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-lg">
+                  <span className="text-4xl block mb-2">📅</span>
+                  <p>No recent schedules found</p>
+                </div>
+              )}
+              {profile.recent_schedules && profile.recent_schedules.length > 5 && (
+                <p className="text-sm text-gray-500 mt-3 text-center">... and {profile.recent_schedules.length - 5} more schedules</p>
+              )}
+            </div>
           </div>
         )}
 

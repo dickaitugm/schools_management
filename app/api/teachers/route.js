@@ -10,7 +10,7 @@ export async function GET(request) {
     const search = searchParams.get('search') || '';
     const offset = (page - 1) * limit;
 
-    // Query to get teachers with their schools
+    // Query to get teachers only (no schools relation)
     const teachersQuery = `
       SELECT 
         t.id,
@@ -19,21 +19,9 @@ export async function GET(request) {
         t.phone,
         t.email,
         t.hire_date,
-        t.created_at,
-        COALESCE(
-          JSON_AGG(
-            JSON_BUILD_OBJECT(
-              'id', s.id,
-              'name', s.name
-            )
-          ) FILTER (WHERE s.id IS NOT NULL), 
-          '[]'
-        ) as schools
+        t.created_at
       FROM teachers t
-      LEFT JOIN teacher_schools ts ON t.id = ts.teacher_id
-      LEFT JOIN schools s ON ts.school_id = s.id
       WHERE t.name ILIKE $1 OR t.subject ILIKE $1 OR t.email ILIKE $1
-      GROUP BY t.id, t.name, t.subject, t.phone, t.email, t.hire_date, t.created_at
       ORDER BY t.created_at DESC
       LIMIT $2 OFFSET $3
     `;

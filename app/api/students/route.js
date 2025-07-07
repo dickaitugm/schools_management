@@ -11,7 +11,7 @@ export async function GET(request) {
     const schoolId = searchParams.get('school_id') || '';
     const offset = (page - 1) * limit;
 
-    // Query to get students with their school and teachers
+    // Query to get students with their school only (no teachers relation)
     let whereClause = `WHERE (s.name ILIKE $1 OR s.email ILIKE $1 OR s.grade ILIKE $1)`;
     let queryParams = [`%${search}%`, limit, offset];
     
@@ -31,23 +31,10 @@ export async function GET(request) {
         s.enrollment_date,
         s.created_at,
         s.school_id,
-        sc.name as school_name,
-        COALESCE(
-          JSON_AGG(
-            JSON_BUILD_OBJECT(
-              'id', t.id,
-              'name', t.name,
-              'subject', t.subject
-            )
-          ) FILTER (WHERE t.id IS NOT NULL), 
-          '[]'
-        ) as teachers
+        sc.name as school_name
       FROM students s
       LEFT JOIN schools sc ON s.school_id = sc.id
-      LEFT JOIN student_teachers st ON s.id = st.student_id
-      LEFT JOIN teachers t ON st.teacher_id = t.id
       ${whereClause}
-      GROUP BY s.id, s.name, s.grade, s.age, s.phone, s.email, s.enrollment_date, s.created_at, s.school_id, sc.name
       ORDER BY s.created_at DESC
       LIMIT $2 OFFSET $3
     `;

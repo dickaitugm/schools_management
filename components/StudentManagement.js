@@ -320,9 +320,6 @@ const StudentManagement = ({ selectedSchoolId, onViewProfile }) => {
                       Contact
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Teachers
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Enrollment Date
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -348,23 +345,6 @@ const StudentManagement = ({ selectedSchoolId, onViewProfile }) => {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">{student.email || 'N/A'}</div>
                         <div className="text-sm text-gray-500">{student.phone || 'N/A'}</div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex flex-wrap gap-1">
-                          {student.teachers && student.teachers.length > 0 ? (
-                            student.teachers.map((teacher) => (
-                              <span 
-                                key={teacher.id}
-                                className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800"
-                                title={teacher.subject}
-                              >
-                                {teacher.name}
-                              </span>
-                            ))
-                          ) : (
-                            <span className="text-sm text-gray-500">No teachers assigned</span>
-                          )}
-                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {formatDateIndonesian(student.enrollment_date)}
