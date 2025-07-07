@@ -568,33 +568,274 @@ const ProfileView = ({ entityType, id, onBack }) => {
 
             {/* Performance Statistics */}
             <div className="bg-white rounded-lg shadow-md p-6 mb-6 hover:shadow-lg transition-shadow">
-              <h4 className="text-lg font-semibold mb-4 text-gray-800">Performance Statistics</h4>
-              <div className="grid md:grid-cols-6 gap-4">
-                <div className="bg-green-100 p-4 rounded-lg text-center hover:shadow-md transition-shadow">
-                  <h4 className="text-green-800 font-semibold text-sm">Attendance Rate</h4>
-                  <p className="text-xl font-bold text-green-600">{profile.statistics.attendance_rate}%</p>
+              <h4 className="text-lg font-semibold mb-4 text-gray-800">Performance Overview</h4>
+              <div className="grid md:grid-cols-2 gap-6">
+                {/* Current Levels Summary */}
+                <div>
+                  <h5 className="text-md font-medium mb-3 text-gray-700">Current Development Levels</h5>
+                  <div className="space-y-3">
+                    {(() => {
+                      // Get the latest assessment based on scheduled_date
+                      const latestAssessment = profile.assessments && profile.assessments.length > 0 
+                        ? profile.assessments.sort((a, b) => new Date(b.scheduled_date) - new Date(a.scheduled_date))[0]
+                        : null;
+                      
+                      const personalLevel = latestAssessment?.personal_development_level || 0;
+                      const criticalLevel = latestAssessment?.critical_thinking_level || 0;
+                      const teamworkLevel = latestAssessment?.team_work_level || 0;
+                      const academicLevel = latestAssessment?.academic_knowledge_level || 0;
+                      
+                      return (
+                        <>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-indigo-700 font-medium">Personal Development</span>
+                            <div className="flex items-center">
+                              <div className="w-16 bg-gray-200 rounded-full h-2 mr-2">
+                                <div className="bg-indigo-500 h-2 rounded-full" style={{width: `${personalLevel * 25}%`}}></div>
+                              </div>
+                              <span className="text-sm font-semibold text-indigo-600">Level {personalLevel}</span>
+                            </div>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-pink-700 font-medium">Critical Thinking</span>
+                            <div className="flex items-center">
+                              <div className="w-16 bg-gray-200 rounded-full h-2 mr-2">
+                                <div className="bg-pink-500 h-2 rounded-full" style={{width: `${criticalLevel * 25}%`}}></div>
+                              </div>
+                              <span className="text-sm font-semibold text-pink-600">Level {criticalLevel}</span>
+                            </div>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-orange-700 font-medium">Team Work</span>
+                            <div className="flex items-center">
+                              <div className="w-16 bg-gray-200 rounded-full h-2 mr-2">
+                                <div className="bg-orange-500 h-2 rounded-full" style={{width: `${teamworkLevel * 25}%`}}></div>
+                              </div>
+                              <span className="text-sm font-semibold text-orange-600">Level {teamworkLevel}</span>
+                            </div>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-purple-700 font-medium">Academic Knowledge</span>
+                            <div className="flex items-center">
+                              <div className="w-16 bg-gray-200 rounded-full h-2 mr-2">
+                                <div className="bg-purple-500 h-2 rounded-full" style={{width: `${academicLevel * 25}%`}}></div>
+                              </div>
+                              <span className="text-sm font-semibold text-purple-600">Level {academicLevel}</span>
+                            </div>
+                          </div>
+                          {latestAssessment && (
+                            <div className="text-xs text-gray-500 mt-2 pt-2 border-t border-gray-200">
+                              Latest assessment: {new Date(latestAssessment.scheduled_date).toLocaleDateString('id-ID')}
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
+                  </div>
                 </div>
-                <div className="bg-blue-100 p-4 rounded-lg text-center hover:shadow-md transition-shadow">
-                  <h4 className="text-blue-800 font-semibold text-sm">Knowledge</h4>
-                  <p className="text-xl font-bold text-blue-600">{profile.statistics.avg_knowledge_score || 'N/A'}</p>
-                </div>
-                <div className="bg-purple-100 p-4 rounded-lg text-center hover:shadow-md transition-shadow">
-                  <h4 className="text-purple-800 font-semibold text-sm">Participation</h4>
-                  <p className="text-xl font-bold text-purple-600">{profile.statistics.avg_participation_score || 'N/A'}</p>
-                </div>
-                <div className="bg-indigo-100 p-4 rounded-lg text-center hover:shadow-md transition-shadow">
-                  <h4 className="text-indigo-800 font-semibold text-sm">Personal Dev.</h4>
-                  <p className="text-xl font-bold text-indigo-600">{profile.statistics.avg_personal_development || 'N/A'}</p>
-                </div>
-                <div className="bg-pink-100 p-4 rounded-lg text-center hover:shadow-md transition-shadow">
-                  <h4 className="text-pink-800 font-semibold text-sm">Critical Think.</h4>
-                  <p className="text-xl font-bold text-pink-600">{profile.statistics.avg_critical_thinking || 'N/A'}</p>
-                </div>
-                <div className="bg-orange-100 p-4 rounded-lg text-center hover:shadow-md transition-shadow">
-                  <h4 className="text-orange-800 font-semibold text-sm">Team Work</h4>
-                  <p className="text-xl font-bold text-orange-600">{profile.statistics.avg_team_work || 'N/A'}</p>
+
+                {/* Simple Attendance Rate Card */}
+                <div>
+                  <h5 className="text-md font-medium mb-3 text-gray-700">Attendance Overview</h5>
+                  <div className="bg-green-50 p-6 rounded-lg text-center">
+                    <div className="text-3xl font-bold text-green-600 mb-2">{profile.statistics.attendance_rate}%</div>
+                    <div className="text-sm text-green-700 font-medium">Overall Attendance Rate</div>
+                    <div className="w-full bg-gray-200 rounded-full h-3 mt-3">
+                      <div className="bg-green-500 h-3 rounded-full transition-all duration-300" style={{width: `${profile.statistics.attendance_rate}%`}}></div>
+                    </div>
+                  </div>
                 </div>
               </div>
+
+              {/* Development Progress Chart */}
+              {profile.assessments && profile.assessments.length > 0 && (
+                <div className="mt-6">
+                  <h5 className="text-md font-medium mb-4 text-gray-700">Development Progress Over Time</h5>
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    {/* Legend for categories */}
+                    <div className="flex justify-center mb-4 flex-wrap">
+                      <div className="flex space-x-6 text-sm">
+                        <div className="flex items-center">
+                          <div className="w-4 h-4 bg-indigo-500 rounded mr-2"></div>
+                          <span>Personal Development</span>
+                        </div>
+                        <div className="flex items-center">
+                          <div className="w-4 h-4 bg-orange-500 rounded mr-2"></div>
+                          <span>Team Work</span>
+                        </div>
+                        <div className="flex items-center">
+                          <div className="w-4 h-4 bg-pink-500 rounded mr-2"></div>
+                          <span>Critical Thinking</span>
+                        </div>
+                        <div className="flex items-center">
+                          <div className="w-4 h-4 bg-purple-500 rounded mr-2"></div>
+                          <span>Academic Knowledge</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Chart Container */}
+                    <div className="bg-white border border-gray-200 rounded-lg p-4">
+                      <div className="flex">
+                        {/* Y-axis labels */}
+                        <div className="flex flex-col justify-between text-xs text-gray-500 pr-3 border-r border-gray-200" style={{height: '300px'}}>
+                          <span>4</span>
+                          <span>3</span>
+                          <span>2</span>
+                          <span>1</span>
+                          <span>0</span>
+                        </div>
+                        
+                        {/* Chart area */}
+                        <div className="flex-1 relative ml-4" style={{height: '300px'}}>
+                          {/* Grid lines */}
+                          <div className="absolute inset-0">
+                            {[0, 1, 2, 3, 4].map((level) => (
+                              <div 
+                                key={level} 
+                                className="absolute w-full border-t border-gray-100" 
+                                style={{bottom: `${(level / 4) * 100}%`}}
+                              ></div>
+                            ))}
+                          </div>
+                          
+                          {/* Category groups */}
+                          <div className="absolute inset-0 flex items-end justify-around px-4">
+                            {/* Personal Development Category */}
+                            <div className="flex flex-col items-center">
+                              <div className="flex items-end space-x-1">
+                                {profile.assessments
+                                  .sort((a, b) => new Date(a.scheduled_date) - new Date(b.scheduled_date))
+                                  .slice(-8)
+                                  .map((assessment, index) => {
+                                  const level = assessment.personal_development_level || 0;
+                                  const barHeight = (level / 4) * 300; // 300px = full height of chart
+                                  
+                                  return (
+                                    <div 
+                                      key={`personal-${assessment.id}`}
+                                      className="bg-indigo-500 border border-indigo-600 w-6 hover:bg-indigo-400 cursor-pointer group relative transition-colors"
+                                      style={{height: `${barHeight}px`}}
+                                    >
+                                      {/* Tooltip */}
+                                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 bg-gray-800 text-white text-xs rounded py-2 px-3 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 whitespace-nowrap">
+                                        <div className="text-center">
+                                          <div className="font-semibold">Personal Development</div>
+                                          <div>Level: {level}</div>
+                                          <div>{new Date(assessment.scheduled_date).toLocaleDateString('id-ID')}</div>
+                                        </div>
+                                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                            
+                            {/* Team Work Category */}
+                            <div className="flex flex-col items-center">
+                              <div className="flex items-end space-x-1">
+                                {profile.assessments
+                                  .sort((a, b) => new Date(a.scheduled_date) - new Date(b.scheduled_date))
+                                  .slice(-8)
+                                  .map((assessment, index) => {
+                                  const level = assessment.team_work_level || 0;
+                                  const barHeight = (level / 4) * 300; // 300px = full height of chart
+                                  
+                                  return (
+                                    <div 
+                                      key={`teamwork-${assessment.id}`}
+                                      className="bg-orange-500 border border-orange-600 w-6 hover:bg-orange-400 cursor-pointer group relative transition-colors"
+                                      style={{height: `${barHeight}px`}}
+                                    >
+                                      {/* Tooltip */}
+                                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 bg-gray-800 text-white text-xs rounded py-2 px-3 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 whitespace-nowrap">
+                                        <div className="text-center">
+                                          <div className="font-semibold">Team Work</div>
+                                          <div>Level: {level}</div>
+                                          <div>{new Date(assessment.scheduled_date).toLocaleDateString('id-ID')}</div>
+                                        </div>
+                                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                            
+                            {/* Critical Thinking Category */}
+                            <div className="flex flex-col items-center">
+                              <div className="flex items-end space-x-1">
+                                {profile.assessments
+                                  .sort((a, b) => new Date(a.scheduled_date) - new Date(b.scheduled_date))
+                                  .slice(-8)
+                                  .map((assessment, index) => {
+                                  const level = assessment.critical_thinking_level || 0;
+                                  const barHeight = (level / 4) * 300; // 300px = full height of chart
+                                  
+                                  return (
+                                    <div 
+                                      key={`critical-${assessment.id}`}
+                                      className="bg-pink-500 border border-pink-600 w-6 hover:bg-pink-400 cursor-pointer group relative transition-colors"
+                                      style={{height: `${barHeight}px`}}
+                                    >
+                                      {/* Tooltip */}
+                                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 bg-gray-800 text-white text-xs rounded py-2 px-3 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 whitespace-nowrap">
+                                        <div className="text-center">
+                                          <div className="font-semibold">Critical Thinking</div>
+                                          <div>Level: {level}</div>
+                                          <div>{new Date(assessment.scheduled_date).toLocaleDateString('id-ID')}</div>
+                                        </div>
+                                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                            
+                            {/* Academic Knowledge Category */}
+                            <div className="flex flex-col items-center">
+                              <div className="flex items-end space-x-1">
+                                {profile.assessments
+                                  .sort((a, b) => new Date(a.scheduled_date) - new Date(b.scheduled_date))
+                                  .slice(-8)
+                                  .map((assessment, index) => {
+                                  const level = assessment.academic_knowledge_level || 0;
+                                  const barHeight = (level / 4) * 300; // 300px = full height of chart
+                                  
+                                  return (
+                                    <div 
+                                      key={`academic-${assessment.id}`}
+                                      className="bg-purple-500 border border-purple-600 w-6 hover:bg-purple-400 cursor-pointer group relative transition-colors"
+                                      style={{height: `${barHeight}px`}}
+                                    >
+                                      {/* Tooltip */}
+                                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 bg-gray-800 text-white text-xs rounded py-2 px-3 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 whitespace-nowrap">
+                                        <div className="text-center">
+                                          <div className="font-semibold">Academic Knowledge</div>
+                                          <div>Level: {level}</div>
+                                          <div>{new Date(assessment.scheduled_date).toLocaleDateString('id-ID')}</div>
+                                        </div>
+                                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* X-axis title */}
+                      <div className="text-center text-xs text-gray-500 mt-4 border-t border-gray-100 pt-3">
+                        Development Categories
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Teachers Section */}
@@ -692,14 +933,6 @@ const ProfileView = ({ entityType, id, onBack }) => {
                                   </div>
                                 )}
                               </div>
-                            </div>
-                            <div className="text-right">
-                              {activity.knowledge_score && (
-                                <p className="text-sm text-yellow-700">Knowledge: {activity.knowledge_score}/100</p>
-                              )}
-                              {activity.participation_score && (
-                                <p className="text-sm text-yellow-700">Participation: {activity.participation_score}/100</p>
-                              )}
                             </div>
                           </div>
                         </div>
@@ -811,25 +1044,12 @@ const ProfileView = ({ entityType, id, onBack }) => {
                         </div>
                       </div>
                       
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        {/* Traditional Scores */}
-                        {(assessment.knowledge_score || assessment.participation_score) && (
-                          <div className="bg-white p-3 rounded border">
-                            <h6 className="font-medium text-gray-700 mb-2">📚 Academic Scores</h6>
-                            {assessment.knowledge_score && (
-                              <p className="text-sm">Knowledge: <span className="font-semibold text-blue-600">{assessment.knowledge_score}/10</span></p>
-                            )}
-                            {assessment.participation_score && (
-                              <p className="text-sm">Participation: <span className="font-semibold text-purple-600">{assessment.participation_score}/10</span></p>
-                            )}
-                          </div>
-                        )}
-                        
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* Developmental Levels */}
                         <div className="bg-white p-3 rounded border">
                           <h6 className="font-medium text-gray-700 mb-2">🌱 Development</h6>
                           {assessment.personal_development_level && (
-                            <p className="text-sm">Personal: <span className="font-semibold text-green-600">Level {assessment.personal_development_level}</span></p>
+                            <p className="text-sm">Personal: <span className="font-semibold text-indigo-600">Level {assessment.personal_development_level}</span></p>
                           )}
                           {assessment.team_work_level && (
                             <p className="text-sm">Team Work: <span className="font-semibold text-orange-600">Level {assessment.team_work_level}</span></p>
