@@ -331,28 +331,32 @@ const StudentAssessmentView = ({ scheduleId, onBack }) => {
               </div>
 
               {/* Assessment Categories */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+              <div className="space-y-4 mb-4">
                 {Object.entries(assessmentCategories).map(([categoryKey, category]) => (
-                  <div key={categoryKey} className="border border-gray-200 rounded-lg p-4">
-                    <h4 className="font-medium text-gray-900 mb-3">{category.name}</h4>
-                    <div className="space-y-2">
-                      {[1, 2, 3, 4].map((level) => (
-                        <label key={level} className="flex items-start space-x-3 cursor-pointer">
-                          <input
-                            type="radio"
-                            name={`${student.id}_${categoryKey}`}
-                            value={level}
-                            checked={student.assessment?.[`${categoryKey}_level`] === level}
-                            onChange={() => handleAssessmentChange(student.id, categoryKey, level)}
-                            className="mt-1 text-blue-600 focus:ring-blue-500"
-                          />
-                          <div>
-                            <div className="font-medium text-sm">Level {level}</div>
-                            <div className="text-xs text-gray-600">{category.levels[level]}</div>
-                          </div>
-                        </label>
+                  <div key={categoryKey} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                    <h4 className="font-medium text-gray-900 mb-2">{category.name}</h4>
+                    <p className="text-xs text-gray-600 mb-3 italic">{category.description}</p>
+                    
+                    <select
+                      value={student.assessment?.[`${categoryKey}_level`] || ''}
+                      onChange={(e) => handleAssessmentChange(student.id, categoryKey, parseInt(e.target.value) || '')}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    >
+                      <option value="">Select Level</option>
+                      {Object.entries(category.levels).map(([level, description]) => (
+                        <option key={level} value={level}>
+                          Level {level}: {description.length > 60 ? description.substring(0, 60) + '...' : description}
+                        </option>
                       ))}
-                    </div>
+                    </select>
+                    
+                    {/* Show selected level description */}
+                    {student.assessment?.[`${categoryKey}_level`] && (
+                      <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded text-sm">
+                        <strong>Level {student.assessment[`${categoryKey}_level`]}:</strong>{' '}
+                        {category.levels[student.assessment[`${categoryKey}_level`]]}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

@@ -290,23 +290,35 @@ const StudentAssessmentModal = ({ scheduleId, onClose }) => {
                   </div>
 
                   {/* Assessment Categories */}
-                  <div className="grid md:grid-cols-2 gap-4 mb-4">
+                  <div className="space-y-4 mb-4">
                     {Object.entries(assessmentCategories).map(([key, category]) => (
-                      <div key={key}>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          {category.title} (Level 1-4)
+                      <div key={key} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          {category.title}
                         </label>
+                        <p className="text-xs text-gray-600 mb-3 italic">
+                          {category.goal}
+                        </p>
                         <select
                           value={student[`${key}_level`] || ''}
                           onChange={(e) => handleStudentChange(student.id, `${key}_level`, e.target.value)}
-                          className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+                          className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                         >
                           <option value="">Select Level</option>
-                          <option value="1">Level 1</option>
-                          <option value="2">Level 2</option>
-                          <option value="3">Level 3</option>
-                          <option value="4">Level 4</option>
+                          {Object.entries(category.levels).map(([level, description]) => (
+                            <option key={level} value={level}>
+                              Level {level}: {description.length > 50 ? description.substring(0, 50) + '...' : description}
+                            </option>
+                          ))}
                         </select>
+                        
+                        {/* Show selected level description */}
+                        {student[`${key}_level`] && (
+                          <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-xs">
+                            <strong>Level {student[`${key}_level`]}:</strong>{' '}
+                            {category.levels[student[`${key}_level`]]}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
