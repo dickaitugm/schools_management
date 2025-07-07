@@ -62,15 +62,21 @@ const TeacherManagement = ({ selectedSchoolId, onViewProfile }) => {
       const response = await fetch('/api/schools');
       const data = await response.json();
 
-      // API schools returns array directly, not {success: true, data: [...]}
-      if (Array.isArray(data)) {
+      // Check if response has success property and data array
+      if (data.success && Array.isArray(data.data)) {
+        setSchools(data.data);
+        console.log('Schools loaded:', data.data.length, 'schools');
+      } else if (Array.isArray(data)) {
+        // Fallback for direct array response
         setSchools(data);
         console.log('Schools loaded:', data.length, 'schools');
       } else {
         console.error('Unexpected schools API response format:', data);
+        setSchools([]);
       }
     } catch (error) {
       console.error('Failed to fetch schools:', error);
+      setSchools([]);
     }
   };
 
@@ -141,11 +147,16 @@ const TeacherManagement = ({ selectedSchoolId, onViewProfile }) => {
     setError(null);
 
     try {
+      // Add minimum delay for better UX
+      const startTime = Date.now();
+      
       const url = modalType === 'edit' 
         ? `/api/teachers/${selectedTeacher.id}`
         : '/api/teachers';
       
       const method = modalType === 'edit' ? 'PUT' : 'POST';
+
+      console.log('Submitting teacher data:', formData); // Debug log
 
       const response = await fetch(url, {
         method,
@@ -156,6 +167,14 @@ const TeacherManagement = ({ selectedSchoolId, onViewProfile }) => {
       });
 
       const data = await response.json();
+      console.log('Teacher API response:', data); // Debug log
+
+      // Ensure minimum loading time
+      const elapsed = Date.now() - startTime;
+      const minDelay = 800; // 800ms minimum
+      if (elapsed < minDelay) {
+        await new Promise(resolve => setTimeout(resolve, minDelay - elapsed));
+      }
 
       if (data.success) {
         setSuccess(data.message);
@@ -163,9 +182,10 @@ const TeacherManagement = ({ selectedSchoolId, onViewProfile }) => {
         fetchTeachers();
         setTimeout(() => setSuccess(null), 3000);
       } else {
-        setError(data.error);
+        setError(data.error || 'Failed to save teacher');
       }
     } catch (error) {
+      console.error('Error submitting teacher:', error);
       setError('Failed to save teacher');
     } finally {
       setLoading(false);
