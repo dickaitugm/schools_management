@@ -2,8 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
+import { useAuth } from './AuthContext';
 
 const LessonManagement = ({ onViewProfile }) => {
+  const { hasPermission, logActivity } = useAuth();
   const [lessons, setLessons] = useState([]);
   const [teachers, setTeachers] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -217,12 +219,14 @@ const LessonManagement = ({ onViewProfile }) => {
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-800">BB for Society - Lessons</h1>
-        <button 
-          onClick={() => openModal('create')}
-          className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
-        >
-          Add New Lesson
-        </button>
+        {hasPermission('create_lessons') && (
+          <button 
+            onClick={() => openModal('create')}
+            className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
+          >
+            Add New Lesson
+          </button>
+        )}
       </div>
 
       {/* Success/Error Messages */}
@@ -335,18 +339,22 @@ const LessonManagement = ({ onViewProfile }) => {
                         >
                           View Profile
                         </button>
-                        <button
-                          onClick={() => openModal('edit', lesson)}
-                          className="text-indigo-600 hover:text-indigo-900 mr-3"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDelete(lesson)}
-                          className="text-red-600 hover:text-red-900"
-                        >
-                          Delete
-                        </button>
+                        {hasPermission('update_lessons') && (
+                          <button
+                            onClick={() => openModal('edit', lesson)}
+                            className="text-indigo-600 hover:text-indigo-900 mr-3"
+                          >
+                            Edit
+                          </button>
+                        )}
+                        {hasPermission('delete_lessons') && (
+                          <button
+                            onClick={() => handleDelete(lesson)}
+                            className="text-red-600 hover:text-red-900"
+                          >
+                            Delete
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}

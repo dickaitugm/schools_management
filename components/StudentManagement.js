@@ -2,9 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
+import { useAuth } from './AuthContext';
 import { formatDateIndonesian } from '../utils/dateUtils';
 
 const StudentManagement = ({ selectedSchoolId, onViewProfile }) => {
+  const { hasPermission, logActivity } = useAuth();
   const [students, setStudents] = useState([]);
   const [schools, setSchools] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -253,12 +255,14 @@ const StudentManagement = ({ selectedSchoolId, onViewProfile }) => {
             </p>
           )}
         </div>
-        <button 
-          onClick={() => openModal('create')}
-          className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
-        >
-          Add New Student
-        </button>
+        {hasPermission('create_students') && (
+          <button 
+            onClick={() => openModal('create')}
+            className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+          >
+            Add New Student
+          </button>
+        )}
       </div>
 
       {/* Success/Error Messages */}
@@ -356,18 +360,22 @@ const StudentManagement = ({ selectedSchoolId, onViewProfile }) => {
                         >
                           View Profile
                         </button>
-                        <button
-                          onClick={() => openModal('edit', student)}
-                          className="text-purple-600 hover:text-purple-900 mr-3"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDelete(student)}
-                          className="text-red-600 hover:text-red-900"
-                        >
-                          Delete
-                        </button>
+                        {hasPermission('update_students') && (
+                          <button
+                            onClick={() => openModal('edit', student)}
+                            className="text-purple-600 hover:text-purple-900 mr-3"
+                          >
+                            Edit
+                          </button>
+                        )}
+                        {hasPermission('delete_students') && (
+                          <button
+                            onClick={() => handleDelete(student)}
+                            className="text-red-600 hover:text-red-900"
+                          >
+                            Delete
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}

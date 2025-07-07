@@ -5,7 +5,7 @@ import { useAuth } from './AuthContext';
 
 const Sidebar = ({ currentPage, onPageChange, collapsed = false, onToggle }) => {
   const [isMobile, setIsMobile] = useState(false);
-  const { user, hasPermission, logout } = useAuth();
+  const { user, hasPermission, logout, isGuest } = useAuth();
 
   useEffect(() => {
     const checkScreenSize = () => {
@@ -28,7 +28,8 @@ const Sidebar = ({ currentPage, onPageChange, collapsed = false, onToggle }) => 
     { path: 'students', name: 'Students', icon: '👨‍🎓', permission: 'read_students' },
     { path: 'lessons', name: 'Lessons', icon: '📚', permission: 'read_lessons' },
     { path: 'schedules', name: 'Schedules', icon: '📅', permission: 'read_schedules' },
-    { path: 'roles', name: 'Role Management', icon: '⚙️', permission: 'manage_roles' }
+    { path: 'roles', name: 'Role Management', icon: '⚙️', permission: 'manage_roles' },
+    { path: 'activity-logs', name: 'Activity Logs', icon: '📝', permission: 'manage_roles' }
   ];
 
   // Filter menu items based on user permissions
@@ -132,16 +133,26 @@ const Sidebar = ({ currentPage, onPageChange, collapsed = false, onToggle }) => 
           </ul>
         </nav>
 
-        {/* User Info & Logout */}
-        {!collapsed && user && (
+        {/* User Info & Login/Logout */}
+        {!collapsed && (
           <div className="p-4 border-t border-blue-700">
-            <button
-              onClick={logout}
-              className="flex items-center space-x-3 p-2 rounded-lg hover:bg-blue-700 transition-colors w-full text-left"
-            >
-              <span className="text-xl">🚪</span>
-              <span className="truncate">Logout</span>
-            </button>
+            {isGuest ? (
+              <button
+                onClick={() => handleMenuClick('login')}
+                className="flex items-center space-x-3 p-2 rounded-lg hover:bg-blue-700 transition-colors w-full text-left"
+              >
+                <span className="text-xl">🔑</span>
+                <span className="truncate">Login</span>
+              </button>
+            ) : (
+              <button
+                onClick={logout}
+                className="flex items-center space-x-3 p-2 rounded-lg hover:bg-blue-700 transition-colors w-full text-left"
+              >
+                <span className="text-xl">🚪</span>
+                <span className="truncate">Logout</span>
+              </button>
+            )}
           </div>
         )}
       </div>

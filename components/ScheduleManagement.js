@@ -2,9 +2,11 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import Modal from './Modal';
+import { useAuth } from './AuthContext';
 import { formatDateIndonesian, formatDateTimeIndonesian, formatTimeIndonesian } from '../utils/dateUtils';
 
 const ScheduleManagement = ({ selectedSchoolId, onViewProfile, onViewAssessment }) => {
+  const { hasPermission, logActivity } = useAuth();
   const [schedules, setSchedules] = useState([]);
   const [schools, setSchools] = useState([]);
   const [teachers, setTeachers] = useState([]);
@@ -397,12 +399,14 @@ const ScheduleManagement = ({ selectedSchoolId, onViewProfile, onViewAssessment 
       {/* Header */}
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-800">BB for Society - Schedules</h1>
-        <button
-          onClick={() => openModal('create')}
-          className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors"
-        >
-          Add New Schedule
-        </button>
+        {hasPermission('create_schedules') && (
+          <button
+            onClick={() => openModal('create')}
+            className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors"
+          >
+            Add New Schedule
+          </button>
+        )}
       </div>
 
       {/* Success/Error Messages */}
@@ -643,12 +647,14 @@ const ScheduleManagement = ({ selectedSchoolId, onViewProfile, onViewAssessment 
               )}
 
               <div className="flex space-x-2 pt-4">
-                <button
-                  onClick={() => openModal('edit', displaySchedule)}
-                  className="flex-1 bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700"
-                >
-                  Edit
-                </button>
+                {hasPermission('update_schedules') && (
+                  <button
+                    onClick={() => openModal('edit', displaySchedule)}
+                    className="flex-1 bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700"
+                  >
+                    Edit
+                  </button>
+                )}
                 {displaySchedule.status === 'completed' && (
                   <button
                     onClick={() => handleViewScheduleAssessment(displaySchedule.id)}
@@ -657,12 +663,14 @@ const ScheduleManagement = ({ selectedSchoolId, onViewProfile, onViewAssessment 
                     Assessment
                   </button>
                 )}
-                <button
-                  onClick={() => handleDelete(displaySchedule)}
-                  className="flex-1 bg-red-600 text-white px-3 py-2 rounded text-sm hover:bg-red-700"
-                >
-                  Delete
-                </button>
+                {hasPermission('delete_schedules') && (
+                  <button
+                    onClick={() => handleDelete(displaySchedule)}
+                    className="flex-1 bg-red-600 text-white px-3 py-2 rounded text-sm hover:bg-red-700"
+                  >
+                    Delete
+                  </button>
+                )}
               </div>
             </div>
           ) : !selectedSchedule && upcomingSchedules.length === 0 ? (
@@ -890,15 +898,17 @@ const ScheduleManagement = ({ selectedSchoolId, onViewProfile, onViewAssessment 
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              openModal('edit', schedule);
-                            }}
-                            className="text-blue-600 hover:text-blue-900 mr-3"
-                          >
-                            Edit
-                          </button>
+                          {hasPermission('update_schedules') && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openModal('edit', schedule);
+                              }}
+                              className="text-blue-600 hover:text-blue-900 mr-3"
+                            >
+                              Edit
+                            </button>
+                          )}
                           {schedule.status === 'completed' && (
                             <button
                               onClick={(e) => {
@@ -911,15 +921,17 @@ const ScheduleManagement = ({ selectedSchoolId, onViewProfile, onViewAssessment 
                               Assessment
                             </button>
                           )}
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDelete(schedule);
-                            }}
-                            className="text-red-600 hover:text-red-900"
-                          >
-                            Delete
-                          </button>
+                          {hasPermission('delete_schedules') && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDelete(schedule);
+                              }}
+                              className="text-red-600 hover:text-red-900"
+                            >
+                              Delete
+                            </button>
+                          )}
                         </td>
                       </tr>
                     ))}

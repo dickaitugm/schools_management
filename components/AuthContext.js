@@ -15,39 +15,87 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isGuest, setIsGuest] = useState(true);
 
   // Role permissions mapping
   const rolePermissions = {
-    admin: ['*'], // Admin has all permissions
+    admin: ['*', 'manage_roles'], // Admin has all permissions including role management
     teachers: [
-      'read_students', 'read_teachers', 'read_schedules', 'read_lessons', 
+      'create_students', 'read_students', 'update_students', 'delete_students',
+      'create_teachers', 'read_teachers', 'update_teachers', 'delete_teachers',
+      'create_schools', 'read_schools', 'update_schools', 'delete_schools',
+      'create_schedules', 'read_schedules', 'update_schedules', 'delete_schedules',
+      'create_lessons', 'read_lessons', 'update_lessons', 'delete_lessons',
       'view_reports', 'view_assessments', 'create_assessments'
     ],
-    student: ['read_schedules', 'read_lessons', 'view_assessments'],
-    parents: ['read_students', 'read_schedules', 'view_assessments'],
-    guest: ['read_schedules', 'read_lessons']
+    parents: ['read_students', 'update_students', 'read_schedules', 'read_lessons', 'view_assessments'],
+    student: ['read_students', 'update_students', 'read_schedules', 'read_lessons', 'view_assessments'],
+    guest: ['read_students', 'read_teachers', 'read_schools', 'read_schedules', 'read_lessons']
   };
 
   useEffect(() => {
     // Check if user is logged in from localStorage
     const savedUser = localStorage.getItem('currentUser');
     if (savedUser) {
-      setUser(JSON.parse(savedUser));
+      const userData = JSON.parse(savedUser);
+      setUser(userData);
+      setIsGuest(false);
+    } else {
+      // Default guest user
+      setUser({ role: 'guest', name: 'Guest User', id: 'guest' });
+      setIsGuest(true);
     }
     setLoading(false);
   }, []);
 
+  // Activity Logger
+  const logActivity = (action, description, metadata = {}) => {
+    const activity = {
+      id: Date.now(),
+      timestamp: new Date().toISOString(),
+      user: user ? {
+        id: user.id,
+        name: user.name,
+        role: user.role
+      } : { id: 'guest', name: 'Guest User', role: 'guest' },
+      action,
+      description,
+      metadata,
+      session: isGuest ? 'guest' : 'authenticated'
+    };
+
+    // Get existing logs
+    const existingLogs = JSON.parse(localStorage.getItem('activityLogs') || '[]');
+    
+    // Add new log
+    existingLogs.push(activity);
+    
+    // Keep only last 1000 logs to prevent localStorage overflow
+    if (existingLogs.length > 1000) {
+      existingLogs.splice(0, existingLogs.length - 1000);
+    }
+    
+    // Save to localStorage
+    localStorage.setItem('activityLogs', JSON.stringify(existingLogs));
+    
+    console.log('Activity logged:', activity);
+  };
+
   const login = (userData) => {
-    console.log('AuthContext login called with:', userData);
     setUser(userData);
+    setIsGuest(false);
     localStorage.setItem('currentUser', JSON.stringify(userData));
+    logActivity('login', `User ${userData.name} logged in`);
   };
 
   const logout = () => {
-    setUser(null);
+    if (user && !isGuest) {
+      logActivity('logout', `User ${user.name} logged out`);
+    }
+    setUser({ role: 'guest', name: 'Guest User', id: 'guest' });
+    setIsGuest(true);
     localStorage.removeItem('currentUser');
-    localStorage.removeItem('userSession'); // Also remove userSession for compatibility
-    window.location.reload(); // Refresh to reset app state
+    localStorage.removeItem('userSession');
   };
 
   const hasPermission = (permission) => {
@@ -70,14 +118,22 @@ export const AuthProvider = ({ children }) => {
     return hasPermission(permission);
   };
 
+  const getActivityLogs = (limit = 100) => {
+    const logs = JSON.parse(localStorage.getItem('activityLogs') || '[]');
+    return logs.slice(-limit).reverse(); // Return latest first
+  };
+
   const value = {
     user,
+    isGuest,
     login,
     logout,
     hasPermission,
     hasAnyPermission,
     canAccess,
-    loading
+    loading,
+    logActivity,
+    getActivityLogs
   };
 
   return (
@@ -85,46 +141,6 @@ export const AuthProvider = ({ children }) => {
       {children}
     </AuthContext.Provider>
   );
-};
-
-// Higher-order component for protecting routes
-export const withAuth = (WrappedComponent, requiredPermissions = []) => {
-  return function AuthenticatedComponent(props) {
-    const { user, hasAnyPermission, loading } = useAuth();
-
-    if (loading) {
-      return (
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        </div>
-      );
-    }
-
-    if (!user) {
-      return (
-        <div className="flex items-center justify-center min-h-screen bg-gray-100">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h2>
-            <p className="text-gray-600">You need to log in to access this page.</p>
-          </div>
-        </div>
-      );
-    }
-
-    if (requiredPermissions.length > 0 && !hasAnyPermission(requiredPermissions)) {
-      return (
-        <div className="flex items-center justify-center min-h-screen bg-gray-100">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h2>
-            <p className="text-gray-600">You don't have permission to access this page.</p>
-            <p className="text-sm text-gray-500 mt-2">Required permissions: {requiredPermissions.join(', ')}</p>
-          </div>
-        </div>
-      );
-    }
-
-    return <WrappedComponent {...props} />;
-  };
 };
 
 export default AuthContext;
