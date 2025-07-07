@@ -618,45 +618,156 @@ const ProfileView = ({ entityType, id, onBack }) => {
               )}
             </div>
 
-            {/* Recent Attendance */}
+            {/* Learning Activity - Combined Attendance & Schedules */}
             <div className="bg-white rounded-lg shadow-md p-6 mb-6 hover:shadow-lg transition-shadow">
-              <h4 className="text-xl font-semibold mb-4">Recent Attendance</h4>
+              <h4 className="text-xl font-semibold mb-4 flex items-center">
+                <span className="text-purple-600 mr-2">📚</span>
+                Learning Activity
+              </h4>
               <div className="space-y-3">
-                {profile.attendance_records.slice(0, 5).map((record) => (
-                  <div key={record.id} className="bg-yellow-50 p-4 rounded-lg border border-yellow-200 hover:shadow-md transition-shadow">
-                    <div className="flex justify-between items-start">
-                      <div className="flex items-start">
-                        <div className="bg-yellow-100 p-2 rounded-full mr-3">
-                          <span className="text-yellow-600 text-sm">
-                            {record.attendance_status === 'present' ? '✅' : '❌'}
-                          </span>
+                {/* Combine and sort attendance records and schedules by date */}
+                {(() => {
+                  const activities = [];
+                  
+                  // Add attendance records
+                  if (profile.attendance_records && profile.attendance_records.length > 0) {
+                    profile.attendance_records.forEach(record => {
+                      activities.push({
+                        ...record,
+                        type: 'attendance',
+                        sort_date: new Date(record.scheduled_date + ' ' + (record.scheduled_time || '00:00'))
+                      });
+                    });
+                  }
+                  
+                  // Add recent schedules
+                  if (profile.recent_schedules && profile.recent_schedules.length > 0) {
+                    profile.recent_schedules.forEach(schedule => {
+                      activities.push({
+                        ...schedule,
+                        type: 'schedule',
+                        sort_date: new Date(schedule.scheduled_date + ' ' + (schedule.scheduled_time || '00:00'))
+                      });
+                    });
+                  }
+                  
+                  // Sort by date (newest first) and take top 8
+                  const sortedActivities = activities
+                    .sort((a, b) => b.sort_date - a.sort_date)
+                    .slice(0, 8);
+                  
+                  return sortedActivities.map((activity, index) => {
+                    if (activity.type === 'attendance') {
+                      // Render attendance record
+                      return (
+                        <div key={`attendance-${activity.id}-${index}`} className="bg-gradient-to-r from-yellow-50 to-orange-50 p-4 rounded-lg border border-yellow-200 hover:shadow-md transition-shadow">
+                          <div className="flex justify-between items-start">
+                            <div className="flex items-start">
+                              <div className="bg-yellow-100 p-2 rounded-full mr-3">
+                                <span className="text-yellow-600 text-sm">
+                                  {activity.attendance_status === 'present' ? '✅' : '❌'}
+                                </span>
+                              </div>
+                              <div className="flex-1">
+                                <div className="flex items-center mb-2">
+                                  <h5 className="font-semibold text-yellow-800">
+                                    📅 {formatDateTimeIndonesian(activity.scheduled_date, activity.scheduled_time)}
+                                  </h5>
+                                  <span className="ml-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                    Attendance
+                                  </span>
+                                </div>
+                                <p className="text-sm text-yellow-600 mb-1">
+                                  Status: <span className={`font-medium ${activity.attendance_status === 'present' ? 'text-green-600' : 'text-red-600'}`}>
+                                    {activity.attendance_status}
+                                  </span>
+                                </p>
+                                {activity.lesson_titles && activity.lesson_titles[0] && (
+                                  <div className="flex flex-wrap gap-1 mt-2">
+                                    {activity.lesson_titles.map((title, idx) => (
+                                      <span key={idx} className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-indigo-100 text-indigo-800">
+                                        📚 {title}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              {activity.knowledge_score && (
+                                <p className="text-sm text-yellow-700">Knowledge: {activity.knowledge_score}/100</p>
+                              )}
+                              {activity.participation_score && (
+                                <p className="text-sm text-yellow-700">Participation: {activity.participation_score}/100</p>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-semibold text-yellow-800">{formatDateTimeIndonesian(record.scheduled_date, record.scheduled_time)}</p>
-                          <p className="text-sm text-yellow-600">Status: 
-                            <span className={`ml-1 font-medium ${record.attendance_status === 'present' ? 'text-green-600' : 'text-red-600'}`}>
-                              {record.attendance_status}
-                            </span>
-                          </p>
-                          {record.lesson_titles && record.lesson_titles[0] && (
-                            <p className="text-sm text-yellow-600">Lessons: {record.lesson_titles.join(', ')}</p>
-                          )}
+                      );
+                    } else {
+                      // Render schedule
+                      const statusColor = {
+                        'scheduled': 'blue',
+                        'in-progress': 'yellow', 
+                        'completed': 'green',
+                        'cancelled': 'red'
+                      }[activity.status] || 'gray';
+                      
+                      return (
+                        <div key={`schedule-${activity.id}-${index}`} className="bg-gradient-to-r from-purple-50 to-pink-50 p-4 rounded-lg border border-purple-200 hover:shadow-md transition-shadow">
+                          <div className="flex justify-between items-start">
+                            <div className="flex items-start">
+                              <div className="bg-purple-100 p-2 rounded-full mr-3">
+                                <span className="text-purple-600 text-sm">📅</span>
+                              </div>
+                              <div className="flex-1">
+                                <div className="flex items-center justify-between mb-2">
+                                  <h5 className="font-semibold text-purple-800">
+                                    📅 {formatDateTimeIndonesian(activity.scheduled_date, activity.scheduled_time)}
+                                  </h5>
+                                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-${statusColor}-100 text-${statusColor}-800`}>
+                                    {activity.status.charAt(0).toUpperCase() + activity.status.slice(1)}
+                                  </span>
+                                </div>
+                                <p className="text-sm text-purple-600 mb-1">
+                                  🏫 School: {activity.school_name}
+                                </p>
+                                <p className="text-sm text-purple-600 mb-1">
+                                  ⏱️ Duration: {activity.duration_minutes} minutes
+                                </p>
+                                {activity.lesson_titles && activity.lesson_titles[0] && (
+                                  <div className="flex flex-wrap gap-1 mt-2">
+                                    {activity.lesson_titles.map((title, idx) => (
+                                      <span key={idx} className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-indigo-100 text-indigo-800">
+                                        📚 {title}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+                                {activity.notes && (
+                                  <p className="text-sm text-purple-600 mt-1">
+                                    📝 {activity.notes}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                      <div className="text-right">
-                        {record.knowledge_score && (
-                          <p className="text-sm text-yellow-700">Knowledge: {record.knowledge_score}/100</p>
-                        )}
-                        {record.participation_score && (
-                          <p className="text-sm text-yellow-700">Participation: {record.participation_score}/100</p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                      );
+                    }
+                  });
+                })()}
               </div>
-              {(profile.attendance_records?.length || 0) > 5 && (
-                <p className="text-sm text-gray-500 mt-3 text-center">... and {(profile.attendance_records?.length || 0) - 5} more records</p>
+              {((profile.attendance_records?.length || 0) + (profile.recent_schedules?.length || 0)) > 8 && (
+                <p className="text-sm text-gray-500 mt-3 text-center">
+                  ... and {((profile.attendance_records?.length || 0) + (profile.recent_schedules?.length || 0)) - 8} more activities
+                </p>
+              )}
+              {((profile.attendance_records?.length || 0) + (profile.recent_schedules?.length || 0)) === 0 && (
+                <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-lg">
+                  <span className="text-4xl block mb-2">📚</span>
+                  <p>No learning activities yet</p>
+                </div>
               )}
             </div>
 
@@ -785,87 +896,6 @@ const ProfileView = ({ entityType, id, onBack }) => {
               </div>
             )}
 
-            {/* Recent Schedules */}
-            <div className="bg-white rounded-lg shadow-md p-6 mb-6 hover:shadow-lg transition-shadow">
-              <h4 className="text-xl font-semibold mb-4 flex items-center">
-                <span className="text-purple-600 mr-2">📅</span>
-                Recent Schedules
-              </h4>
-              {profile.recent_schedules && profile.recent_schedules.length > 0 ? (
-                <div className="space-y-4">
-                  {profile.recent_schedules.slice(0, 5).map((schedule) => {
-                    const statusColor = {
-                      'scheduled': 'blue',
-                      'in-progress': 'yellow', 
-                      'completed': 'green',
-                      'cancelled': 'red'
-                    }[schedule.status] || 'gray';
-                    
-                    return (
-                      <div key={schedule.id} className="bg-gradient-to-r from-purple-50 to-pink-50 p-4 rounded-lg border border-purple-200 hover:shadow-lg transition-all duration-200">
-                        <div className="flex justify-between items-start">
-                          <div className="flex-1">
-                            <div className="flex items-center justify-between mb-2">
-                              <h5 className="font-semibold text-purple-800 text-lg">
-                                📅 {formatDateTimeIndonesian(schedule.scheduled_date, schedule.scheduled_time)}
-                              </h5>
-                              <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-${statusColor}-100 text-${statusColor}-800 border border-${statusColor}-200`}>
-                                {schedule.status.charAt(0).toUpperCase() + schedule.status.slice(1)}
-                              </span>
-                            </div>
-                            
-                            <div className="grid md:grid-cols-2 gap-4 mb-3">
-                              <div>
-                                <p className="text-sm text-purple-600 mb-1">
-                                  <span className="font-medium">🏫 School:</span> {schedule.school_name}
-                                </p>
-                                <p className="text-sm text-purple-600 mb-1">
-                                  <span className="font-medium">⏱️ Duration:</span> {schedule.duration_minutes} minutes
-                                </p>
-                                {schedule.notes && (
-                                  <p className="text-sm text-purple-600">
-                                    <span className="font-medium">📝 Notes:</span> {schedule.notes}
-                                  </p>
-                                )}
-                              </div>
-                              
-                              <div>
-                                {schedule.lesson_titles && schedule.lesson_titles[0] && (
-                                  <div>
-                                    <p className="text-sm font-medium text-purple-700 mb-1">📚 Lessons:</p>
-                                    <div className="flex flex-wrap gap-1">
-                                      {schedule.lesson_titles.map((title, idx) => (
-                                        <span key={idx} className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-indigo-100 text-indigo-800">
-                                          {title}
-                                        </span>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                            
-                            <div className="flex items-center text-xs text-purple-500">
-                              <span className="bg-purple-100 px-2 py-1 rounded">
-                                Schedule ID: {schedule.id}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-lg">
-                  <span className="text-4xl block mb-2">📅</span>
-                  <p>No recent schedules found</p>
-                </div>
-              )}
-              {profile.recent_schedules && profile.recent_schedules.length > 5 && (
-                <p className="text-sm text-gray-500 mt-3 text-center">... and {profile.recent_schedules.length - 5} more schedules</p>
-              )}
-            </div>
           </div>
         )}
 
