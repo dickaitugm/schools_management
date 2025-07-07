@@ -123,50 +123,55 @@ const ProfileView = ({ entityType, id, onBack }) => {
         {entityType === 'schools' && (
           <div>
             {/* Basic Info */}
-            <div className="bg-blue-50 rounded-lg p-6 mb-6">
-              <h3 className="text-2xl font-semibold mb-4 text-blue-800">{profile.school.name}</h3>
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <p><strong>Address:</strong> {profile.school.address || 'N/A'}</p>
-                  <p><strong>Phone:</strong> {profile.school.phone || 'N/A'}</p>
-                  <p><strong>Email:</strong> {profile.school.email || 'N/A'}</p>
-                </div>
-                <div>
-                  <p><strong>Created:</strong> {formatDate(profile.school.created_at)}</p>
-                  <p><strong>Total Students:</strong> {profile.statistics.total_students}</p>
-                  <p><strong>Total Teachers:</strong> {profile.statistics.total_teachers}</p>
-                  <p><strong>Upcoming Schedules:</strong> {profile.statistics.upcoming_schedules}</p>
+            <div className="bg-white rounded-lg shadow-md p-6 mb-6 hover:shadow-lg transition-shadow">
+              <div className="bg-blue-50 rounded-lg p-6">
+                <h3 className="text-2xl font-semibold mb-4 text-blue-800">{profile.school.name}</h3>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <p><strong>Address:</strong> {profile.school.address || 'N/A'}</p>
+                    <p><strong>Phone:</strong> {profile.school.phone || 'N/A'}</p>
+                    <p><strong>Email:</strong> {profile.school.email || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p><strong>Created:</strong> {formatDate(profile.school.created_at)}</p>
+                    <p><strong>Total Students:</strong> {profile.statistics.total_students}</p>
+                    <p><strong>Total Teachers:</strong> {profile.statistics.total_teachers}</p>
+                    <p><strong>Upcoming Schedules:</strong> {profile.statistics.upcoming_schedules}</p>
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* Statistics */}
-            <div className="grid md:grid-cols-5 gap-4 mb-6">
-              <div className="bg-green-100 p-4 rounded-lg text-center">
-                <h4 className="text-green-800 font-semibold">Students</h4>
-                <p className="text-2xl font-bold text-green-600">{profile.statistics.total_students}</p>
-              </div>
-              <div className="bg-blue-100 p-4 rounded-lg text-center">
-                <h4 className="text-blue-800 font-semibold">Teachers</h4>
-                <p className="text-2xl font-bold text-blue-600">{profile.statistics.total_teachers}</p>
-              </div>
-              <div className="bg-indigo-100 p-4 rounded-lg text-center">
-                <h4 className="text-indigo-800 font-semibold">Lessons</h4>
-                <p className="text-2xl font-bold text-indigo-600">{profile.statistics.total_lessons || 0}</p>
-              </div>
-              <div className="bg-purple-100 p-4 rounded-lg text-center">
-                <h4 className="text-purple-800 font-semibold">Total Schedules</h4>
-                <p className="text-2xl font-bold text-purple-600">{profile.statistics.total_schedules}</p>
-              </div>
-              <div className="bg-orange-100 p-4 rounded-lg text-center">
-                <h4 className="text-orange-800 font-semibold">Upcoming</h4>
-                <p className="text-2xl font-bold text-orange-600">{profile.statistics.upcoming_schedules}</p>
+            <div className="bg-white rounded-lg shadow-md p-6 mb-6 hover:shadow-lg transition-shadow">
+              <h4 className="text-lg font-semibold mb-4 text-gray-800">School Statistics</h4>
+              <div className="grid md:grid-cols-5 gap-4">
+                <div className="bg-green-100 p-4 rounded-lg text-center hover:shadow-md transition-shadow">
+                  <h4 className="text-green-800 font-semibold">Students</h4>
+                  <p className="text-2xl font-bold text-green-600">{profile.statistics.total_students}</p>
+                </div>
+                <div className="bg-blue-100 p-4 rounded-lg text-center hover:shadow-md transition-shadow">
+                  <h4 className="text-blue-800 font-semibold">Teachers</h4>
+                  <p className="text-2xl font-bold text-blue-600">{profile.statistics.total_teachers}</p>
+                </div>
+                <div className="bg-indigo-100 p-4 rounded-lg text-center hover:shadow-md transition-shadow">
+                  <h4 className="text-indigo-800 font-semibold">Lessons</h4>
+                  <p className="text-2xl font-bold text-indigo-600">{profile.statistics.total_lessons || 0}</p>
+                </div>
+                <div className="bg-purple-100 p-4 rounded-lg text-center hover:shadow-md transition-shadow">
+                  <h4 className="text-purple-800 font-semibold">Total Schedules</h4>
+                  <p className="text-2xl font-bold text-purple-600">{profile.statistics.total_schedules}</p>
+                </div>
+                <div className="bg-orange-100 p-4 rounded-lg text-center hover:shadow-md transition-shadow">
+                  <h4 className="text-orange-800 font-semibold">Upcoming</h4>
+                  <p className="text-2xl font-bold text-orange-600">{profile.statistics.upcoming_schedules}</p>
+                </div>
               </div>
             </div>
 
             {/* Students Section */}
-            <div className="mb-6">
-              <h4 className="text-xl font-semibold mb-3 flex items-center">
+            <div className="bg-white rounded-lg shadow-md p-6 mb-6 hover:shadow-lg transition-shadow">
+              <h4 className="text-xl font-semibold mb-4 flex items-center">
                 <span className="text-green-600 mr-2">👥</span>
                 Students ({profile.students.length})
               </h4>
@@ -202,8 +207,8 @@ const ProfileView = ({ entityType, id, onBack }) => {
             </div>
 
             {/* Lessons Section */}
-            <div className="mb-6">
-              <h4 className="text-xl font-semibold mb-3 flex items-center">
+            <div className="bg-white rounded-lg shadow-md p-6 mb-6 hover:shadow-lg transition-shadow">
+              <h4 className="text-xl font-semibold mb-4 flex items-center">
                 <span className="text-indigo-600 mr-2">📚</span>
                 Lessons ({profile.lessons?.length || 0})
               </h4>
@@ -237,8 +242,8 @@ const ProfileView = ({ entityType, id, onBack }) => {
             </div>
 
             {/* Teachers Section */}
-            <div className="mb-6">
-              <h4 className="text-xl font-semibold mb-3 flex items-center">
+            <div className="bg-white rounded-lg shadow-md p-6 mb-6 hover:shadow-lg transition-shadow">
+              <h4 className="text-xl font-semibold mb-4 flex items-center">
                 <span className="text-blue-600 mr-2">👨‍🏫</span>
                 Teachers ({profile.teachers.length})
               </h4>
@@ -274,8 +279,8 @@ const ProfileView = ({ entityType, id, onBack }) => {
             </div>
 
             {/* Recent Schedules */}
-            <div className="mb-6">
-              <h4 className="text-xl font-semibold mb-3 flex items-center">
+            <div className="bg-white rounded-lg shadow-md p-6 mb-6 hover:shadow-lg transition-shadow">
+              <h4 className="text-xl font-semibold mb-4 flex items-center">
                 <span className="text-purple-600 mr-2">📅</span>
                 Recent Schedules
               </h4>
@@ -371,53 +376,58 @@ const ProfileView = ({ entityType, id, onBack }) => {
         {entityType === 'teachers' && (
           <div>
             {/* Basic Info */}
-            <div className="bg-green-50 rounded-lg p-6 mb-6">
-              <h3 className="text-2xl font-semibold mb-4 text-green-800">{profile.teacher.name}</h3>
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <p><strong>Subject:</strong> {profile.teacher.subject || 'N/A'}</p>
-                  <p><strong>Phone:</strong> {profile.teacher.phone || 'N/A'}</p>
-                  <p><strong>Email:</strong> {profile.teacher.email || 'N/A'}</p>
-                </div>
-                <div>
-                  <p><strong>Hire Date:</strong> {formatDate(profile.teacher.hire_date)}</p>
-                  <p><strong>Created:</strong> {formatDate(profile.teacher.created_at)}</p>
-                  <p><strong>Schools:</strong> {profile.statistics.total_schools}</p>
-                  <p><strong>Students:</strong> {profile.statistics.total_students}</p>
+            <div className="bg-white rounded-lg shadow-md p-6 mb-6 hover:shadow-lg transition-shadow">
+              <div className="bg-green-50 rounded-lg p-6">
+                <h3 className="text-2xl font-semibold mb-4 text-green-800">{profile.teacher.name}</h3>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <p><strong>Subject:</strong> {profile.teacher.subject || 'N/A'}</p>
+                    <p><strong>Phone:</strong> {profile.teacher.phone || 'N/A'}</p>
+                    <p><strong>Email:</strong> {profile.teacher.email || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p><strong>Hire Date:</strong> {formatDate(profile.teacher.hire_date)}</p>
+                    <p><strong>Created:</strong> {formatDate(profile.teacher.created_at)}</p>
+                    <p><strong>Schools:</strong> {profile.statistics.total_schools}</p>
+                    <p><strong>Students:</strong> {profile.statistics.total_students}</p>
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* Statistics */}
-            <div className="grid md:grid-cols-5 gap-4 mb-6">
-              <div className="bg-blue-100 p-4 rounded-lg text-center">
-                <h4 className="text-blue-800 font-semibold">Schools</h4>
-                <p className="text-2xl font-bold text-blue-600">{profile.statistics.total_schools}</p>
-              </div>
-              <div className="bg-green-100 p-4 rounded-lg text-center">
-                <h4 className="text-green-800 font-semibold">Students</h4>
-                <p className="text-2xl font-bold text-green-600">{profile.statistics.total_students}</p>
-              </div>
-              <div className="bg-purple-100 p-4 rounded-lg text-center">
-                <h4 className="text-purple-800 font-semibold">Lessons</h4>
-                <p className="text-2xl font-bold text-purple-600">{profile.statistics.total_lessons}</p>
-              </div>
-              <div className="bg-orange-100 p-4 rounded-lg text-center">
-                <h4 className="text-orange-800 font-semibold">Total Schedules</h4>
-                <p className="text-2xl font-bold text-orange-600">{profile.statistics.total_schedules}</p>
-              </div>
-              <div className="bg-red-100 p-4 rounded-lg text-center">
-                <h4 className="text-red-800 font-semibold">Upcoming</h4>
-                <p className="text-2xl font-bold text-red-600">{profile.statistics.upcoming_schedules}</p>
+            <div className="bg-white rounded-lg shadow-md p-6 mb-6 hover:shadow-lg transition-shadow">
+              <h4 className="text-lg font-semibold mb-4 text-gray-800">Teacher Statistics</h4>
+              <div className="grid md:grid-cols-5 gap-4">
+                <div className="bg-blue-100 p-4 rounded-lg text-center hover:shadow-md transition-shadow">
+                  <h4 className="text-blue-800 font-semibold">Schools</h4>
+                  <p className="text-2xl font-bold text-blue-600">{profile.statistics.total_schools}</p>
+                </div>
+                <div className="bg-green-100 p-4 rounded-lg text-center hover:shadow-md transition-shadow">
+                  <h4 className="text-green-800 font-semibold">Students</h4>
+                  <p className="text-2xl font-bold text-green-600">{profile.statistics.total_students}</p>
+                </div>
+                <div className="bg-purple-100 p-4 rounded-lg text-center hover:shadow-md transition-shadow">
+                  <h4 className="text-purple-800 font-semibold">Lessons</h4>
+                  <p className="text-2xl font-bold text-purple-600">{profile.statistics.total_lessons}</p>
+                </div>
+                <div className="bg-orange-100 p-4 rounded-lg text-center hover:shadow-md transition-shadow">
+                  <h4 className="text-orange-800 font-semibold">Total Schedules</h4>
+                  <p className="text-2xl font-bold text-orange-600">{profile.statistics.total_schedules}</p>
+                </div>
+                <div className="bg-red-100 p-4 rounded-lg text-center hover:shadow-md transition-shadow">
+                  <h4 className="text-red-800 font-semibold">Upcoming</h4>
+                  <p className="text-2xl font-bold text-red-600">{profile.statistics.upcoming_schedules}</p>
+                </div>
               </div>
             </div>
 
             {/* Schools Section */}
-            <div className="mb-6">
-              <h4 className="text-xl font-semibold mb-3">Schools ({profile.schools.length})</h4>
+            <div className="bg-white rounded-lg shadow-md p-6 mb-6 hover:shadow-lg transition-shadow">
+              <h4 className="text-xl font-semibold mb-4">Schools ({profile.schools.length})</h4>
               <div className="grid md:grid-cols-2 gap-4">
                 {profile.schools.map((school) => (
-                  <div key={school.id} className="bg-gray-50 p-4 rounded-lg">
+                  <div key={school.id} className="bg-gray-50 p-4 rounded-lg hover:shadow-md transition-shadow">
                     <h5 className="font-semibold">{school.name}</h5>
                     <p className="text-sm text-gray-600">{school.address || 'N/A'}</p>
                     <p className="text-xs text-gray-500">Associated: {formatDate(school.association_date)}</p>
@@ -427,18 +437,28 @@ const ProfileView = ({ entityType, id, onBack }) => {
             </div>
 
             {/* Lessons Section */}
-            <div className="mb-6">
-              <h4 className="text-xl font-semibold mb-3">Lessons ({profile.lessons.length})</h4>
+            <div className="bg-white rounded-lg shadow-md p-6 mb-6 hover:shadow-lg transition-shadow">
+              <h4 className="text-xl font-semibold mb-4">Lessons ({profile.lessons.length})</h4>
               <div className="grid md:grid-cols-2 gap-4">
                 {profile.lessons.slice(0, 4).map((lesson) => (
-                  <div key={lesson.id} className="bg-gray-50 p-4 rounded-lg">
-                    <h5 className="font-semibold">{lesson.title}</h5>
-                    <p className="text-sm text-gray-600">{lesson.description || 'No description'}</p>
-                    <p className="text-sm text-gray-600">Duration: {lesson.duration_minutes} minutes</p>
-                    <p className="text-sm text-gray-600">Target Grade: {lesson.target_grade || 'N/A'}</p>
+                  <div key={lesson.id} className="bg-indigo-50 p-4 rounded-lg border border-indigo-200 hover:shadow-md transition-shadow">
+                    <div className="flex items-start">
+                      <div className="bg-indigo-100 p-2 rounded-full mr-3">
+                        <span className="text-indigo-600 text-sm font-semibold">📚</span>
+                      </div>
+                      <div className="flex-1">
+                        <h5 className="font-semibold text-indigo-800">{lesson.title}</h5>
+                        <p className="text-sm text-indigo-600">{lesson.description || 'No description'}</p>
+                        <p className="text-sm text-indigo-600">Duration: {lesson.duration_minutes} minutes</p>
+                        <p className="text-xs text-indigo-500">Target Grade: {lesson.target_grade || 'N/A'}</p>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
+              {profile.lessons.length > 4 && (
+                <p className="text-sm text-gray-500 mt-3 text-center">... and {profile.lessons.length - 4} more lessons</p>
+              )}
             </div>
           </div>
         )}
@@ -447,58 +467,63 @@ const ProfileView = ({ entityType, id, onBack }) => {
         {entityType === 'students' && (
           <div>
             {/* Basic Info */}
-            <div className="bg-purple-50 rounded-lg p-6 mb-6">
-              <h3 className="text-2xl font-semibold mb-4 text-purple-800">{profile.student.name}</h3>
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <p><strong>School:</strong> {profile.student.school_name}</p>
-                  <p><strong>Grade:</strong> {profile.student.grade || 'N/A'}</p>
-                  <p><strong>Age:</strong> {profile.student.age || 'N/A'}</p>
-                  <p><strong>Phone:</strong> {profile.student.phone || 'N/A'}</p>
-                </div>
-                <div>
-                  <p><strong>Email:</strong> {profile.student.email || 'N/A'}</p>
-                  <p><strong>Enrollment Date:</strong> {formatDate(profile.student.enrollment_date)}</p>
-                  <p><strong>Attendance Rate:</strong> {profile.statistics.attendance_rate}%</p>
-                  <p><strong>Teachers:</strong> {profile.statistics.total_teachers}</p>
+            <div className="bg-white rounded-lg shadow-md p-6 mb-6 hover:shadow-lg transition-shadow">
+              <div className="bg-purple-50 rounded-lg p-6">
+                <h3 className="text-2xl font-semibold mb-4 text-purple-800">{profile.student.name}</h3>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <p><strong>School:</strong> {profile.student.school_name}</p>
+                    <p><strong>Grade:</strong> {profile.student.grade || 'N/A'}</p>
+                    <p><strong>Age:</strong> {profile.student.age || 'N/A'}</p>
+                    <p><strong>Phone:</strong> {profile.student.phone || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p><strong>Email:</strong> {profile.student.email || 'N/A'}</p>
+                    <p><strong>Enrollment Date:</strong> {formatDate(profile.student.enrollment_date)}</p>
+                    <p><strong>Attendance Rate:</strong> {profile.statistics.attendance_rate}%</p>
+                    <p><strong>Teachers:</strong> {profile.statistics.total_teachers}</p>
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* Performance Statistics */}
-            <div className="grid md:grid-cols-6 gap-4 mb-6">
-              <div className="bg-green-100 p-4 rounded-lg text-center">
-                <h4 className="text-green-800 font-semibold text-sm">Attendance Rate</h4>
-                <p className="text-xl font-bold text-green-600">{profile.statistics.attendance_rate}%</p>
-              </div>
-              <div className="bg-blue-100 p-4 rounded-lg text-center">
-                <h4 className="text-blue-800 font-semibold text-sm">Knowledge</h4>
-                <p className="text-xl font-bold text-blue-600">{profile.statistics.avg_knowledge_score || 'N/A'}</p>
-              </div>
-              <div className="bg-purple-100 p-4 rounded-lg text-center">
-                <h4 className="text-purple-800 font-semibold text-sm">Participation</h4>
-                <p className="text-xl font-bold text-purple-600">{profile.statistics.avg_participation_score || 'N/A'}</p>
-              </div>
-              <div className="bg-indigo-100 p-4 rounded-lg text-center">
-                <h4 className="text-indigo-800 font-semibold text-sm">Personal Dev.</h4>
-                <p className="text-xl font-bold text-indigo-600">{profile.statistics.avg_personal_development || 'N/A'}</p>
-              </div>
-              <div className="bg-pink-100 p-4 rounded-lg text-center">
-                <h4 className="text-pink-800 font-semibold text-sm">Critical Think.</h4>
-                <p className="text-xl font-bold text-pink-600">{profile.statistics.avg_critical_thinking || 'N/A'}</p>
-              </div>
-              <div className="bg-orange-100 p-4 rounded-lg text-center">
-                <h4 className="text-orange-800 font-semibold text-sm">Team Work</h4>
-                <p className="text-xl font-bold text-orange-600">{profile.statistics.avg_team_work || 'N/A'}</p>
+            <div className="bg-white rounded-lg shadow-md p-6 mb-6 hover:shadow-lg transition-shadow">
+              <h4 className="text-lg font-semibold mb-4 text-gray-800">Performance Statistics</h4>
+              <div className="grid md:grid-cols-6 gap-4">
+                <div className="bg-green-100 p-4 rounded-lg text-center hover:shadow-md transition-shadow">
+                  <h4 className="text-green-800 font-semibold text-sm">Attendance Rate</h4>
+                  <p className="text-xl font-bold text-green-600">{profile.statistics.attendance_rate}%</p>
+                </div>
+                <div className="bg-blue-100 p-4 rounded-lg text-center hover:shadow-md transition-shadow">
+                  <h4 className="text-blue-800 font-semibold text-sm">Knowledge</h4>
+                  <p className="text-xl font-bold text-blue-600">{profile.statistics.avg_knowledge_score || 'N/A'}</p>
+                </div>
+                <div className="bg-purple-100 p-4 rounded-lg text-center hover:shadow-md transition-shadow">
+                  <h4 className="text-purple-800 font-semibold text-sm">Participation</h4>
+                  <p className="text-xl font-bold text-purple-600">{profile.statistics.avg_participation_score || 'N/A'}</p>
+                </div>
+                <div className="bg-indigo-100 p-4 rounded-lg text-center hover:shadow-md transition-shadow">
+                  <h4 className="text-indigo-800 font-semibold text-sm">Personal Dev.</h4>
+                  <p className="text-xl font-bold text-indigo-600">{profile.statistics.avg_personal_development || 'N/A'}</p>
+                </div>
+                <div className="bg-pink-100 p-4 rounded-lg text-center hover:shadow-md transition-shadow">
+                  <h4 className="text-pink-800 font-semibold text-sm">Critical Think.</h4>
+                  <p className="text-xl font-bold text-pink-600">{profile.statistics.avg_critical_thinking || 'N/A'}</p>
+                </div>
+                <div className="bg-orange-100 p-4 rounded-lg text-center hover:shadow-md transition-shadow">
+                  <h4 className="text-orange-800 font-semibold text-sm">Team Work</h4>
+                  <p className="text-xl font-bold text-orange-600">{profile.statistics.avg_team_work || 'N/A'}</p>
+                </div>
               </div>
             </div>
 
             {/* Teachers Section */}
-            <div className="mb-6">
-              <h4 className="text-xl font-semibold mb-3">Teachers ({profile.teachers.length})</h4>
+            <div className="bg-white rounded-lg shadow-md p-6 mb-6 hover:shadow-lg transition-shadow">
+              <h4 className="text-xl font-semibold mb-4">Teachers ({profile.teachers.length})</h4>
               <div className="grid md:grid-cols-2 gap-4">
                 {profile.teachers.map((teacher) => (
-                  <div key={teacher.id} className="bg-gray-50 p-4 rounded-lg">
+                  <div key={teacher.id} className="bg-gray-50 p-4 rounded-lg hover:shadow-md transition-shadow">
                     <h5 className="font-semibold">{teacher.name}</h5>
                     <p className="text-sm text-gray-600">Subject: {teacher.subject || 'N/A'}</p>
                     <p className="text-xs text-gray-500">Teaching since: {formatDate(teacher.association_date)}</p>
@@ -508,60 +533,75 @@ const ProfileView = ({ entityType, id, onBack }) => {
             </div>
 
             {/* Recent Attendance */}
-            <div className="mb-6">
-              <h4 className="text-xl font-semibold mb-3">Recent Attendance</h4>
+            <div className="bg-white rounded-lg shadow-md p-6 mb-6 hover:shadow-lg transition-shadow">
+              <h4 className="text-xl font-semibold mb-4">Recent Attendance</h4>
               <div className="space-y-3">
                 {profile.attendance_records.slice(0, 5).map((record) => (
-                  <div key={record.id} className="bg-gray-50 p-4 rounded-lg">
+                  <div key={record.id} className="bg-yellow-50 p-4 rounded-lg border border-yellow-200 hover:shadow-md transition-shadow">
                     <div className="flex justify-between items-start">
-                      <div>
-                        <p className="font-semibold">{formatDateTime(record.scheduled_date, record.scheduled_time)}</p>
-                        <p className="text-sm text-gray-600">Status: 
-                          <span className={`ml-1 ${record.attendance_status === 'present' ? 'text-green-600' : 'text-red-600'}`}>
-                            {record.attendance_status}
+                      <div className="flex items-start">
+                        <div className="bg-yellow-100 p-2 rounded-full mr-3">
+                          <span className="text-yellow-600 text-sm">
+                            {record.attendance_status === 'present' ? '✅' : '❌'}
                           </span>
-                        </p>
-                        {record.lesson_titles && record.lesson_titles[0] && (
-                          <p className="text-sm text-gray-600">Lessons: {record.lesson_titles.join(', ')}</p>
-                        )}
+                        </div>
+                        <div>
+                          <p className="font-semibold text-yellow-800">{formatDateTime(record.scheduled_date, record.scheduled_time)}</p>
+                          <p className="text-sm text-yellow-600">Status: 
+                            <span className={`ml-1 font-medium ${record.attendance_status === 'present' ? 'text-green-600' : 'text-red-600'}`}>
+                              {record.attendance_status}
+                            </span>
+                          </p>
+                          {record.lesson_titles && record.lesson_titles[0] && (
+                            <p className="text-sm text-yellow-600">Lessons: {record.lesson_titles.join(', ')}</p>
+                          )}
+                        </div>
                       </div>
                       <div className="text-right">
                         {record.knowledge_score && (
-                          <p className="text-sm">Knowledge: {record.knowledge_score}/100</p>
+                          <p className="text-sm text-yellow-700">Knowledge: {record.knowledge_score}/100</p>
                         )}
                         {record.participation_score && (
-                          <p className="text-sm">Participation: {record.participation_score}/100</p>
+                          <p className="text-sm text-yellow-700">Participation: {record.participation_score}/100</p>
                         )}
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
+              {profile.attendance_records.length > 5 && (
+                <p className="text-sm text-gray-500 mt-3 text-center">... and {profile.attendance_records.length - 5} more records</p>
+              )}
             </div>
 
             {/* Assessment History */}
             {profile.assessments && profile.assessments.length > 0 && (
-              <div className="mb-6">
-                <h4 className="text-xl font-semibold mb-3 flex items-center">
+              <div className="bg-white rounded-lg shadow-md p-6 mb-6 hover:shadow-lg transition-shadow">
+                <h4 className="text-xl font-semibold mb-4 flex items-center">
                   <span className="text-indigo-600 mr-2">📊</span>
                   Assessment History
                 </h4>
                 <div className="space-y-4">
                   {profile.assessments.slice(0, 5).map((assessment) => (
-                    <div key={assessment.id} className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 rounded-lg border border-indigo-200">
+                    <div key={assessment.id} className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 rounded-lg border border-indigo-200 hover:shadow-md transition-shadow">
                       <div className="flex justify-between items-start mb-3">
-                        <div>
-                          <h5 className="font-semibold text-indigo-800">
-                            📅 {formatDateTime(assessment.scheduled_date, assessment.scheduled_time)}
-                          </h5>
-                          <p className="text-sm text-indigo-600">
-                            School: {assessment.school_name}
-                          </p>
-                          {assessment.lesson_titles && assessment.lesson_titles[0] && (
+                        <div className="flex items-start">
+                          <div className="bg-indigo-100 p-2 rounded-full mr-3">
+                            <span className="text-indigo-600 text-sm">📊</span>
+                          </div>
+                          <div>
+                            <h5 className="font-semibold text-indigo-800">
+                              📅 {formatDateTime(assessment.scheduled_date, assessment.scheduled_time)}
+                            </h5>
                             <p className="text-sm text-indigo-600">
-                              Lessons: {assessment.lesson_titles.join(', ')}
+                              School: {assessment.school_name}
                             </p>
-                          )}
+                            {assessment.lesson_titles && assessment.lesson_titles[0] && (
+                              <p className="text-sm text-indigo-600">
+                                Lessons: {assessment.lesson_titles.join(', ')}
+                              </p>
+                            )}
+                          </div>
                         </div>
                         <div className="text-right">
                           <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
@@ -633,55 +673,60 @@ const ProfileView = ({ entityType, id, onBack }) => {
         {entityType === 'lessons' && (
           <div>
             {/* Basic Info */}
-            <div className="bg-orange-50 rounded-lg p-6 mb-6">
-              <h3 className="text-2xl font-semibold mb-4 text-orange-800">{profile.lesson.title}</h3>
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <p><strong>Description:</strong> {profile.lesson.description || 'No description'}</p>
-                  <p><strong>Duration:</strong> {profile.lesson.duration_minutes} minutes</p>
-                  <p><strong>Target Grade:</strong> {profile.lesson.target_grade || 'N/A'}</p>
+            <div className="bg-white rounded-lg shadow-md p-6 mb-6 hover:shadow-lg transition-shadow">
+              <div className="bg-orange-50 rounded-lg p-6">
+                <h3 className="text-2xl font-semibold mb-4 text-orange-800">{profile.lesson.title}</h3>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <p><strong>Description:</strong> {profile.lesson.description || 'No description'}</p>
+                    <p><strong>Duration:</strong> {profile.lesson.duration_minutes} minutes</p>
+                    <p><strong>Target Grade:</strong> {profile.lesson.target_grade || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p><strong>Created:</strong> {formatDate(profile.lesson.created_at)}</p>
+                    <p><strong>Teachers:</strong> {profile.statistics.total_teachers}</p>
+                    <p><strong>Students Taught:</strong> {profile.statistics.total_students_taught}</p>
+                    <p><strong>Total Sessions:</strong> {profile.statistics.total_schedules}</p>
+                  </div>
                 </div>
-                <div>
-                  <p><strong>Created:</strong> {formatDate(profile.lesson.created_at)}</p>
-                  <p><strong>Teachers:</strong> {profile.statistics.total_teachers}</p>
-                  <p><strong>Students Taught:</strong> {profile.statistics.total_students_taught}</p>
-                  <p><strong>Total Sessions:</strong> {profile.statistics.total_schedules}</p>
-                </div>
+                {profile.lesson.materials && (
+                  <div className="mt-4">
+                    <p><strong>Materials:</strong></p>
+                    <p className="text-sm bg-white p-3 rounded mt-1">{profile.lesson.materials}</p>
+                  </div>
+                )}
               </div>
-              {profile.lesson.materials && (
-                <div className="mt-4">
-                  <p><strong>Materials:</strong></p>
-                  <p className="text-sm bg-white p-3 rounded mt-1">{profile.lesson.materials}</p>
-                </div>
-              )}
             </div>
 
             {/* Performance Statistics */}
-            <div className="grid md:grid-cols-4 gap-4 mb-6">
-              <div className="bg-blue-100 p-4 rounded-lg text-center">
-                <h4 className="text-blue-800 font-semibold">Teachers</h4>
-                <p className="text-2xl font-bold text-blue-600">{profile.statistics.total_teachers}</p>
-              </div>
-              <div className="bg-green-100 p-4 rounded-lg text-center">
-                <h4 className="text-green-800 font-semibold">Students Taught</h4>
-                <p className="text-2xl font-bold text-green-600">{profile.statistics.total_students_taught}</p>
-              </div>
-              <div className="bg-purple-100 p-4 rounded-lg text-center">
-                <h4 className="text-purple-800 font-semibold">Avg Knowledge</h4>
-                <p className="text-2xl font-bold text-purple-600">{profile.statistics.avg_knowledge_score || 'N/A'}</p>
-              </div>
-              <div className="bg-orange-100 p-4 rounded-lg text-center">
-                <h4 className="text-orange-800 font-semibold">Avg Participation</h4>
-                <p className="text-2xl font-bold text-orange-600">{profile.statistics.avg_participation_score || 'N/A'}</p>
+            <div className="bg-white rounded-lg shadow-md p-6 mb-6 hover:shadow-lg transition-shadow">
+              <h4 className="text-lg font-semibold mb-4 text-gray-800">Lesson Statistics</h4>
+              <div className="grid md:grid-cols-4 gap-4">
+                <div className="bg-blue-100 p-4 rounded-lg text-center hover:shadow-md transition-shadow">
+                  <h4 className="text-blue-800 font-semibold">Teachers</h4>
+                  <p className="text-2xl font-bold text-blue-600">{profile.statistics.total_teachers}</p>
+                </div>
+                <div className="bg-green-100 p-4 rounded-lg text-center hover:shadow-md transition-shadow">
+                  <h4 className="text-green-800 font-semibold">Students Taught</h4>
+                  <p className="text-2xl font-bold text-green-600">{profile.statistics.total_students_taught}</p>
+                </div>
+                <div className="bg-purple-100 p-4 rounded-lg text-center hover:shadow-md transition-shadow">
+                  <h4 className="text-purple-800 font-semibold">Avg Knowledge</h4>
+                  <p className="text-2xl font-bold text-purple-600">{profile.statistics.avg_knowledge_score || 'N/A'}</p>
+                </div>
+                <div className="bg-orange-100 p-4 rounded-lg text-center hover:shadow-md transition-shadow">
+                  <h4 className="text-orange-800 font-semibold">Avg Participation</h4>
+                  <p className="text-2xl font-bold text-orange-600">{profile.statistics.avg_participation_score || 'N/A'}</p>
+                </div>
               </div>
             </div>
 
             {/* Teachers Section */}
-            <div className="mb-6">
-              <h4 className="text-xl font-semibold mb-3">Teachers ({profile.teachers.length})</h4>
+            <div className="bg-white rounded-lg shadow-md p-6 mb-6 hover:shadow-lg transition-shadow">
+              <h4 className="text-xl font-semibold mb-4">Teachers ({profile.teachers.length})</h4>
               <div className="grid md:grid-cols-2 gap-4">
                 {profile.teachers.map((teacher) => (
-                  <div key={teacher.id} className="bg-gray-50 p-4 rounded-lg">
+                  <div key={teacher.id} className="bg-gray-50 p-4 rounded-lg hover:shadow-md transition-shadow">
                     <h5 className="font-semibold">{teacher.name}</h5>
                     <p className="text-sm text-gray-600">Subject: {teacher.subject || 'N/A'}</p>
                     {teacher.school_names && teacher.school_names[0] && (
@@ -695,8 +740,8 @@ const ProfileView = ({ entityType, id, onBack }) => {
 
             {/* Performance by School */}
             {profile.performance_by_school.length > 0 && (
-              <div className="mb-6">
-                <h4 className="text-xl font-semibold mb-3">Performance by School</h4>
+              <div className="bg-white rounded-lg shadow-md p-6 mb-6 hover:shadow-lg transition-shadow">
+                <h4 className="text-xl font-semibold mb-4">Performance by School</h4>
                 <div className="space-y-3">
                   {profile.performance_by_school.map((school, index) => (
                     <div key={index} className="bg-gray-50 p-4 rounded-lg">
@@ -725,57 +770,63 @@ const ProfileView = ({ entityType, id, onBack }) => {
         {entityType === 'schedules' && (
           <div>
             {/* Basic Info */}
-            <div className="bg-orange-50 rounded-lg p-6 mb-6">
-              <h3 className="text-2xl font-semibold mb-4 text-orange-800">
-                Schedule at {profile.data.school_name}
-              </h3>
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <p><strong>Date:</strong> {formatDate(profile.data.scheduled_date)}</p>
-                  <p><strong>Time:</strong> {profile.data.scheduled_time?.slice(0, 5) || 'N/A'}</p>
-                  <p><strong>Duration:</strong> {profile.data.duration_minutes} minutes</p>
-                  <p><strong>Status:</strong> 
-                    <span className={`ml-2 px-2 py-1 text-xs font-semibold rounded-full ${
-                      profile.data.status === 'completed' ? 'bg-green-100 text-green-800' :
-                      profile.data.status === 'in-progress' ? 'bg-yellow-100 text-yellow-800' :
-                      profile.data.status === 'cancelled' ? 'bg-red-100 text-red-800' :
-                      'bg-blue-100 text-blue-800'
-                    }`}>
-                      {profile.data.status.charAt(0).toUpperCase() + profile.data.status.slice(1)}
-                    </span>
-                  </p>
+            <div className="bg-white rounded-lg shadow-md p-6 mb-6 hover:shadow-lg transition-shadow">
+              <div className="bg-orange-50 rounded-lg p-6">
+                <h3 className="text-2xl font-semibold mb-4 text-orange-800">
+                  Schedule at {profile.data.school_name}
+                </h3>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <p><strong>Date:</strong> {formatDate(profile.data.scheduled_date)}</p>
+                    <p><strong>Time:</strong> {profile.data.scheduled_time?.slice(0, 5) || 'N/A'}</p>
+                    <p><strong>Duration:</strong> {profile.data.duration_minutes} minutes</p>
+                    <p><strong>Status:</strong> 
+                      <span className={`ml-2 px-2 py-1 text-xs font-semibold rounded-full ${
+                        profile.data.status === 'completed' ? 'bg-green-100 text-green-800' :
+                        profile.data.status === 'in-progress' ? 'bg-yellow-100 text-yellow-800' :
+                        profile.data.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                        'bg-blue-100 text-blue-800'
+                      }`}>
+                        {profile.data.status.charAt(0).toUpperCase() + profile.data.status.slice(1)}
+                      </span>
+                    </p>
+                  </div>
+                  <div>
+                    <p><strong>School:</strong> {profile.data.school_name}</p>
+                    <p><strong>Address:</strong> {profile.data.school_address || 'N/A'}</p>
+                    <p><strong>School Phone:</strong> {profile.data.school_phone || 'N/A'}</p>
+                    <p><strong>School Email:</strong> {profile.data.school_email || 'N/A'}</p>
+                  </div>
                 </div>
-                <div>
-                  <p><strong>School:</strong> {profile.data.school_name}</p>
-                  <p><strong>Address:</strong> {profile.data.school_address || 'N/A'}</p>
-                  <p><strong>School Phone:</strong> {profile.data.school_phone || 'N/A'}</p>
-                  <p><strong>School Email:</strong> {profile.data.school_email || 'N/A'}</p>
-                </div>
+                {profile.data.notes && (
+                  <div className="mt-4">
+                    <p><strong>Notes:</strong></p>
+                    <p className="text-sm bg-white p-3 rounded mt-1">{profile.data.notes}</p>
+                  </div>
+                )}
               </div>
-              {profile.data.notes && (
-                <div className="mt-4">
-                  <p><strong>Notes:</strong> {profile.data.notes}</p>
-                </div>
-              )}
             </div>
 
             {/* Statistics */}
-            <div className="grid md:grid-cols-4 gap-4 mb-6">
-              <div className="bg-blue-100 p-4 rounded-lg text-center">
-                <h4 className="text-blue-800 font-semibold">Teachers</h4>
-                <p className="text-2xl font-bold text-blue-600">{profile.data.stats.total_teachers}</p>
-              </div>
-              <div className="bg-green-100 p-4 rounded-lg text-center">
-                <h4 className="text-green-800 font-semibold">Lessons</h4>
-                <p className="text-2xl font-bold text-green-600">{profile.data.stats.total_lessons}</p>
-              </div>
-              <div className="bg-purple-100 p-4 rounded-lg text-center">
-                <h4 className="text-purple-800 font-semibold">Students</h4>
-                <p className="text-2xl font-bold text-purple-600">{profile.data.stats.total_students}</p>
-              </div>
-              <div className="bg-yellow-100 p-4 rounded-lg text-center">
-                <h4 className="text-yellow-800 font-semibold">Attendance Rate</h4>
-                <p className="text-2xl font-bold text-yellow-600">{profile.data.stats.attendance_rate}%</p>
+            <div className="bg-white rounded-lg shadow-md p-6 mb-6 hover:shadow-lg transition-shadow">
+              <h4 className="text-lg font-semibold mb-4 text-gray-800">Schedule Statistics</h4>
+              <div className="grid md:grid-cols-4 gap-4">
+                <div className="bg-blue-100 p-4 rounded-lg text-center hover:shadow-md transition-shadow">
+                  <h4 className="text-blue-800 font-semibold">Teachers</h4>
+                  <p className="text-2xl font-bold text-blue-600">{profile.data.stats.total_teachers}</p>
+                </div>
+                <div className="bg-green-100 p-4 rounded-lg text-center hover:shadow-md transition-shadow">
+                  <h4 className="text-green-800 font-semibold">Lessons</h4>
+                  <p className="text-2xl font-bold text-green-600">{profile.data.stats.total_lessons}</p>
+                </div>
+                <div className="bg-purple-100 p-4 rounded-lg text-center hover:shadow-md transition-shadow">
+                  <h4 className="text-purple-800 font-semibold">Students</h4>
+                  <p className="text-2xl font-bold text-purple-600">{profile.data.stats.total_students}</p>
+                </div>
+                <div className="bg-yellow-100 p-4 rounded-lg text-center hover:shadow-md transition-shadow">
+                  <h4 className="text-yellow-800 font-semibold">Attendance Rate</h4>
+                  <p className="text-2xl font-bold text-yellow-600">{profile.data.stats.attendance_rate}%</p>
+                </div>
               </div>
             </div>
 
