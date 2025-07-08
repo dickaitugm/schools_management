@@ -28,7 +28,7 @@ const Sidebar = ({ currentPage, onPageChange, collapsed = false, onToggle }) => 
         { path: "students", name: "Students", icon: "👨‍🎓", permission: "read_students" },
         { path: "lessons", name: "Lessons", icon: "📚", permission: "read_lessons" },
         { path: "schedules", name: "Schedules", icon: "📅", permission: "read_schedules" },
-        { path: "cash-flow", name: "Cash Flow", icon: "💰", permission: "read_cash_flow" },
+        { path: "cash-flow", name: "Donations", icon: "💰", permission: "read_cash_flow" },
         { path: "roles", name: "Role Management", icon: "⚙️", permission: "manage_roles" },
         { path: "activity-logs", name: "Activity Logs", icon: "📝", permission: "manage_roles" },
     ];
