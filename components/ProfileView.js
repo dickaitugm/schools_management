@@ -3,9 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import { formatDateIndonesian, formatDateTimeIndonesian } from '../utils/dateUtils';
+import { conditionallyMaskStudentName } from '../utils/privacyUtils';
 
 const ProfileView = ({ entityType, id, onBack }) => {
-  const { logActivity } = useAuth();
+  const { logActivity, user } = useAuth();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -186,7 +187,7 @@ const ProfileView = ({ entityType, id, onBack }) => {
                           </span>
                         </div>
                         <div className="flex-1">
-                          <h5 className="font-semibold text-green-800">{student.name}</h5>
+                          <h5 className="font-semibold text-green-800">{conditionallyMaskStudentName(student.name, user, { preserveFirstName: true })}</h5>
                           <p className="text-sm text-green-600">Grade: {student.grade || 'N/A'}</p>
                           <p className="text-sm text-green-600">Email: {student.email || 'N/A'}</p>
                           <p className="text-xs text-green-500">Enrolled: {formatDateIndonesian(student.enrollment_date)}</p>
@@ -557,7 +558,7 @@ const ProfileView = ({ entityType, id, onBack }) => {
             {/* Basic Info */}
             <div className="bg-white rounded-lg shadow-md p-6 mb-6 hover:shadow-lg transition-shadow">
               <div className="bg-purple-50 rounded-lg p-6">
-                <h3 className="text-2xl font-semibold mb-4 text-purple-800">{profile.student.name}</h3>
+                <h3 className="text-2xl font-semibold mb-4 text-purple-800">{conditionallyMaskStudentName(profile.student.name, user, { preserveFirstName: true })}</h3>
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
                     <p><strong>School:</strong> {profile.student.school_name}</p>
@@ -1331,7 +1332,7 @@ const ProfileView = ({ entityType, id, onBack }) => {
                 <div className="grid md:grid-cols-3 gap-4">
                   {profile.data.students.map(student => (
                     <div key={student.id} className="border border-gray-200 rounded-lg p-4">
-                      <h5 className="font-medium text-gray-900">{student.name}</h5>
+                      <h5 className="font-medium text-gray-900">{conditionallyMaskStudentName(student.name, user, { preserveFirstName: true })}</h5>
                       <p className="text-sm text-gray-600">Class: {student.class_level}</p>
                       <p className="text-sm text-gray-500">Age: {student.age}</p>
                     </div>

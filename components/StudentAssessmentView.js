@@ -3,8 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import MultilineSelect from './MultilineSelect';
 import { formatDateTimeIndonesian } from '../utils/dateUtils';
+import { conditionallyMaskStudentName } from '../utils/privacyUtils';
+import { useAuth } from './AuthContext';
 
 const StudentAssessmentView = ({ scheduleId, onBack }) => {
+  const { user } = useAuth();
   const [students, setStudents] = useState([]);
   const [schedule, setSchedule] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -354,7 +357,7 @@ const StudentAssessmentView = ({ scheduleId, onBack }) => {
             <div key={student.id} className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
               <div className="flex justify-between items-start mb-4">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">{student.name}</h3>
+                  <h3 className="text-lg font-semibold text-gray-900">{conditionallyMaskStudentName(student.name, user, { preserveFirstName: true })}</h3>
                   <p className="text-gray-600">Grade: {student.grade}</p>
                 </div>
                 <div className="flex items-center space-x-4">

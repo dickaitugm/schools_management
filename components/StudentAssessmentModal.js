@@ -4,8 +4,11 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Modal from './Modal';
 import MultilineSelect from './MultilineSelect';
 import { formatDateIndonesian, formatDateTimeIndonesian } from '../utils/dateUtils';
+import { conditionallyMaskStudentName } from '../utils/privacyUtils';
+import { useAuth } from './AuthContext';
 
 const StudentAssessmentModal = ({ scheduleId, onClose }) => {
+  const { user } = useAuth();
   const [students, setStudents] = useState([]);
   const [schedule, setSchedule] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -286,7 +289,7 @@ const StudentAssessmentModal = ({ scheduleId, onClose }) => {
             <div key={student.id} className="border border-gray-200 rounded-lg p-4">
               <div className="flex justify-between items-start mb-4">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-800">{student.name}</h3>
+                  <h3 className="text-lg font-semibold text-gray-800">{conditionallyMaskStudentName(student.name, user, { preserveFirstName: true })}</h3>
                   <p className="text-sm text-gray-600">Grade: {student.grade} | Age: {student.age || 'N/A'}</p>
                 </div>
                 <div>

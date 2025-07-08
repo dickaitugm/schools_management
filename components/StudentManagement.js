@@ -4,9 +4,10 @@ import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
 import { useAuth } from './AuthContext';
 import { formatDateIndonesian } from '../utils/dateUtils';
+import { conditionallyMaskStudentName } from '../utils/privacyUtils';
 
 const StudentManagement = ({ selectedSchoolId, onViewProfile }) => {
-  const { hasPermission, logActivity } = useAuth();
+  const { hasPermission, logActivity, user } = useAuth();
   const [students, setStudents] = useState([]);
   const [schools, setSchools] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -336,7 +337,9 @@ const StudentManagement = ({ selectedSchoolId, onViewProfile }) => {
                     <tr key={student.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div>
-                          <div className="text-sm font-medium text-gray-900">{student.name}</div>
+                          <div className="text-sm font-medium text-gray-900">
+                            {conditionallyMaskStudentName(student.name, user, { preserveFirstName: true })}
+                          </div>
                           {student.age && (
                             <div className="text-sm text-gray-500">Age: {student.age}</div>
                           )}
