@@ -817,6 +817,9 @@ const ScheduleManagement = ({ selectedSchoolId, onViewProfile, onViewAssessment 
                         Lessons
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Student Count
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Status
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -890,6 +893,16 @@ const ScheduleManagement = ({ selectedSchoolId, onViewProfile, onViewAssessment 
                                 +{schedule.lessons.length - 2} more
                               </span>
                             )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm">
+                            <div className="font-medium text-gray-900">
+                              {schedule.assessed_students || 0}/{schedule.total_students || 0}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {schedule.assessed_students > 0 ? 'assessed' : 'not assessed'}
+                            </div>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">

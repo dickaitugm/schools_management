@@ -39,7 +39,11 @@ export async function GET(request) {
         s.notes,
         s.created_at,
         sch.name as school_name,
-        sch.address as school_address
+        sch.address as school_address,
+        -- Count total students in this school
+        (SELECT COUNT(*) FROM students st WHERE st.school_id = s.school_id) as total_students,
+        -- Count assessed students for this specific schedule
+        (SELECT COUNT(*) FROM student_attendance sa WHERE sa.schedule_id = s.id) as assessed_students
       FROM schedules s
       JOIN schools sch ON s.school_id = sch.id
       ${whereClause}
