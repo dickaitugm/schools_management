@@ -43,6 +43,7 @@ const ScheduleManagement = ({ selectedSchoolId, onViewProfile, onViewAssessment 
   });
 
   const [assessmentStats, setAssessmentStats] = useState(null);
+  const [scheduleAssessments, setScheduleAssessments] = useState({}); // Store assessment data for multiple schedules
 
   const statusOptions = [
     { value: 'scheduled', label: 'Scheduled', color: 'blue', bgColor: 'bg-blue-100', textColor: 'text-blue-800', borderColor: 'border-blue-300' },
@@ -53,11 +54,26 @@ const ScheduleManagement = ({ selectedSchoolId, onViewProfile, onViewAssessment 
 
   useEffect(() => {
     fetchSchedules();
-    fetchUpcomingSchedules();
+    fetchRecentAndUpcomingSchedules();
     fetchSchools();
     fetchTeachers();
     fetchLessons();
   }, [currentPage, searchTerm, statusFilter, selectedSchoolId, schoolFilter, dateFilter, timeFilter]);
+
+  useEffect(() => {
+    // Auto-update schedule statuses on component mount
+    autoUpdateScheduleStatuses();
+  }, []);
+
+  useEffect(() => {
+    // Fetch assessment data for recent schedules whenever upcomingSchedules changes
+    upcomingSchedules.forEach(schedule => {
+      const isFuture = isScheduleInFuture(schedule.scheduled_date, schedule.scheduled_time);
+      if (!isFuture && !scheduleAssessments[schedule.id]) {
+        fetchScheduleAssessment(schedule.id);
+      }
+    });
+  }, [upcomingSchedules]);
 
   useEffect(() => {
     if (selectedSchoolId) {
@@ -67,6 +83,28 @@ const ScheduleManagement = ({ selectedSchoolId, onViewProfile, onViewAssessment 
       }));
     }
   }, [selectedSchoolId]);
+
+  const autoUpdateScheduleStatuses = async () => {
+    try {
+      // This will trigger auto-updates in the backend for all schedules based on current time
+      const response = await fetch('/api/schedules/auto-update-status', {
+        method: 'POST',
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log(`Auto-updated ${data.updatedCount || 0} schedule statuses`);
+        
+        // Refresh schedules to reflect any changes
+        if (data.updatedCount > 0) {
+          fetchSchedules();
+          fetchRecentAndUpcomingSchedules();
+        }
+      }
+    } catch (error) {
+      console.error('Error auto-updating schedule statuses:', error);
+    }
+  };
 
   const fetchSchedules = async () => {
     setLoading(true);
@@ -99,23 +137,54 @@ const ScheduleManagement = ({ selectedSchoolId, onViewProfile, onViewAssessment 
     }
   };
 
-  const fetchUpcomingSchedules = async () => {
+  const fetchRecentAndUpcomingSchedules = async () => {
     try {
-      const params = new URLSearchParams({
-        limit: 5,
+      // Get upcoming schedules
+      const upcomingParams = new URLSearchParams({
+        limit: 3,
         upcoming: 'true'
       });
+      if (selectedSchoolId) upcomingParams.append('school_id', selectedSchoolId);
 
-      if (selectedSchoolId) params.append('school_id', selectedSchoolId);
+      // Get recent schedules (last 2)
+      const recentParams = new URLSearchParams({
+        limit: 2,
+        page: 1
+      });
+      if (selectedSchoolId) recentParams.append('school_id', selectedSchoolId);
 
-      const response = await fetch(`/api/schedules?${params}`);
-      const data = await response.json();
+      const [upcomingResponse, recentResponse] = await Promise.all([
+        fetch(`/api/schedules?${upcomingParams}`),
+        fetch(`/api/schedules?${recentParams}`)
+      ]);
 
-      if (data.success) {
-        setUpcomingSchedules(data.data || []);
-      }
+      const [upcomingData, recentData] = await Promise.all([
+        upcomingResponse.json(),
+        recentResponse.json()
+      ]);
+
+      const upcomingSchedules = upcomingData.success ? upcomingData.data || [] : [];
+      const recentSchedules = recentData.success ? recentData.data || [] : [];
+
+      // Filter recent schedules to only include past ones and limit to 2
+      const pastSchedules = recentSchedules.filter(schedule => 
+        !isScheduleInFuture(schedule.scheduled_date, schedule.scheduled_time)
+      ).slice(0, 2);
+
+      // Combine upcoming and recent schedules, prioritizing upcoming
+      const combinedSchedules = [...upcomingSchedules, ...pastSchedules].slice(0, 5);
+      
+      setUpcomingSchedules(combinedSchedules);
+
+      // Fetch assessment data for recent schedules
+      pastSchedules.forEach(schedule => {
+        if (!scheduleAssessments[schedule.id]) {
+          fetchScheduleAssessment(schedule.id);
+        }
+      });
+      
     } catch (error) {
-      console.error('Error fetching upcoming schedules:', error);
+      console.error('Error fetching schedules:', error);
     }
   };
 
@@ -149,6 +218,63 @@ const ScheduleManagement = ({ selectedSchoolId, onViewProfile, onViewAssessment 
     }
   };
 
+  const fetchScheduleAssessment = async (scheduleId) => {
+    try {
+      const response = await fetch(`/api/schedules/${scheduleId}/assessment`);
+      const data = await response.json();
+      
+      if (data.success && data.data && data.data.students) {
+        // Filter students who have assessment data
+        const assessedStudents = data.data.students.filter(student => 
+          student.attendance_id && 
+          (student.personal_development_level || 
+           student.critical_thinking_level || 
+           student.team_work_level || 
+           student.academic_knowledge_level)
+        );
+        
+        const assessmentData = {
+          assessedCount: assessedStudents.length,
+          totalStudents: data.data.students.length,
+          averages: null
+        };
+        
+        if (assessedStudents.length > 0) {
+          const totalPersonalDev = assessedStudents.reduce((sum, s) => sum + (s.personal_development_level || 0), 0);
+          const totalCriticalThinking = assessedStudents.reduce((sum, s) => sum + (s.critical_thinking_level || 0), 0);
+          const totalTeamWork = assessedStudents.reduce((sum, s) => sum + (s.team_work_level || 0), 0);
+          const totalAcademicKnowledge = assessedStudents.reduce((sum, s) => sum + (s.academic_knowledge_level || 0), 0);
+          
+          const avgPersonalDev = (totalPersonalDev / assessedStudents.length).toFixed(1);
+          const avgCriticalThinking = (totalCriticalThinking / assessedStudents.length).toFixed(1);
+          const avgTeamWork = (totalTeamWork / assessedStudents.length).toFixed(1);
+          const avgAcademicKnowledge = (totalAcademicKnowledge / assessedStudents.length).toFixed(1);
+          
+          const overallAverage = ((parseFloat(avgPersonalDev) + parseFloat(avgCriticalThinking) + parseFloat(avgTeamWork) + parseFloat(avgAcademicKnowledge)) / 4).toFixed(1);
+          
+          assessmentData.averages = {
+            personal_development: avgPersonalDev,
+            critical_thinking: avgCriticalThinking,
+            team_work: avgTeamWork,
+            academic_knowledge: avgAcademicKnowledge,
+            overall: overallAverage
+          };
+        }
+        
+        // Store assessment data for this schedule
+        setScheduleAssessments(prev => ({
+          ...prev,
+          [scheduleId]: assessmentData
+        }));
+        
+        return assessmentData;
+      }
+    } catch (error) {
+      console.error('Error fetching schedule assessment:', error);
+      return null;
+    }
+  };
+
   const fetchAssessmentStats = async (scheduleId) => {
     try {
       const response = await fetch(`/api/schedules/${scheduleId}/assessment`);
@@ -164,7 +290,11 @@ const ScheduleManagement = ({ selectedSchoolId, onViewProfile, onViewAssessment 
            student.academic_knowledge_level)
         );
         
-        console.log('Assessed students:', assessedStudents); // Debug log
+        const assessmentStatsData = {
+          assessedCount: assessedStudents.length,
+          totalStudents: data.data.students.length,
+          averages: null
+        };
         
         if (assessedStudents.length > 0) {
           const totalPersonalDev = assessedStudents.reduce((sum, s) => sum + (s.personal_development_level || 0), 0);
@@ -179,36 +309,25 @@ const ScheduleManagement = ({ selectedSchoolId, onViewProfile, onViewAssessment 
           
           const overallAverage = ((parseFloat(avgPersonalDev) + parseFloat(avgCriticalThinking) + parseFloat(avgTeamWork) + parseFloat(avgAcademicKnowledge)) / 4).toFixed(1);
           
-          console.log('Assessment stats set:', {
-            assessedCount: assessedStudents.length,
-            totalStudents: data.data.students.length,
-            averages: {
-              personal_development: avgPersonalDev,
-              critical_thinking: avgCriticalThinking,
-              team_work: avgTeamWork,
-              academic_knowledge: avgAcademicKnowledge,
-              overall: overallAverage
-            }
-          }); // Debug log
-          
-          setAssessmentStats({
-            assessedCount: assessedStudents.length,
-            totalStudents: data.data.students.length,
-            averages: {
-              personal_development: avgPersonalDev,
-              critical_thinking: avgCriticalThinking,
-              team_work: avgTeamWork,
-              academic_knowledge: avgAcademicKnowledge,
-              overall: overallAverage
-            }
-          });
-        } else {
-          setAssessmentStats({
-            assessedCount: 0,
-            totalStudents: data.data.students.length,
-            averages: null
-          });
+          assessmentStatsData.averages = {
+            personal_development: avgPersonalDev,
+            critical_thinking: avgCriticalThinking,
+            team_work: avgTeamWork,
+            academic_knowledge: avgAcademicKnowledge,
+            overall: overallAverage
+          };
         }
+        
+        setAssessmentStats(assessmentStatsData);
+        
+        // Auto-update schedule status based on time and assessment completion
+        if (selectedSchedule) {
+          const newStatus = getAutoStatus(selectedSchedule, assessmentStatsData);
+          if (newStatus !== selectedSchedule.status) {
+            await updateScheduleStatus(selectedSchedule.id, newStatus);
+          }
+        }
+        
       } else {
         console.error('Invalid assessment data structure:', data);
         setAssessmentStats(null);
@@ -216,6 +335,39 @@ const ScheduleManagement = ({ selectedSchoolId, onViewProfile, onViewAssessment 
     } catch (error) {
       console.error('Error fetching assessment stats:', error);
       setAssessmentStats(null);
+    }
+  };
+
+  const updateScheduleStatus = async (scheduleId, newStatus) => {
+    try {
+      const response = await fetch(`/api/schedules/${scheduleId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...selectedSchedule,
+          status: newStatus
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Update the selected schedule in state
+        setSelectedSchedule(prev => prev ? { ...prev, status: newStatus } : null);
+        
+        // Refresh schedules list to reflect the change
+        fetchSchedules();
+        fetchRecentAndUpcomingSchedules();
+        
+        // Log activity
+        logActivity(`Updated schedule status to ${newStatus}`, 'update');
+      } else {
+        console.error('Failed to update schedule status:', data.error);
+      }
+    } catch (error) {
+      console.error('Error updating schedule status:', error);
     }
   };
 
@@ -299,10 +451,30 @@ const ScheduleManagement = ({ selectedSchoolId, onViewProfile, onViewAssessment 
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    
+    // Special handling for status changes
+    if (name === 'status' && selectedSchedule) {
+      // Check if status change is allowed
+      if (!canChangeStatus(selectedSchedule, value)) {
+        if (value === 'completed') {
+          setError('Cannot mark as completed: not all students have been assessed');
+        } else if (['in-progress', 'completed'].includes(value) && 
+                   isScheduleInFuture(selectedSchedule.scheduled_date, selectedSchedule.scheduled_time)) {
+          setError('Cannot change status to in-progress or completed for future schedules');
+        }
+        return;
+      }
+    }
+    
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
+    
+    // Clear error when user makes valid changes
+    if (error) {
+      setError(null);
+    }
   };
 
   const handleTeacherSelection = (teacherId) => {
@@ -349,7 +521,7 @@ const ScheduleManagement = ({ selectedSchoolId, onViewProfile, onViewAssessment 
         setSuccess(data.message);
         closeModal();
         fetchSchedules();
-        fetchUpcomingSchedules();
+        fetchRecentAndUpcomingSchedules();
         setTimeout(() => setSuccess(null), 3000);
       } else {
         setError(data.error);
@@ -377,7 +549,7 @@ const ScheduleManagement = ({ selectedSchoolId, onViewProfile, onViewAssessment 
       if (data.success) {
         setSuccess(data.message);
         fetchSchedules();
-        fetchUpcomingSchedules();
+        fetchRecentAndUpcomingSchedules();
         setTimeout(() => setSuccess(null), 3000);
       } else {
         setError(data.error);
@@ -460,6 +632,89 @@ const ScheduleManagement = ({ selectedSchoolId, onViewProfile, onViewAssessment 
     setCurrentPage(1);
     setSelectedSchedule(null);
     setSelectedDate(new Date());
+  };
+
+  // Helper functions for schedule status management
+  const isScheduleInFuture = (scheduledDate, scheduledTime) => {
+    const now = new Date();
+    const scheduleDateTime = new Date(`${scheduledDate.split('T')[0]}T${scheduledTime}`);
+    return scheduleDateTime > now;
+  };
+
+  const isScheduleInProgress = (scheduledDate, scheduledTime) => {
+    const now = new Date();
+    const scheduleDateTime = new Date(`${scheduledDate.split('T')[0]}T${scheduledTime}`);
+    return scheduleDateTime <= now;
+  };
+
+  const getAutoStatus = (schedule, assessmentStats) => {
+    const isFuture = isScheduleInFuture(schedule.scheduled_date, schedule.scheduled_time);
+    
+    if (isFuture) {
+      return 'scheduled';
+    }
+    
+    // If it's past/current time
+    if (assessmentStats && assessmentStats.assessedCount === assessmentStats.totalStudents && assessmentStats.assessedCount > 0) {
+      return 'completed';
+    }
+    
+    return 'in-progress';
+  };
+
+  const canChangeStatus = (schedule, newStatus) => {
+    const isFuture = isScheduleInFuture(schedule.scheduled_date, schedule.scheduled_time);
+    
+    // Future schedules can only be 'scheduled' or 'cancelled'
+    if (isFuture) {
+      return ['scheduled', 'cancelled'].includes(newStatus);
+    }
+    
+    // Past/current schedules: check assessment completion for 'completed' status
+    if (newStatus === 'completed') {
+      // For completed status, all students must be assessed
+      return assessmentStats && 
+             assessmentStats.assessedCount === assessmentStats.totalStudents && 
+             assessmentStats.assessedCount > 0;
+    }
+    
+    // Other statuses are allowed for past/current schedules
+    return true;
+  };
+
+  const getAvailableStatusOptions = () => {
+    // For new schedules, don't show 'completed' status
+    if (modalType === 'create') {
+      return statusOptions.filter(status => status.value !== 'completed');
+    }
+    
+    // For editing existing schedules
+    if (!selectedSchedule || !formData.scheduled_date || !formData.scheduled_time) {
+      return statusOptions.filter(status => status.value !== 'completed');
+    }
+    
+    const isFuture = isScheduleInFuture(formData.scheduled_date, formData.scheduled_time);
+    
+    if (isFuture) {
+      // Future schedules can only be 'scheduled' or 'cancelled'
+      return statusOptions.filter(status => 
+        ['scheduled', 'cancelled'].includes(status.value)
+      );
+    }
+    
+    // For past/current schedules, filter out 'completed' if assessment not complete
+    if (!assessmentStats || 
+        assessmentStats.assessedCount !== assessmentStats.totalStudents || 
+        assessmentStats.assessedCount === 0) {
+      return statusOptions.filter(status => status.value !== 'completed');
+    }
+    
+    return statusOptions;
+  };
+
+  const shouldShowAssessmentButton = (schedule) => {
+    const isFuture = isScheduleInFuture(schedule.scheduled_date, schedule.scheduled_time);
+    return !isFuture && ['in-progress', 'completed'].includes(schedule.status);
   };
 
   if (loading && schedules.length === 0) {
@@ -647,7 +902,24 @@ const ScheduleManagement = ({ selectedSchoolId, onViewProfile, onViewAssessment 
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold text-gray-800">
-              {selectedSchedule ? 'Schedule Details' : 'Upcoming Schedules'}
+              {selectedSchedule ? 
+                `Schedule Details ${isScheduleInFuture(selectedSchedule.scheduled_date, selectedSchedule.scheduled_time) ? '(Upcoming)' : '(Recent)'}` : 
+                (() => {
+                  // Determine if we have more recent or upcoming schedules
+                  const recentCount = upcomingSchedules.filter(s => !isScheduleInFuture(s.scheduled_date, s.scheduled_time)).length;
+                  const upcomingCount = upcomingSchedules.filter(s => isScheduleInFuture(s.scheduled_date, s.scheduled_time)).length;
+                  
+                  if (recentCount > 0 && upcomingCount > 0) {
+                    return 'Recent & Upcoming Schedules';
+                  } else if (recentCount > 0) {
+                    return 'Recent Schedules';
+                  } else if (upcomingCount > 0) {
+                    return 'Upcoming Schedules';
+                  } else {
+                    return 'Schedules';
+                  }
+                })()
+              }
             </h2>
             {selectedSchedule && (
               <button
@@ -658,9 +930,9 @@ const ScheduleManagement = ({ selectedSchoolId, onViewProfile, onViewAssessment 
                   setSelectedDate(new Date());
                 }}
                 className="px-3 py-1 text-sm bg-gray-500 text-white rounded hover:bg-gray-600"
-                title="Reset to Upcoming View"
+                title="Back to Schedule List"
               >
-                Reset to Upcoming
+                Back to List
               </button>
             )}
           </div>
@@ -801,29 +1073,176 @@ const ScheduleManagement = ({ selectedSchoolId, onViewProfile, onViewAssessment 
           ) : !selectedSchedule && upcomingSchedules.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               <span className="text-4xl block mb-2">📅</span>
-              <p>No upcoming schedules</p>
+              <p>No schedules available</p>
             </div>
           ) : (
             <div className="space-y-3">
-              {upcomingSchedules.map(schedule => (
-                <div
-                  key={schedule.id}
-                  className="border border-gray-200 rounded-lg p-3 cursor-pointer hover:bg-gray-50"
-                  onClick={() => handleScheduleClick(schedule)}
-                >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="font-medium text-gray-900">{schedule.school_name}</p>
-                      <p className="text-sm text-gray-600">
-                        {formatDateTimeIndonesian(schedule.scheduled_date, schedule.scheduled_time)}
-                      </p>
+              {upcomingSchedules.map(schedule => {
+                const isFuture = isScheduleInFuture(schedule.scheduled_date, schedule.scheduled_time);
+                const scheduleAssessment = scheduleAssessments[schedule.id];
+                
+                return (
+                  <div
+                    key={schedule.id}
+                    className={`border rounded-lg p-4 cursor-pointer hover:bg-gray-50 transition-colors ${
+                      isFuture ? 'border-blue-200 bg-blue-50' : 'border-orange-200 bg-orange-50'
+                    }`}
+                    onClick={() => handleScheduleClick(schedule)}
+                  >
+                    <div className="space-y-3">
+                      {/* Header */}
+                      <div className="flex justify-between items-start">
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-medium text-gray-900">{schedule.school_name}</h4>
+                          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                            isFuture ? 'bg-blue-100 text-blue-800' : 'bg-orange-100 text-orange-800'
+                          }`}>
+                            {isFuture ? 'Upcoming' : 'Recent'}
+                          </span>
+                        </div>
+                        <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusClasses(schedule.status).bg} ${getStatusClasses(schedule.status).text}`}>
+                          {statusOptions.find(s => s.value === schedule.status)?.label}
+                        </span>
+                      </div>
+
+                      {/* Date and Time Info */}
+                      <div className="grid grid-cols-2 gap-3 text-sm">
+                        <div>
+                          <span className="font-medium text-gray-700">Date:</span>
+                          <p className="text-gray-600">{formatDateIndonesian(schedule.scheduled_date)}</p>
+                        </div>
+                        <div>
+                          <span className="font-medium text-gray-700">Time:</span>
+                          <p className="text-gray-600">{formatTime(schedule.scheduled_time)}</p>
+                        </div>
+                        <div>
+                          <span className="font-medium text-gray-700">Duration:</span>
+                          <p className="text-gray-600">{schedule.duration_minutes} minutes</p>
+                        </div>
+                        <div>
+                          <span className="font-medium text-gray-700">Students:</span>
+                          <p className="text-gray-600">
+                            {schedule.assessed_students || 0}/{schedule.total_students || 0} assessed
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Assessment Average for Recent schedules */}
+                      {!isFuture && scheduleAssessment && scheduleAssessment.averages && (
+                        <div className="border-t pt-3">
+                          <span className="font-medium text-gray-700 text-sm">Assessment Average:</span>
+                          <div className="grid grid-cols-2 gap-2 mt-2 text-xs">
+                            <div className="text-gray-600">
+                              Personal Development: <span className="font-medium">{scheduleAssessment.averages.personal_development}/5</span>
+                            </div>
+                            <div className="text-gray-600">
+                              Critical Thinking: <span className="font-medium">{scheduleAssessment.averages.critical_thinking}/5</span>
+                            </div>
+                            <div className="text-gray-600">
+                              Team Work: <span className="font-medium">{scheduleAssessment.averages.team_work}/5</span>
+                            </div>
+                            <div className="text-gray-600">
+                              Academic Knowledge: <span className="font-medium">{scheduleAssessment.averages.academic_knowledge}/5</span>
+                            </div>
+                          </div>
+                          <div className="mt-2 text-sm">
+                            <span className="text-gray-700 font-medium">Overall Average: </span>
+                            <span className={`font-bold ${
+                              parseFloat(scheduleAssessment.averages.overall) >= 4 ? 'text-green-600' :
+                              parseFloat(scheduleAssessment.averages.overall) >= 3 ? 'text-yellow-600' : 'text-red-600'
+                            }`}>
+                              {scheduleAssessment.averages.overall}/5
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Warning for Recent schedules with no assessment */}
+                      {!isFuture && (!scheduleAssessment || !scheduleAssessment.averages) && schedule.status === 'completed' && (
+                        <div className="border-t pt-3">
+                          <div className="text-amber-600 text-sm flex items-center gap-1">
+                            <span>⚠️</span>
+                            <span>No assessment data available</span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Teachers */}
+                      {schedule.teachers && schedule.teachers.length > 0 && (
+                        <div>
+                          <span className="font-medium text-gray-700 text-sm">Teachers:</span>
+                          <div className="mt-1">
+                            {schedule.teachers.slice(0, 2).map(teacher => (
+                              <div key={teacher.id} className="text-sm text-gray-600">
+                                {teacher.name} - {teacher.subject}
+                              </div>
+                            ))}
+                            {schedule.teachers.length > 2 && (
+                              <div className="text-sm text-gray-500">
+                                +{schedule.teachers.length - 2} more
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Lessons */}
+                      {schedule.lessons && schedule.lessons.length > 0 && (
+                        <div>
+                          <span className="font-medium text-gray-700 text-sm">Lessons:</span>
+                          <div className="mt-1">
+                            {schedule.lessons.slice(0, 2).map(lesson => (
+                              <div key={lesson.id} className="text-sm text-gray-600">
+                                {lesson.title}
+                              </div>
+                            ))}
+                            {schedule.lessons.length > 2 && (
+                              <div className="text-sm text-gray-500">
+                                +{schedule.lessons.length - 2} more
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Action Buttons */}
+                      <div className="flex gap-2 pt-2 border-t border-gray-200">
+                        {shouldShowAssessmentButton(schedule) && (hasPermission('update_schedules') || user.role === 'admin' || user.role === 'teacher') && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleViewScheduleAssessment(schedule.id);
+                            }}
+                            className="flex-1 bg-green-600 text-white px-3 py-1.5 rounded text-xs hover:bg-green-700 transition-colors"
+                          >
+                            Assessment
+                          </button>
+                        )}
+                        {hasPermission('update_schedules') && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openModal('edit', schedule);
+                            }}
+                            className="flex-1 bg-blue-600 text-white px-3 py-1.5 rounded text-xs hover:bg-blue-700 transition-colors"
+                          >
+                            Edit
+                          </button>
+                        )}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleViewScheduleProfile(schedule.id);
+                          }}
+                          className="flex-1 bg-gray-600 text-white px-3 py-1.5 rounded text-xs hover:bg-gray-700 transition-colors"
+                        >
+                          View
+                        </button>
+                      </div>
                     </div>
-                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusClasses(schedule.status).bg} ${getStatusClasses(schedule.status).text}`}>
-                      {statusOptions.find(s => s.value === schedule.status)?.label}
-                    </span>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -1047,7 +1466,7 @@ const ScheduleManagement = ({ selectedSchoolId, onViewProfile, onViewAssessment 
                               Edit
                             </button>
                           )}
-                          {schedule.status === 'completed' && (hasPermission('update_schedules') || user.role === 'admin' || user.role === 'teacher') && (
+                          {shouldShowAssessmentButton(schedule) && (hasPermission('update_schedules') || user.role === 'admin' || user.role === 'teacher') && (
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -1175,12 +1594,20 @@ const ScheduleManagement = ({ selectedSchoolId, onViewProfile, onViewAssessment 
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                 >
-                  {statusOptions.map(status => (
+                  {getAvailableStatusOptions().map(status => (
                     <option key={status.value} value={status.value}>
                       {status.label}
                     </option>
                   ))}
                 </select>
+                {modalType === 'edit' && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    {isScheduleInFuture(formData.scheduled_date, formData.scheduled_time) 
+                      ? 'Future schedules can only be scheduled or cancelled'
+                      : 'Complete status requires all students to be assessed'
+                    }
+                  </p>
+                )}
               </div>
 
               <div>

@@ -10,6 +10,7 @@ export async function GET(request) {
     const search = searchParams.get('search') || '';
     const schoolId = searchParams.get('school_id') || '';
     const status = searchParams.get('status') || '';
+    const upcoming = searchParams.get('upcoming') === 'true';
     const offset = (page - 1) * limit;
 
     let whereClause = `WHERE (sch.name ILIKE $1 OR s.notes ILIKE $1)`;
@@ -26,6 +27,12 @@ export async function GET(request) {
       paramCount++;
       whereClause += ` AND s.status = $${paramCount}`;
       queryParams.push(status);
+    }
+
+    if (upcoming) {
+      // Filter to only show schedules in the future
+      whereClause += ` AND (s.scheduled_date > CURRENT_DATE OR 
+                          (s.scheduled_date = CURRENT_DATE AND s.scheduled_time > CURRENT_TIME))`;
     }
 
     const schedulesQuery = `
@@ -47,7 +54,7 @@ export async function GET(request) {
       FROM schedules s
       JOIN schools sch ON s.school_id = sch.id
       ${whereClause}
-      ORDER BY s.scheduled_date DESC, s.scheduled_time DESC
+      ORDER BY ${upcoming ? 's.scheduled_date ASC, s.scheduled_time ASC' : 's.scheduled_date DESC, s.scheduled_time DESC'}
       LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}
     `;
 
