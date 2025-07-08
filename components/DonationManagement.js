@@ -121,11 +121,16 @@ const DonationManagement = () => {
     try {
       const response = await fetch('/api/schools');
       if (response.ok) {
-        const schools = await response.json();
-        setSchools(schools);
+        const result = await response.json();
+        // Handle both formats: direct array or nested data
+        const schoolsData = result.data || result;
+        setSchools(Array.isArray(schoolsData) ? schoolsData : []);
+      } else {
+        setSchools([]);
       }
     } catch (error) {
       console.error('Error fetching schools:', error);
+      setSchools([]);
     }
   };
 
@@ -381,7 +386,7 @@ const DonationManagement = () => {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">All Schools</option>
-              {schools.map(school => (
+              {Array.isArray(schools) && schools.map(school => (
                 <option key={school.id} value={school.name}>{school.name}</option>
               ))}
             </select>

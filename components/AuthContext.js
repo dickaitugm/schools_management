@@ -26,11 +26,11 @@ export const AuthProvider = ({ children }) => {
       'create_schools', 'read_schools', 'update_schools', 'delete_schools',
       'create_schedules', 'read_schedules', 'update_schedules', 'delete_schedules',
       'create_lessons', 'read_lessons', 'update_lessons', 'delete_lessons',
-      'read_donations', 'create_donations', 'update_donations',
+      'read_cash_flow', 'create_cash_flow', 'update_cash_flow', 'delete_cash_flow',
       'view_reports', 'view_assessments', 'create_assessments'
     ],
-    parents: ['read_students', 'update_students', 'read_schedules', 'read_lessons', 'read_donations', 'view_assessments'],
-    student: ['read_students', 'update_students', 'read_schedules', 'read_lessons', 'read_donations', 'view_assessments'],
+    parents: ['read_students', 'update_students', 'read_schedules', 'read_lessons', 'read_cash_flow', 'view_assessments'],
+    student: ['read_students', 'update_students', 'read_schedules', 'read_lessons', 'read_cash_flow', 'view_assessments'],
     guest: ['read_students', 'read_teachers', 'read_schools', 'read_schedules', 'read_lessons']
   };
 

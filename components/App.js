@@ -10,7 +10,7 @@ import TeacherManagement from './TeacherManagement';
 import StudentManagement from './StudentManagement';
 import LessonManagement from './LessonManagement';
 import ScheduleManagement from './ScheduleManagement';
-import DonationManagement from './DonationManagement';
+import CashFlowManagement from './CashFlowManagement';
 import RoleManagement from './RoleManagement';
 import ProfileView from './ProfileView';
 import StudentAssessmentView from './StudentAssessmentView';
@@ -126,8 +126,8 @@ const AppContent = () => {
             onViewAssessment={handleViewAssessment}
           />
         );
-      case 'donations':
-        return <DonationManagement />;
+      case 'cash-flow':
+        return <CashFlowManagement />;
       case 'roles':
         return <RoleManagement />;
       case 'activity-logs':
