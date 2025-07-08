@@ -113,12 +113,50 @@ export async function GET() {
       ORDER BY student_count DESC
     `;
 
-        const [countsResult, scheduleDataResult, scheduleStatusResult, studentsPerSchoolResult] =
+        // Get recent cash flow (5 most recent) with correct running balance
+        const recentCashFlowQuery = `
+      SELECT 
+        cf.id,
+        cf.transaction_date,
+        cf.reference_number,
+        cf.description,
+        cf.category,
+        cf.transaction_type,
+        cf.amount,
+        cf.account,
+        cf.status,
+        s.name as school_name,
+        cf.created_at,
+        -- Calculate running balance up to each transaction (including this one)
+        (
+          SELECT COALESCE(SUM(
+            CASE 
+              WHEN cf_inner.transaction_type = 'income' THEN cf_inner.amount 
+              WHEN cf_inner.transaction_type = 'expense' THEN -cf_inner.amount 
+              ELSE 0 
+            END
+          ), 0)
+          FROM cash_flow cf_inner 
+          WHERE cf_inner.status = 'confirmed'
+          AND (
+            cf_inner.transaction_date < cf.transaction_date OR 
+            (cf_inner.transaction_date = cf.transaction_date AND cf_inner.created_at <= cf.created_at)
+          )
+        ) as running_balance
+      FROM cash_flow cf
+      LEFT JOIN schools s ON cf.school_id = s.id
+      WHERE cf.status = 'confirmed'
+      ORDER BY cf.transaction_date DESC, cf.created_at DESC
+      LIMIT 5
+    `;
+
+        const [countsResult, scheduleDataResult, scheduleStatusResult, studentsPerSchoolResult, recentCashFlowResult] =
             await Promise.all([
                 pool.query(countsQuery),
                 pool.query(scheduleDataQuery),
                 pool.query(scheduleStatusQuery),
                 pool.query(studentsPerSchoolQuery),
+                pool.query(recentCashFlowQuery),
             ]);
 
         const data = {
@@ -133,6 +171,9 @@ export async function GET() {
 
             // Students per school for bar chart
             studentsPerSchool: studentsPerSchoolResult.rows,
+
+            // Recent cash flow transactions
+            recentCashFlow: recentCashFlowResult.rows,
 
             // Additional analytics
             analytics: {

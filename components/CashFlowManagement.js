@@ -709,95 +709,86 @@ const CashFlowManagement = () => {
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
-                                {(() => {
-                                    let runningBalance = 0;
-                                    return transactions.map((transaction, index) => {
-                                        // Update running balance for this transaction
-                                        if (transaction.transaction_type === "income") {
-                                            runningBalance += parseFloat(transaction.amount);
-                                        } else {
-                                            runningBalance -= parseFloat(transaction.amount);
-                                        }
-
-                                        return (
-                                            <tr key={transaction.id} className="hover:bg-gray-50">
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    <div>
-                                                        <div className="text-sm font-medium text-gray-900">
-                                                            {formatDate(
-                                                                transaction.transaction_date
-                                                            )}
-                                                        </div>
-                                                        <div className="text-xs text-gray-500">
-                                                            {transaction.reference_number}
-                                                        </div>
+                                {transactions.map((transaction, index) => {
+                                    return (
+                                        <tr key={transaction.id} className="hover:bg-gray-50">
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div>
+                                                    <div className="text-sm font-medium text-gray-900">
+                                                        {formatDate(
+                                                            transaction.transaction_date
+                                                        )}
                                                     </div>
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    <div className="text-sm text-gray-900">
-                                                        {transaction.description}
+                                                    <div className="text-xs text-gray-500">
+                                                        {transaction.reference_number}
                                                     </div>
-                                                    {transaction.school_name && (
-                                                        <div className="text-xs text-gray-500">
-                                                            📍 {transaction.school_name}
-                                                        </div>
-                                                    )}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    <span className="text-sm text-gray-900">
-                                                        {transaction.category}
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    <span className="text-sm text-gray-900">
-                                                        {transaction.account}
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    <div className="text-sm font-semibold text-green-600">
-                                                        {transaction.transaction_type === "income"
-                                                            ? formatCurrency(transaction.amount)
-                                                            : "-"}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="text-sm text-gray-900">
+                                                    {transaction.description}
+                                                </div>
+                                                {transaction.school_name && (
+                                                    <div className="text-xs text-gray-500">
+                                                        📍 {transaction.school_name}
                                                     </div>
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    <div className="text-sm font-semibold text-red-600">
-                                                        {transaction.transaction_type === "expense"
-                                                            ? formatCurrency(transaction.amount)
-                                                            : "-"}
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    <div
-                                                        className={`text-sm font-bold ${
-                                                            runningBalance >= 0
-                                                                ? "text-blue-600"
-                                                                : "text-red-600"
-                                                        }`}
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <span className="text-sm text-gray-900">
+                                                    {transaction.category}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <span className="text-sm text-gray-900">
+                                                    {transaction.account}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="text-sm font-semibold text-green-600">
+                                                    {transaction.transaction_type === "income"
+                                                        ? formatCurrency(transaction.amount)
+                                                        : "-"}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="text-sm font-semibold text-red-600">
+                                                    {transaction.transaction_type === "expense"
+                                                        ? formatCurrency(transaction.amount)
+                                                        : "-"}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div
+                                                    className={`text-sm font-bold ${
+                                                        transaction.running_balance >= 0
+                                                            ? "text-blue-600"
+                                                            : "text-red-600"
+                                                    }`}
+                                                >
+                                                    {formatCurrency(transaction.running_balance)}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                                <div className="flex space-x-2">
+                                                    <button
+                                                        onClick={() =>
+                                                            openModal("view", transaction)
+                                                        }
+                                                        className="text-blue-600 hover:text-blue-900"
                                                     >
-                                                        {formatCurrency(runningBalance)}
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                                    <div className="flex space-x-2">
+                                                        View
+                                                    </button>
+                                                    {hasPermission("update_cash_flow") && (
                                                         <button
                                                             onClick={() =>
-                                                                openModal("view", transaction)
+                                                                openModal("edit", transaction)
                                                             }
-                                                            className="text-blue-600 hover:text-blue-900"
+                                                            className="text-indigo-600 hover:text-indigo-900"
                                                         >
-                                                            View
+                                                            Edit
                                                         </button>
-                                                        {hasPermission("update_cash_flow") && (
-                                                            <button
-                                                                onClick={() =>
-                                                                    openModal("edit", transaction)
-                                                                }
-                                                                className="text-indigo-600 hover:text-indigo-900"
-                                                            >
-                                                                Edit
-                                                            </button>
-                                                        )}
+                                                    )}
                                                         {hasPermission("delete_cash_flow") && (
                                                             <button
                                                                 onClick={() =>
@@ -812,8 +803,7 @@ const CashFlowManagement = () => {
                                                 </td>
                                             </tr>
                                         );
-                                    });
-                                })()}
+                                    })}
                             </tbody>
                         </table>
                     </div>

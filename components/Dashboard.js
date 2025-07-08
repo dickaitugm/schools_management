@@ -837,58 +837,113 @@ const Dashboard = () => {
                 </div>
             )}
 
-            {/* Recent Schedules Table */}
-            {dashboardData?.scheduleData && (
+            {/* Recent Cash Flow Table */}
+            {dashboardData?.recentCashFlow && (
                 <div className="bg-white rounded-lg shadow-md p-6">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-4">Recent Schedules</h3>
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4">Recent Cash Flow</h3>
                     <div className="overflow-x-auto">
                         <table className="min-w-full divide-y divide-gray-200">
                             <thead className="bg-gray-50">
                                 <tr>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        School
+                                        Date & Reference
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Date
+                                        Description
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Status
+                                        Category
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Students
+                                        Account
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Total School Students
+                                        Income
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Expense
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Total Balance
                                     </th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
-                                {dashboardData.scheduleData.slice(0, 5).map((schedule) => (
-                                    <tr key={schedule.id} className="hover:bg-gray-50">
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                            {schedule.school_name}
+                                {dashboardData.recentCashFlow.map((transaction, index) => (
+                                    <tr key={transaction.id} className="hover:bg-gray-50">
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div>
+                                                <div className="text-sm font-medium text-gray-900">
+                                                    {new Date(transaction.transaction_date).toLocaleDateString("id-ID", {
+                                                        day: "2-digit",
+                                                        month: "short",
+                                                        year: "numeric",
+                                                    })}
+                                                </div>
+                                                <div className="text-xs text-gray-500">
+                                                    {transaction.reference_number}
+                                                </div>
+                                            </div>
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            {new Date(schedule.scheduled_date).toLocaleDateString()}
+                                        <td className="px-6 py-4">
+                                            <div className="text-sm text-gray-900">
+                                                {transaction.description}
+                                            </div>
+                                            {transaction.school_name && (
+                                                <div className="text-xs text-gray-500">
+                                                    📍 {transaction.school_name}
+                                                </div>
+                                            )}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <span
-                                                className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                                                    schedule.status === "completed"
-                                                        ? "bg-green-100 text-green-800"
-                                                        : schedule.status === "scheduled"
-                                                        ? "bg-blue-100 text-blue-800"
-                                                        : "bg-gray-100 text-gray-800"
-                                                }`}
-                                            >
-                                                {schedule.status}
+                                            <span className="text-sm text-gray-900">
+                                                {transaction.category}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            {schedule.student_count}
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <span className="text-sm text-gray-900">
+                                                {transaction.account}
+                                            </span>
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            {schedule.total_school_students}
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="text-sm font-semibold text-green-600">
+                                                {transaction.transaction_type === "income"
+                                                    ? new Intl.NumberFormat("id-ID", {
+                                                        style: "currency",
+                                                        currency: "IDR",
+                                                        minimumFractionDigits: 0,
+                                                        maximumFractionDigits: 0,
+                                                    }).format(transaction.amount)
+                                                    : "-"}
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="text-sm font-semibold text-red-600">
+                                                {transaction.transaction_type === "expense"
+                                                    ? new Intl.NumberFormat("id-ID", {
+                                                        style: "currency",
+                                                        currency: "IDR",
+                                                        minimumFractionDigits: 0,
+                                                        maximumFractionDigits: 0,
+                                                    }).format(transaction.amount)
+                                                    : "-"}
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div
+                                                className={`text-sm font-bold ${
+                                                    (transaction.running_balance || 0) >= 0
+                                                        ? "text-blue-600"
+                                                        : "text-red-600"
+                                                }`}
+                                            >
+                                                {new Intl.NumberFormat("id-ID", {
+                                                    style: "currency",
+                                                    currency: "IDR",
+                                                    minimumFractionDigits: 0,
+                                                    maximumFractionDigits: 0,
+                                                }).format(transaction.running_balance || 0)}
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}
@@ -897,55 +952,6 @@ const Dashboard = () => {
                     </div>
                 </div>
             )}
-
-            {/* Welcome Message */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-                <h2 className="text-xl font-bold text-gray-800 mb-4">
-                    Welcome to BB for Society Information System
-                </h2>
-                <p className="text-gray-600 mb-4">
-                    Manage your schools, teachers, students, lessons, and schedules all in one
-                    place.
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                        <h3 className="font-semibold text-gray-900 mb-2">🏫 Schools</h3>
-                        <p className="text-sm text-gray-600">
-                            Add and manage school information, contact details, and locations.
-                        </p>
-                    </div>
-                    <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                        <h3 className="font-semibold text-gray-900 mb-2">👨‍🏫 Teachers</h3>
-                        <p className="text-sm text-gray-600">
-                            Manage teacher profiles and assign them to multiple schools.
-                        </p>
-                    </div>
-                    <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                        <h3 className="font-semibold text-gray-900 mb-2">👨‍🎓 Students</h3>
-                        <p className="text-sm text-gray-600">
-                            Track student enrollment and manage their information.
-                        </p>
-                    </div>
-                    <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                        <h3 className="font-semibold text-gray-900 mb-2">📚 Lessons</h3>
-                        <p className="text-sm text-gray-600">
-                            Create lesson content that can be taught at multiple schools.
-                        </p>
-                    </div>
-                    <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                        <h3 className="font-semibold text-gray-900 mb-2">📅 Schedules</h3>
-                        <p className="text-sm text-gray-600">
-                            Plan and track when lessons are taught at different schools.
-                        </p>
-                    </div>
-                    <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                        <h3 className="font-semibold text-gray-900 mb-2">📊 Analytics</h3>
-                        <p className="text-sm text-gray-600">
-                            Monitor attendance and performance across all schools.
-                        </p>
-                    </div>
-                </div>
-            </div>
         </div>
     );
 };

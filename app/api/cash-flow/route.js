@@ -72,11 +72,27 @@ export async function GET(request) {
     const countResult = await pool.query(countQuery, params);
     const total = parseInt(countResult.rows[0].total);
 
-    // Get cash flow data
+    // Get cash flow data with running balance
     const query = `
       SELECT 
         cf.*,
-        s.name as school_name
+        s.name as school_name,
+        -- Calculate running balance up to and including each transaction
+        (
+          SELECT COALESCE(SUM(
+            CASE 
+              WHEN cf_inner.transaction_type = 'income' THEN cf_inner.amount 
+              WHEN cf_inner.transaction_type = 'expense' THEN -cf_inner.amount 
+              ELSE 0 
+            END
+          ), 0)
+          FROM cash_flow cf_inner 
+          WHERE cf_inner.status = 'confirmed'
+          AND (
+            cf_inner.transaction_date < cf.transaction_date OR 
+            (cf_inner.transaction_date = cf.transaction_date AND cf_inner.created_at <= cf.created_at)
+          )
+        ) as running_balance
       FROM cash_flow cf
       LEFT JOIN schools s ON cf.school_id = s.id
       ${whereClause}
