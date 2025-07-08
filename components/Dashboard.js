@@ -12,6 +12,7 @@ const Dashboard = () => {
         schedules: 0,
     });
     const [dashboardData, setDashboardData] = useState(null);
+    const [statsData, setStatsData] = useState(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -22,31 +23,33 @@ const Dashboard = () => {
         try {
             setLoading(true);
 
-            // Fetch comprehensive dashboard data
-            const response = await fetch("/api/dashboard");
+            // Fetch comprehensive stats data
+            const statsResponse = await fetch("/api/dashboard/stats");
+            if (statsResponse.ok) {
+                const statsResult = await statsResponse.json();
+                if (statsResult.success) {
+                    setStatsData(statsResult.data);
+                    setStats({
+                        schools: statsResult.data.counts.totalSchools,
+                        teachers: statsResult.data.counts.totalTeachers,
+                        students: statsResult.data.counts.totalStudents,
+                        lessons: 0, // Not provided in new API
+                        schedules: statsResult.data.counts.todaySchedules,
+                    });
+                }
+            }
 
+            // Fetch original dashboard data for fallback compatibility
+            const response = await fetch("/api/dashboard");
             if (response.ok) {
                 const result = await response.json();
                 if (result.success) {
-                    setStats({
-                        schools: result.data.schools,
-                        teachers: result.data.teachers,
-                        students: result.data.students,
-                        lessons: result.data.lessons,
-                        schedules: result.data.schedules,
-                    });
                     setDashboardData(result.data);
-                } else {
-                    console.error("Failed to fetch dashboard data:", result.error);
-                    // Fallback to stats endpoint
-                    await fetchStatsOnly();
                 }
-            } else {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
         } catch (error) {
             console.error("Error fetching dashboard data:", error);
-            // Fallback to stats endpoint
+            // Fallback to old stats endpoint
             await fetchStatsOnly();
         } finally {
             setLoading(false);
@@ -146,18 +149,22 @@ const Dashboard = () => {
 
     const scheduleAssessmentData = prepareScheduleAssessmentData(dashboardData?.scheduleData);
 
-    // Get unique school names for the stacked bars
-    const uniqueSchools = [
-        ...new Set(dashboardData?.scheduleData?.map((s) => s.school_name) || []),
-    ];
+    // Get unique schools from stats data for dynamic color mapping
+    const uniqueSchools = statsData?.schools ? statsData.schools.map(school => school.name) : 
+                         (dashboardData?.scheduleData ? 
+                          [...new Set(dashboardData.scheduleData.map(item => item.school_name).filter(Boolean))] : 
+                          []);
 
-    // School colors mapping
-    const schoolColors = {
-        "SD Harapan Bangsa": "#3B82F6", // Blue
-        "SMP Tunas Muda": "#10B981", // Green
-        "SMA Cerdas Berkarya": "#F59E0B", // Yellow/Orange
-        "Rusunawa Cibuluh": "#EF4444", // Red
+    // Dynamic school colors mapping
+    const generateSchoolColors = (schools) => {
+        const colors = {};
+        schools.forEach((school, index) => {
+            colors[school] = COLORS[index % COLORS.length];
+        });
+        return colors;
     };
+
+    const schoolColors = generateSchoolColors(uniqueSchools);
 
     // Get color for school, with fallback
     const getSchoolColor = (schoolName, index) => {
@@ -167,7 +174,14 @@ const Dashboard = () => {
     return (
         <div className="p-6 space-y-6">
             <div className="flex justify-between items-center">
-                <h1 className="text-3xl font-bold text-gray-800">BB for Society Dashboard</h1>
+                <div>
+                    <h1 className="text-3xl font-bold text-gray-800">BB for Society Dashboard</h1>
+                    {statsData?.currentTime && (
+                        <p className="text-sm text-gray-500 mt-1">
+                            Data updated: {formatDateIndonesian(new Date(statsData.currentTime), true)}
+                        </p>
+                    )}
+                </div>
             </div>
 
             {/* Stats Cards */}
@@ -303,25 +317,108 @@ const Dashboard = () => {
             )}
 
             {/* Charts Section */}
-            {dashboardData && (
+            {(dashboardData || statsData) && (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Recent and Upcoming Schedules Cards */}
                     <div className="bg-white rounded-lg shadow-md p-6">
                         <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                            Recent & Upcoming Schedules
+                            Upcoming & Recent Schedules
                         </h3>
-                        {dashboardData.scheduleData && dashboardData.scheduleData.length > 0 ? (
+                        {/* Upcoming Schedules */}
+                        {statsData?.upcomingSchedules && statsData.upcomingSchedules.length > 0 ? (
                             <div className="space-y-3">
-                                {dashboardData.scheduleData
-                                    .sort(
-                                        (a, b) =>
-                                            new Date(b.scheduled_date) - new Date(a.scheduled_date)
-                                    ) // Sort by newest first
-                                    .slice(0, 3) // Take only 3 newest
-                                    .map((schedule) => {
+                                <h4 className="text-sm font-medium text-gray-700 mb-2">Upcoming</h4>
+                                {statsData.upcomingSchedules.slice(0, 2).map((schedule) => {
+                                    const scheduleDate = new Date(schedule.scheduled_date);
+                                    const scheduleTime = schedule.scheduled_time;
+                                    const isUpcoming = schedule.status === "scheduled";
+
+                                    return (
+                                        <div
+                                            key={schedule.id}
+                                            className="border border-gray-200 rounded-lg p-3 hover:shadow-md transition-shadow"
+                                        >
+                                            {/* Header */}
+                                            <div className="flex justify-between items-start mb-2">
+                                                <div>
+                                                    <h4 className="font-semibold text-gray-900 text-sm">
+                                                        {schedule.school_name}
+                                                    </h4>
+                                                </div>
+                                                <span
+                                                    className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                                        isUpcoming
+                                                            ? "bg-blue-100 text-blue-800"
+                                                            : "bg-gray-100 text-gray-800"
+                                                    }`}
+                                                >
+                                                    {schedule.status === "scheduled"
+                                                        ? "Scheduled"
+                                                        : schedule.status}
+                                                </span>
+                                            </div>
+
+                                            {/* Compact Schedule Details */}
+                                            <div className="grid grid-cols-2 gap-3 text-xs">
+                                                <div>
+                                                    <span className="text-gray-600 font-medium">
+                                                        📅{" "}
+                                                    </span>
+                                                    <span className="text-gray-900">
+                                                        {formatDateIndonesian(
+                                                            schedule.scheduled_date
+                                                        )}
+                                                    </span>
+                                                </div>
+
+                                                <div>
+                                                    <span className="text-gray-600 font-medium">
+                                                        ⏰{" "}
+                                                    </span>
+                                                    <span className="text-gray-900">
+                                                        {scheduleTime ? scheduleTime.slice(0, 5) : "00:00"}
+                                                    </span>
+                                                </div>
+
+                                                <div>
+                                                    <span className="text-gray-600 font-medium">
+                                                        👥{" "}
+                                                    </span>
+                                                    <span className="text-gray-900">
+                                                        {schedule.assessed_students} assessed
+                                                    </span>
+                                                </div>
+
+                                                <div>
+                                                    <span className="text-gray-600 font-medium">
+                                                        📚{" "}
+                                                    </span>
+                                                    <span className="text-gray-900">
+                                                        {schedule.notes || "Lesson Activity"}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        ) : (
+                            <div className="flex items-center justify-center h-24 text-gray-500">
+                                <div className="text-center">
+                                    <p className="text-sm">No upcoming schedules found.</p>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Recent Schedules */}
+                        {statsData?.recentSchedules && statsData.recentSchedules.length > 0 && (
+                            <div className="mt-4 pt-4 border-t border-gray-200">
+                                <h4 className="text-sm font-medium text-gray-700 mb-2">Recent</h4>
+                                <div className="space-y-3">
+                                    {statsData.recentSchedules.slice(0, 2).map((schedule) => {
                                         const scheduleDate = new Date(schedule.scheduled_date);
+                                        const scheduleTime = schedule.scheduled_time;
                                         const isCompleted = schedule.status === "completed";
-                                        const isUpcoming = schedule.status === "scheduled";
 
                                         return (
                                             <div
@@ -339,15 +436,11 @@ const Dashboard = () => {
                                                         className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                                                             isCompleted
                                                                 ? "bg-green-100 text-green-800"
-                                                                : isUpcoming
-                                                                ? "bg-blue-100 text-blue-800"
                                                                 : "bg-gray-100 text-gray-800"
                                                         }`}
                                                     >
                                                         {schedule.status === "completed"
                                                             ? "Completed"
-                                                            : schedule.status === "scheduled"
-                                                            ? "Scheduled"
                                                             : schedule.status}
                                                     </span>
                                                 </div>
@@ -370,13 +463,7 @@ const Dashboard = () => {
                                                             ⏰{" "}
                                                         </span>
                                                         <span className="text-gray-900">
-                                                            {scheduleDate.toLocaleTimeString(
-                                                                "id-ID",
-                                                                {
-                                                                    hour: "2-digit",
-                                                                    minute: "2-digit",
-                                                                }
-                                                            )}
+                                                            {scheduleTime ? scheduleTime.slice(0, 5) : "00:00"}
                                                         </span>
                                                     </div>
 
@@ -385,9 +472,7 @@ const Dashboard = () => {
                                                             👥{" "}
                                                         </span>
                                                         <span className="text-gray-900">
-                                                            {schedule.student_count}/
-                                                            {schedule.total_school_students}{" "}
-                                                            assessed
+                                                            {schedule.assessed_students} assessed
                                                         </span>
                                                     </div>
 
@@ -396,8 +481,7 @@ const Dashboard = () => {
                                                             📚{" "}
                                                         </span>
                                                         <span className="text-gray-900">
-                                                            {schedule.lesson_title ||
-                                                                "Pengenalan Hukum Fisika"}
+                                                            {schedule.notes || "Lesson Activity"}
                                                         </span>
                                                     </div>
                                                 </div>
@@ -411,8 +495,7 @@ const Dashboard = () => {
                                                                     Personal:
                                                                 </span>
                                                                 <span className="text-gray-900 font-medium">
-                                                                    {schedule.avg_personal_development ||
-                                                                        "0.0"}
+                                                                    {schedule.avg_personal ? parseFloat(schedule.avg_personal).toFixed(1) : "0.0"}
                                                                     /5
                                                                 </span>
                                                             </div>
@@ -421,8 +504,7 @@ const Dashboard = () => {
                                                                     Critical:
                                                                 </span>
                                                                 <span className="text-gray-900 font-medium">
-                                                                    {schedule.avg_critical_thinking ||
-                                                                        "0.0"}
+                                                                    {schedule.avg_critical ? parseFloat(schedule.avg_critical).toFixed(1) : "0.0"}
                                                                     /5
                                                                 </span>
                                                             </div>
@@ -431,8 +513,7 @@ const Dashboard = () => {
                                                                     Team Work:
                                                                 </span>
                                                                 <span className="text-gray-900 font-medium">
-                                                                    {schedule.avg_team_work ||
-                                                                        "0.0"}
+                                                                    {schedule.avg_teamwork ? parseFloat(schedule.avg_teamwork).toFixed(1) : "0.0"}
                                                                     /5
                                                                 </span>
                                                             </div>
@@ -441,8 +522,7 @@ const Dashboard = () => {
                                                                     Academic:
                                                                 </span>
                                                                 <span className="text-gray-900 font-medium">
-                                                                    {schedule.avg_academic_knowledge ||
-                                                                        "0.0"}
+                                                                    {schedule.avg_academic ? parseFloat(schedule.avg_academic).toFixed(1) : "0.0"}
                                                                     /5
                                                                 </span>
                                                             </div>
@@ -452,7 +532,7 @@ const Dashboard = () => {
                                                                 Overall Average:
                                                             </span>
                                                             <span className="text-blue-600 font-semibold">
-                                                                {schedule.overall_average || "0.0"}
+                                                                {schedule.avg_overall ? parseFloat(schedule.avg_overall).toFixed(1) : "0.0"}
                                                                 /5
                                                             </span>
                                                         </div>
@@ -461,24 +541,6 @@ const Dashboard = () => {
                                             </div>
                                         );
                                     })}
-                            </div>
-                        ) : (
-                            <div className="flex items-center justify-center h-64 text-gray-500">
-                                <div className="text-center">
-                                    <svg
-                                        className="mx-auto h-12 w-12 text-gray-400"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth={2}
-                                            d="M8 7V3a1 1 0 011-1h6a1 1 0 011 1v4h3a1 1 0 011 1v8a1 1 0 01-1 1H3a1 1 0 01-1-1V8a1 1 0 011-1h3z"
-                                        />
-                                    </svg>
-                                    <p className="mt-2">No schedule data available</p>
                                 </div>
                             </div>
                         )}

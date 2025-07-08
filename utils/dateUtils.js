@@ -17,9 +17,10 @@ const monthNames = [
  * Format date to Indonesian format: "Hari, DD MMM YYYY"
  * Example: "Senin, 15 Jan 2024"
  * @param {string|Date} dateString - Date string or Date object
+ * @param {boolean} includeTime - Whether to include time
  * @returns {string} Formatted date string or 'N/A' if invalid
  */
-export const formatDate = (dateString) => {
+export const formatDate = (dateString, includeTime = false) => {
   if (!dateString) return 'N/A';
   
   try {
@@ -32,6 +33,12 @@ export const formatDate = (dateString) => {
     const day = date.getDate();
     const monthName = monthNames[date.getMonth()];
     const year = date.getFullYear();
+    
+    if (includeTime) {
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      return `${dayName}, ${day} ${monthName} ${year} ${hours}:${minutes}`;
+    }
     
     return `${dayName}, ${day} ${monthName} ${year}`;
   } catch (error) {
