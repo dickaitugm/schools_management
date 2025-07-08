@@ -576,205 +576,228 @@ const Dashboard = () => {
                                     </div>
                                 </div>
 
-                                {/* Chart Container */}
-                                <div className="bg-white border border-gray-200 rounded-lg p-4">
-                                    <div className="flex">
-                                        {/* Y-axis labels */}
-                                        <div
-                                            className="flex flex-col justify-between text-xs text-gray-500 pr-3 border-r border-gray-200"
-                                            style={{ height: "300px" }}
-                                        >
-                                            {[...Array(6)].map((_, i) => {
-                                                const maxValue = Math.max(
-                                                    ...scheduleAssessmentData.flatMap((data) =>
-                                                        uniqueSchools.map(
-                                                            (school) =>
-                                                                (data[`${school}_assessed`] || 0) +
-                                                                (data[`${school}_not_assessed`] ||
-                                                                    0)
-                                                        )
-                                                    )
-                                                );
-                                                const value = Math.ceil((maxValue * (5 - i)) / 5);
-                                                return <span key={i}>{value}</span>;
-                                            })}
-                                        </div>
+                                {/* Calculate max value once for consistency */}
+                                {(() => {
+                                    const maxValue = Math.max(
+                                        ...scheduleAssessmentData.flatMap((data) =>
+                                            uniqueSchools.map(
+                                                (school) =>
+                                                    (data[`${school}_assessed`] || 0) +
+                                                    (data[`${school}_not_assessed`] || 0)
+                                            )
+                                        ),
+                                        1 // Minimum value to avoid division by zero
+                                    );
 
-                                        {/* Chart area */}
-                                        <div
-                                            className="flex-1 relative ml-4"
-                                            style={{ height: "300px" }}
-                                        >
-                                            {/* Grid lines */}
-                                            <div className="absolute inset-0">
-                                                {[0, 1, 2, 3, 4, 5].map((level) => (
+                                    // Calculate better step for Y-axis to avoid duplicates
+                                    const calculateYAxisTicks = (max) => {
+                                        // Find a nice round number that's higher than max
+                                        let step;
+                                        if (max <= 3) step = 1;
+                                        else if (max <= 5) step = 1;
+                                        else if (max <= 10) step = 2;
+                                        else if (max <= 20) step = 5;
+                                        else if (max <= 50) step = 10;
+                                        else if (max <= 100) step = 20;
+                                        else if (max <= 200) step = 50;
+                                        else step = Math.ceil(max / 5 / 10) * 10;
+                                        
+                                        // For small values, ensure we have enough space
+                                        let roundedMax = Math.ceil(max / step) * step;
+                                        if (roundedMax < 5 && max <= 3) {
+                                            roundedMax = 5; // Minimum chart height for readability
+                                        }
+                                        
+                                        const ticks = [];
+                                        for (let i = 0; i <= 5; i++) {
+                                            const value = Math.round((roundedMax * (5 - i)) / 5);
+                                            ticks.push(value);
+                                        }
+                                        
+                                        // Remove duplicates while maintaining order
+                                        const uniqueTicks = [...new Set(ticks)].sort((a, b) => b - a);
+                                        
+                                        return { ticks: uniqueTicks, roundedMax };
+                                    };
+
+                                    const { ticks, roundedMax } = calculateYAxisTicks(maxValue);
+
+                                    return (
+                                        /* Chart Container */
+                                        <div className="bg-white border border-gray-200 rounded-lg p-4">
+                                            <div className="flex">
+                                                {/* Y-axis labels */}
+                                                <div
+                                                    className="flex flex-col justify-between text-xs text-gray-500 pr-3 border-r border-gray-200"
+                                                    style={{ height: "300px" }}
+                                                >
+                                                    {ticks.map((value, i) => (
+                                                        <span key={`tick-${i}-${value}`}>{value}</span>
+                                                    ))}
+                                                </div>
+
+                                                {/* Chart area */}
+                                                <div
+                                                    className="flex-1 relative ml-4"
+                                                    style={{ height: "300px" }}
+                                                >
+                                                    {/* Grid lines */}
+                                                    <div className="absolute inset-0">
+                                                        {ticks.map((value, level) => (
+                                                            <div
+                                                                key={`grid-${level}-${value}`}
+                                                                className="absolute w-full border-t border-gray-100"
+                                                                style={{ bottom: `${(level / (ticks.length - 1)) * 100}%` }}
+                                                            ></div>
+                                                        ))}
+                                                    </div>
+
+                                                    {/* Bars for each date */}
+                                                    <div className="absolute inset-0 flex items-end justify-around px-4">
+                                                        {scheduleAssessmentData.map(
+                                                            (dateData, dateIndex) => {
+                                                                return (
+                                                                    <div
+                                                                        key={dateData.date}
+                                                                        className="flex flex-col items-center"
+                                                                    >
+                                                                        <div className="flex items-end space-x-1">
+                                                                            {uniqueSchools.map(
+                                                                                (school, schoolIndex) => {
+                                                                                    const assessedCount =
+                                                                                        dateData[
+                                                                                            `${school}_assessed`
+                                                                                        ] || 0;
+                                                                                    const notAssessedCount =
+                                                                                        dateData[
+                                                                                            `${school}_not_assessed`
+                                                                                        ] || 0;
+                                                                                    const totalCount =
+                                                                                        assessedCount +
+                                                                                        notAssessedCount;
+
+                                                                                    if (totalCount === 0)
+                                                                                        return null;
+
+                                                                                    const totalBarHeight =
+                                                                                        roundedMax > 0
+                                                                                            ? (totalCount /
+                                                                                                  roundedMax) *
+                                                                                              300
+                                                                                            : 0;
+                                                                                    const assessedHeight =
+                                                                                        totalCount > 0
+                                                                                            ? (assessedCount /
+                                                                                                  totalCount) *
+                                                                                              totalBarHeight
+                                                                                            : 0;
+                                                                                    const notAssessedHeight =
+                                                                                        totalBarHeight -
+                                                                                        assessedHeight;
+
+                                                                                    return (
+                                                                                        <div
+                                                                                            key={`${school}-${dateData.date}`}
+                                                                                            className="relative w-8 group cursor-pointer"
+                                                                                            style={{
+                                                                                                height: `${totalBarHeight}px`,
+                                                                                            }}
+                                                                                        >
+                                                                                            {/* Assessed students (bottom part) */}
+                                                                                            <div
+                                                                                                className="absolute bottom-0 w-full border border-gray-300 transition-colors"
+                                                                                                style={{
+                                                                                                    height: `${assessedHeight}px`,
+                                                                                                    backgroundColor:
+                                                                                                        getSchoolColor(
+                                                                                                            school,
+                                                                                                            schoolIndex
+                                                                                                        ),
+                                                                                                }}
+                                                                                            ></div>
+
+                                                                                            {/* Not assessed students (top part) */}
+                                                                                            <div
+                                                                                                className="absolute w-full border border-gray-300 transition-colors"
+                                                                                                style={{
+                                                                                                    bottom: `${assessedHeight}px`,
+                                                                                                    height: `${notAssessedHeight}px`,
+                                                                                                    backgroundColor:
+                                                                                                        getSchoolColor(
+                                                                                                            school,
+                                                                                                            schoolIndex
+                                                                                                        ),
+                                                                                                    opacity: 0.4,
+                                                                                                }}
+                                                                                            ></div>
+
+                                                                                            {/* Tooltip */}
+                                                                                            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 bg-gray-800 text-white text-xs rounded py-2 px-3 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 whitespace-nowrap">
+                                                                                                <div className="text-center">
+                                                                                                    <div className="font-semibold">
+                                                                                                        {
+                                                                                                            school
+                                                                                                        }
+                                                                                                    </div>
+                                                                                                    <div>
+                                                                                                        Assessed:{" "}
+                                                                                                        {
+                                                                                                            assessedCount
+                                                                                                        }
+                                                                                                    </div>
+                                                                                                    <div>
+                                                                                                        Not
+                                                                                                        Assessed:{" "}
+                                                                                                        {
+                                                                                                            notAssessedCount
+                                                                                                        }
+                                                                                                    </div>
+                                                                                                    <div>
+                                                                                                        Total:{" "}
+                                                                                                        {
+                                                                                                            totalCount
+                                                                                                        }
+                                                                                                    </div>
+                                                                                                    <div>
+                                                                                                        {
+                                                                                                            dateData.date
+                                                                                                        }
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                                <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    );
+                                                                                }
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+                                                                );
+                                                            }
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* X-axis labels (date labels outside chart area) */}
+                                            <div className="flex justify-around px-4 mt-4 border-t border-gray-100 pt-3">
+                                                {scheduleAssessmentData.map((dateData) => (
                                                     <div
-                                                        key={level}
-                                                        className="absolute w-full border-t border-gray-100"
-                                                        style={{ bottom: `${(level / 5) * 100}%` }}
-                                                    ></div>
+                                                        key={dateData.date}
+                                                        className="text-xs text-gray-500 text-center transform -rotate-45 origin-center"
+                                                    >
+                                                        {dateData.date}
+                                                    </div>
                                                 ))}
                                             </div>
 
-                                            {/* Bars for each date */}
-                                            <div className="absolute inset-0 flex items-end justify-around px-4">
-                                                {scheduleAssessmentData.map(
-                                                    (dateData, dateIndex) => {
-                                                        const maxValue = Math.max(
-                                                            ...scheduleAssessmentData.flatMap(
-                                                                (data) =>
-                                                                    uniqueSchools.map(
-                                                                        (school) =>
-                                                                            (data[
-                                                                                `${school}_assessed`
-                                                                            ] || 0) +
-                                                                            (data[
-                                                                                `${school}_not_assessed`
-                                                                            ] || 0)
-                                                                    )
-                                                            )
-                                                        );
-
-                                                        return (
-                                                            <div
-                                                                key={dateData.date}
-                                                                className="flex flex-col items-center"
-                                                            >
-                                                                <div className="flex items-end space-x-1">
-                                                                    {uniqueSchools.map(
-                                                                        (school, schoolIndex) => {
-                                                                            const assessedCount =
-                                                                                dateData[
-                                                                                    `${school}_assessed`
-                                                                                ] || 0;
-                                                                            const notAssessedCount =
-                                                                                dateData[
-                                                                                    `${school}_not_assessed`
-                                                                                ] || 0;
-                                                                            const totalCount =
-                                                                                assessedCount +
-                                                                                notAssessedCount;
-
-                                                                            if (totalCount === 0)
-                                                                                return null;
-
-                                                                            const totalBarHeight =
-                                                                                maxValue > 0
-                                                                                    ? (totalCount /
-                                                                                          maxValue) *
-                                                                                      300
-                                                                                    : 0;
-                                                                            const assessedHeight =
-                                                                                totalCount > 0
-                                                                                    ? (assessedCount /
-                                                                                          totalCount) *
-                                                                                      totalBarHeight
-                                                                                    : 0;
-                                                                            const notAssessedHeight =
-                                                                                totalBarHeight -
-                                                                                assessedHeight;
-
-                                                                            return (
-                                                                                <div
-                                                                                    key={`${school}-${dateData.date}`}
-                                                                                    className="relative w-8 group cursor-pointer"
-                                                                                    style={{
-                                                                                        height: `${totalBarHeight}px`,
-                                                                                    }}
-                                                                                >
-                                                                                    {/* Assessed students (bottom part) */}
-                                                                                    <div
-                                                                                        className="absolute bottom-0 w-full border border-gray-300 transition-colors"
-                                                                                        style={{
-                                                                                            height: `${assessedHeight}px`,
-                                                                                            backgroundColor:
-                                                                                                getSchoolColor(
-                                                                                                    school,
-                                                                                                    schoolIndex
-                                                                                                ),
-                                                                                        }}
-                                                                                    ></div>
-
-                                                                                    {/* Not assessed students (top part) */}
-                                                                                    <div
-                                                                                        className="absolute w-full border border-gray-300 transition-colors"
-                                                                                        style={{
-                                                                                            bottom: `${assessedHeight}px`,
-                                                                                            height: `${notAssessedHeight}px`,
-                                                                                            backgroundColor:
-                                                                                                getSchoolColor(
-                                                                                                    school,
-                                                                                                    schoolIndex
-                                                                                                ),
-                                                                                            opacity: 0.4,
-                                                                                        }}
-                                                                                    ></div>
-
-                                                                                    {/* Tooltip */}
-                                                                                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 bg-gray-800 text-white text-xs rounded py-2 px-3 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 whitespace-nowrap">
-                                                                                        <div className="text-center">
-                                                                                            <div className="font-semibold">
-                                                                                                {
-                                                                                                    school
-                                                                                                }
-                                                                                            </div>
-                                                                                            <div>
-                                                                                                Assessed:{" "}
-                                                                                                {
-                                                                                                    assessedCount
-                                                                                                }
-                                                                                            </div>
-                                                                                            <div>
-                                                                                                Not
-                                                                                                Assessed:{" "}
-                                                                                                {
-                                                                                                    notAssessedCount
-                                                                                                }
-                                                                                            </div>
-                                                                                            <div>
-                                                                                                Total:{" "}
-                                                                                                {
-                                                                                                    totalCount
-                                                                                                }
-                                                                                            </div>
-                                                                                            <div>
-                                                                                                {
-                                                                                                    dateData.date
-                                                                                                }
-                                                                                            </div>
-                                                                                        </div>
-                                                                                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
-                                                                                    </div>
-                                                                                </div>
-                                                                            );
-                                                                        }
-                                                                    )}
-                                                                </div>
-                                                            </div>
-                                                        );
-                                                    }
-                                                )}
+                                            {/* X-axis title */}
+                                            <div className="text-center text-xs text-gray-500 mt-2">
+                                                Schedule Dates by School
                                             </div>
                                         </div>
-                                    </div>
-
-                                    {/* X-axis labels (date labels outside chart area) */}
-                                    <div className="flex justify-around px-4 mt-4 border-t border-gray-100 pt-3">
-                                        {scheduleAssessmentData.map((dateData) => (
-                                            <div
-                                                key={dateData.date}
-                                                className="text-xs text-gray-500 text-center transform -rotate-45 origin-center"
-                                            >
-                                                {dateData.date}
-                                            </div>
-                                        ))}
-                                    </div>
-
-                                    {/* X-axis title */}
-                                    <div className="text-center text-xs text-gray-500 mt-2">
-                                        Schedule Dates by School
-                                    </div>
-                                </div>
+                                    );
+                                })()}
                             </div>
                         ) : (
                             <div className="flex items-center justify-center h-64 text-gray-500">
