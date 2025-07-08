@@ -14,6 +14,8 @@ export async function GET() {
                 (SELECT COUNT(*) FROM students) as total_students,
                 (SELECT COUNT(*) FROM teachers) as total_teachers,
                 (SELECT COUNT(*) FROM schools) as total_schools,
+                (SELECT COUNT(*) FROM lessons) as total_lessons,
+                (SELECT COUNT(*) FROM schedules) as total_schedules,
                 (SELECT COUNT(*) FROM schedules WHERE scheduled_date = CURRENT_DATE) as today_schedules
         `;
 
@@ -28,6 +30,15 @@ export async function GET() {
                 s.status,
                 s.notes,
                 sch.name as school_name,
+                (SELECT COUNT(*) FROM students st WHERE st.school_id = s.school_id) as total_school_students,
+                -- Get lesson titles for this schedule
+                COALESCE(
+                    (SELECT STRING_AGG(l.title, ', ' ORDER BY l.title) 
+                     FROM schedule_lessons sl 
+                     JOIN lessons l ON sl.lesson_id = l.id 
+                     WHERE sl.schedule_id = s.id),
+                    COALESCE(NULLIF(s.notes, ''), 'General Learning Activity')
+                ) as lesson_activity,
                 COUNT(DISTINCT CASE 
                     WHEN sa.attendance_status = 'present' 
                     AND sa.personal_development_level IS NOT NULL 
@@ -50,7 +61,7 @@ export async function GET() {
             LEFT JOIN schools sch ON s.school_id = sch.id
             LEFT JOIN student_attendance sa ON s.id = sa.schedule_id
             WHERE s.scheduled_date <= CURRENT_DATE
-            GROUP BY s.id, s.scheduled_date, s.scheduled_time, s.status, s.notes, sch.name
+            GROUP BY s.id, s.scheduled_date, s.scheduled_time, s.status, s.notes, sch.name, s.school_id
             ORDER BY s.scheduled_date DESC, s.scheduled_time DESC
             LIMIT 3
         `;
@@ -66,6 +77,15 @@ export async function GET() {
                 s.status,
                 s.notes,
                 sch.name as school_name,
+                (SELECT COUNT(*) FROM students st WHERE st.school_id = s.school_id) as total_school_students,
+                -- Get lesson titles for this schedule
+                COALESCE(
+                    (SELECT STRING_AGG(l.title, ', ' ORDER BY l.title) 
+                     FROM schedule_lessons sl 
+                     JOIN lessons l ON sl.lesson_id = l.id 
+                     WHERE sl.schedule_id = s.id),
+                    COALESCE(NULLIF(s.notes, ''), 'General Learning Activity')
+                ) as lesson_activity,
                 COUNT(DISTINCT CASE 
                     WHEN sa.attendance_status = 'present' 
                     AND sa.personal_development_level IS NOT NULL 
@@ -88,7 +108,7 @@ export async function GET() {
             LEFT JOIN schools sch ON s.school_id = sch.id
             LEFT JOIN student_attendance sa ON s.id = sa.schedule_id
             WHERE s.scheduled_date > CURRENT_DATE
-            GROUP BY s.id, s.scheduled_date, s.scheduled_time, s.status, s.notes, sch.name
+            GROUP BY s.id, s.scheduled_date, s.scheduled_time, s.status, s.notes, sch.name, s.school_id
             ORDER BY s.scheduled_date ASC, s.scheduled_time ASC
             LIMIT 3
         `;
@@ -136,6 +156,8 @@ export async function GET() {
                     totalStudents: countsResult.rows[0].total_students || 0,
                     totalTeachers: countsResult.rows[0].total_teachers || 0,
                     totalSchools: countsResult.rows[0].total_schools || 0,
+                    totalLessons: countsResult.rows[0].total_lessons || 0,
+                    totalSchedules: countsResult.rows[0].total_schedules || 0,
                     todaySchedules: countsResult.rows[0].today_schedules || 0
                 },
                 recentSchedules: recentSchedulesResult.rows,

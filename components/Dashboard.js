@@ -33,8 +33,8 @@ const Dashboard = () => {
                         schools: statsResult.data.counts.totalSchools,
                         teachers: statsResult.data.counts.totalTeachers,
                         students: statsResult.data.counts.totalStudents,
-                        lessons: 0, // Not provided in new API
-                        schedules: statsResult.data.counts.todaySchedules,
+                        lessons: statsResult.data.counts.totalLessons,
+                        schedules: statsResult.data.counts.totalSchedules,
                     });
                 }
             }
@@ -385,7 +385,7 @@ const Dashboard = () => {
                                                         👥{" "}
                                                     </span>
                                                     <span className="text-gray-900">
-                                                        {schedule.assessed_students} assessed
+                                                        {schedule.assessed_students}/{schedule.total_school_students} assessed
                                                     </span>
                                                 </div>
 
@@ -394,7 +394,7 @@ const Dashboard = () => {
                                                         📚{" "}
                                                     </span>
                                                     <span className="text-gray-900">
-                                                        {schedule.notes || "Lesson Activity"}
+                                                        {schedule.lesson_activity || schedule.notes || "General Learning Activity"}
                                                     </span>
                                                 </div>
                                             </div>
@@ -472,7 +472,7 @@ const Dashboard = () => {
                                                             👥{" "}
                                                         </span>
                                                         <span className="text-gray-900">
-                                                            {schedule.assessed_students} assessed
+                                                            {schedule.assessed_students}/{schedule.total_school_students} assessed
                                                         </span>
                                                     </div>
 
@@ -481,7 +481,7 @@ const Dashboard = () => {
                                                             📚{" "}
                                                         </span>
                                                         <span className="text-gray-900">
-                                                            {schedule.notes || "Lesson Activity"}
+                                                            {schedule.lesson_activity || schedule.notes || "General Learning Activity"}
                                                         </span>
                                                     </div>
                                                 </div>
@@ -626,6 +626,20 @@ const Dashboard = () => {
                                         /* Chart Container */
                                         <div className="bg-white border border-gray-200 rounded-lg p-4">
                                             <div className="flex">
+                                                {/* Y-axis title */}
+                                                <div className="flex items-center pr-2">
+                                                    <div 
+                                                        className="text-xs text-gray-600 font-medium"
+                                                        style={{ 
+                                                            writingMode: 'vertical-rl',
+                                                            textOrientation: 'mixed',
+                                                            transform: 'rotate(180deg)'
+                                                        }}
+                                                    >
+                                                        Student Count
+                                                    </div>
+                                                </div>
+                                                
                                                 {/* Y-axis labels */}
                                                 <div
                                                     className="flex flex-col justify-between text-xs text-gray-500 pr-3 border-r border-gray-200"
