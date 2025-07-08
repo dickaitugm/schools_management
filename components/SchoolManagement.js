@@ -64,7 +64,6 @@ const SchoolManagement = ({ onSchoolSelect, selectedSchoolId, onViewProfile }) =
     try {
       setSaving(true);
       setError(null); // Clear previous errors
-      console.log('Starting to save school...');
       
       // Validate school name
       if (!formData.name || formData.name.trim() === '') {
@@ -110,7 +109,6 @@ const SchoolManagement = ({ onSchoolSelect, selectedSchoolId, onViewProfile }) =
       const remainingTime = Math.max(0, 800 - elapsedTime);
       
       if (remainingTime > 0) {
-        console.log(`Adding ${remainingTime}ms delay to show loading indicator`);
         await new Promise(resolve => setTimeout(resolve, remainingTime));
       }
       
@@ -118,14 +116,12 @@ const SchoolManagement = ({ onSchoolSelect, selectedSchoolId, onViewProfile }) =
       setEditingSchool(null);
       setFormData({ name: '', address: '', phone: '', email: '' });
       setSuccess(data.message || `School ${editingSchool ? 'updated' : 'created'} successfully!`);
-      console.log('School saved successfully');
       setTimeout(() => setSuccess(null), 3000);
       fetchSchools();
     } catch (error) {
       console.error('Error saving school:', error);
       setError(error.message);
     } finally {
-      console.log('Saving completed, setting saving to false');
       setSaving(false);
     }
   };

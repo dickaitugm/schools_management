@@ -46,12 +46,9 @@ const StudentManagement = ({ selectedSchoolId, onViewProfile }) => {
     }
   }, [selectedSchoolId]);
 
-  // Debug schools state
+  // Monitor schools state
   useEffect(() => {
-    console.log('🏫 Schools state updated:', schools.length, 'schools');
-    if (schools.length > 0) {
-      console.log('🏫 Schools list:', schools.map(s => ({ id: s.id, name: s.name })));
-    }
+    // Schools state updated
   }, [schools]);
 
   const fetchStudents = async () => {
@@ -85,22 +82,13 @@ const StudentManagement = ({ selectedSchoolId, onViewProfile }) => {
 
   const fetchSchools = async () => {
     try {
-      console.log('🏫 Fetching schools...');
       const response = await fetch('/api/schools');
       const data = await response.json();
-      
-      console.log('🏫 Schools API Response:', data);
-      console.log('🏫 Data type:', typeof data);
-      console.log('🏫 Has success:', data.success);
-      console.log('🏫 Data.data type:', typeof data.data);
-      console.log('🏫 Is data.data array:', Array.isArray(data.data));
 
       if (data.success && Array.isArray(data.data)) {
-        console.log('🏫 Setting schools:', data.data.length, 'schools');
         setSchools(data.data);
       } else if (Array.isArray(data)) {
         // Fallback for direct array response
-        console.log('🏫 Setting schools (fallback):', data.length, 'schools');
         setSchools(data);
       } else {
         console.error('🏫 Schools API response format error:', data);

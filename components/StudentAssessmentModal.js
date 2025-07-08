@@ -70,18 +70,13 @@ const StudentAssessmentModal = ({ scheduleId, onClose }) => {
       setLoading(true);
       setError(null);
       
-      console.log('Fetching students for schedule ID:', scheduleId);
       const response = await fetch(`/api/schedules/${scheduleId}/assessment`);
-      
-      console.log('Response status:', response.status);
-      console.log('Response ok:', response.ok);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
       const data = await response.json();
-      console.log('API Response:', data);
 
       if (data.success) {
         setSchedule(data.data.schedule);
@@ -110,9 +105,7 @@ const StudentAssessmentModal = ({ scheduleId, onClose }) => {
           }
         }));
         
-        console.log('Transformed students with assessment data:', transformedStudents);
         setStudents(transformedStudents);
-        console.log('Students loaded successfully:', transformedStudents.length);
       } else {
         console.error('API Error:', data.error);
         setError(data.error);
@@ -152,7 +145,6 @@ const StudentAssessmentModal = ({ scheduleId, onClose }) => {
   const handleSaveAssessments = async () => {
     try {
       setSaving(true);
-      console.log('Starting to save assessments...');
       
       // Add minimum delay to ensure loading indicator is visible
       const startTime = Date.now();
@@ -184,13 +176,11 @@ const StudentAssessmentModal = ({ scheduleId, onClose }) => {
       const remainingTime = Math.max(0, 1000 - elapsedTime);
       
       if (remainingTime > 0) {
-        console.log(`Adding ${remainingTime}ms delay to show loading indicator`);
         await new Promise(resolve => setTimeout(resolve, remainingTime));
       }
 
       if (data.success) {
         setSuccess('Student assessments saved successfully!');
-        console.log('Assessments saved successfully');
         setTimeout(() => {
           setSuccess(null);
           onClose();
@@ -203,7 +193,6 @@ const StudentAssessmentModal = ({ scheduleId, onClose }) => {
       console.error('Error saving assessments:', error);
       setError('Failed to save assessments');
     } finally {
-      console.log('Saving completed, setting saving to false');
       setSaving(false);
     }
   };

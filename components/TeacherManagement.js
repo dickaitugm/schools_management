@@ -125,8 +125,6 @@ const TeacherManagement = ({ selectedSchoolId, onViewProfile }) => {
       
       const method = modalType === 'edit' ? 'PUT' : 'POST';
 
-      console.log('Submitting teacher data:', formData); // Debug log
-
       const response = await fetch(url, {
         method,
         headers: {
@@ -136,7 +134,6 @@ const TeacherManagement = ({ selectedSchoolId, onViewProfile }) => {
       });
 
       const data = await response.json();
-      console.log('Teacher API response:', data); // Debug log
 
       // Ensure minimum loading time
       const elapsed = Date.now() - startTime;

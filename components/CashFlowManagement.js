@@ -126,12 +126,9 @@ const CashFlowManagement = () => {
                 if (value && value !== "") params.append(key, value);
             });
 
-            console.log("Fetching transactions with params:", params.toString()); // Debug log
-
             const response = await fetch(`/api/cash-flow?${params}`);
             if (response.ok) {
                 const result = await response.json();
-                console.log("Transactions API response:", result); // Debug log
                 setTransactions(result.data || []);
             } else {
                 throw new Error("Failed to fetch transactions");
@@ -153,12 +150,9 @@ const CashFlowManagement = () => {
             if (filters.date_from) params.append("date_from", filters.date_from);
             if (filters.date_to) params.append("date_to", filters.date_to);
 
-            console.log("Fetching summary with params:", params.toString()); // Debug log
-
             const response = await fetch(`/api/cash-flow/summary?${params}`);
             if (response.ok) {
                 const result = await response.json();
-                console.log("Summary API response:", result); // Debug log
                 setSummary(result.data);
             } else {
                 console.error("Summary API error:", response.status, response.statusText);

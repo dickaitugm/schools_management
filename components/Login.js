@@ -30,7 +30,6 @@ const Login = ({ onLogin }) => {
             if (result.success) {
                 // Save to localStorage
                 localStorage.setItem("currentUser", JSON.stringify(result.data));
-                console.log("Login successful, user data:", result.data);
                 onLogin(result.data);
             } else {
                 setError(result.error || "Login gagal");

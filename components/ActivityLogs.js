@@ -126,7 +126,6 @@ const ActivityLogs = () => {
 
             if (response.ok) {
                 const result = await response.json();
-                console.log("Delete result:", result);
 
                 // Log the deletion activity
                 logActivity("delete", `Deleted old activity logs (kept last ${deleteDays} days)`, {

@@ -50,13 +50,10 @@ const RoleManagement = () => {
 
     const loadUsers = async () => {
         try {
-            console.log("🔄 Loading users...");
             const response = await fetch("/api/users");
             const result = await response.json();
-            console.log("📊 Users API response:", result);
             if (result.success) {
                 setUsers(result.data);
-                console.log("✅ Users loaded:", result.data.length, "users");
             } else {
                 console.error("❌ Failed to load users:", result.error);
             }
@@ -67,13 +64,10 @@ const RoleManagement = () => {
 
     const loadRoles = async () => {
         try {
-            console.log("🔄 Loading roles...");
             const response = await fetch("/api/roles?include_permissions=true");
             const result = await response.json();
-            console.log("📊 Roles API response:", result);
             if (result.success) {
                 setRoles(result.data);
-                console.log("✅ Roles loaded:", result.data.length, "roles");
             } else {
                 console.error("❌ Failed to load roles:", result.error);
             }
@@ -84,13 +78,10 @@ const RoleManagement = () => {
 
     const loadPermissions = async () => {
         try {
-            console.log("🔄 Loading permissions...");
             const response = await fetch("/api/permissions");
             const result = await response.json();
-            console.log("📊 Permissions API response:", result);
             if (result.success) {
                 setPermissions(result.data);
-                console.log("✅ Permissions loaded:", result.data.length, "permissions");
             } else {
                 console.error("❌ Failed to load permissions:", result.error);
             }
@@ -303,15 +294,6 @@ const RoleManagement = () => {
             </div>
         );
     }
-
-    console.log(
-        "🎯 Render state - Users:",
-        users.length,
-        "Roles:",
-        roles.length,
-        "Permissions:",
-        permissions.length
-    );
 
     return (
         <div className="p-6 min-h-screen bg-gray-50">

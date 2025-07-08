@@ -93,7 +93,6 @@ const ScheduleManagement = ({ selectedSchoolId, onViewProfile, onViewAssessment 
       
       if (response.ok) {
         const data = await response.json();
-        console.log(`Auto-updated ${data.updatedCount || 0} schedule statuses`);
         
         // Refresh schedules to reflect any changes
         if (data.updatedCount > 0) {

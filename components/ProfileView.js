@@ -22,9 +22,7 @@ const ProfileView = ({ entityType, id, onBack }) => {
       setLoading(true);
       setError(null);
       
-      console.log(`Fetching profile for ${entityType} ID: ${id}`);
       const response = await fetch(`/api/${entityType}/${id}/profile`);
-      console.log('Response status:', response.status);
       
       if (!response.ok) {
         const errorText = await response.text();
@@ -33,7 +31,6 @@ const ProfileView = ({ entityType, id, onBack }) => {
       }
       
       const data = await response.json();
-      console.log('Profile data:', data);
       setProfile(data);
       
       // Log profile view activity

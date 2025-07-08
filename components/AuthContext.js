@@ -87,7 +87,6 @@ export const AuthProvider = ({ children }) => {
     const logActivity = async (action, description, metadata = {}) => {
         // Skip logging for guest users
         if (!user || user.role === "guest" || user.id === "guest") {
-            console.log("Guest activity not logged:", { action, description });
             return;
         }
 
@@ -112,9 +111,7 @@ export const AuthProvider = ({ children }) => {
                 body: JSON.stringify(activity),
             });
 
-            if (response.ok) {
-                console.log("Activity logged to database:", activity);
-            } else {
+            if (!response.ok) {
                 console.error("Failed to log activity to database:", await response.text());
             }
         } catch (error) {

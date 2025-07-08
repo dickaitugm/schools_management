@@ -69,7 +69,6 @@ const StudentAssessmentView = ({ scheduleId, onBack }) => {
     setError(null);
     
     try {
-      console.log('Fetching students for schedule:', scheduleId);
       const response = await fetch(`/api/schedules/${scheduleId}/assessment`);
       
       if (!response.ok) {
@@ -77,19 +76,10 @@ const StudentAssessmentView = ({ scheduleId, onBack }) => {
       }
       
       const data = await response.json();
-      console.log('Assessment API response:', data);
-      console.log('Raw students data:', data.data?.students);
       
       if (data.success) {
         // Transform API data to match component structure
         const transformedStudents = (data.data.students || []).map(student => {
-          console.log('Processing student:', student.name, {
-            personal_development_level: student.personal_development_level,
-            critical_thinking_level: student.critical_thinking_level,
-            team_work_level: student.team_work_level,
-            academic_knowledge_level: student.academic_knowledge_level,
-            attendance_status: student.attendance_status
-          });
           
           return {
             ...student,
@@ -106,7 +96,6 @@ const StudentAssessmentView = ({ scheduleId, onBack }) => {
           };
         });
         
-        console.log('Transformed students:', transformedStudents);
         setStudents(transformedStudents);
         setSchedule(data.data.schedule);
       } else {
@@ -168,7 +157,6 @@ const StudentAssessmentView = ({ scheduleId, onBack }) => {
   const saveAssessments = async () => {
     setSaving(true);
     setError(null);
-    console.log('Starting to save assessments...');
     
     try {
       // Add minimum delay to ensure loading indicator is visible
@@ -201,13 +189,11 @@ const StudentAssessmentView = ({ scheduleId, onBack }) => {
       const remainingTime = Math.max(0, 1000 - elapsedTime);
       
       if (remainingTime > 0) {
-        console.log(`Adding ${remainingTime}ms delay to show loading indicator`);
         await new Promise(resolve => setTimeout(resolve, remainingTime));
       }
 
       if (data.success) {
         setSuccess('Assessments saved successfully!');
-        console.log('Assessments saved successfully');
         // Redirect back to schedule management after a short delay
         setTimeout(() => {
           onBack();
@@ -220,7 +206,6 @@ const StudentAssessmentView = ({ scheduleId, onBack }) => {
       console.error('Error saving assessments:', error);
       setError('Failed to save assessments');
     } finally {
-      console.log('Saving completed, setting saving to false');
       setSaving(false);
     }
   };

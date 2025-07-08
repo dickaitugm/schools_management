@@ -27,8 +27,6 @@ const AppContent = () => {
   });
   const { user, loading, isGuest, logActivity } = useAuth();
 
-  console.log('App state - user:', user, 'loading:', loading, 'isGuest:', isGuest);
-
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">

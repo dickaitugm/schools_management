@@ -3,6 +3,9 @@
 import React, { useState, useEffect } from "react";
 import { formatDateIndonesian } from "../utils/dateUtils";
 
+// Flag untuk memastikan console.log hanya dijalankan sekali
+let messageShown = false;
+
 const Dashboard = () => {
     const [stats, setStats] = useState({
         schools: 0,
@@ -16,6 +19,19 @@ const Dashboard = () => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        // Console.log pesan khusus hanya sekali
+        if (!messageShown) {
+            console.log(`Halo, Salsabilla Ratu Raya. Selamat sudah menemukan jawaban dari teka-teki yang diberikan. :D
+
+Catatan ini berisi curahat hati dari sang pengembang. 
+Di setiap perkumpulan dengan orang-orang, kebiasaanku selalu mengamati dan memperhatikan perilaku dan kebiasaan orang dengan tujuan agar tidak salah langkah dalam melakukan tindakan. Beberapa kali bertemu dan berkomunikasi di satu aktivitas bersama, bukan tindakan yang harus ku antisipasi, tapi aku malah melihat sesuatu yang berbeda di kamu dan jarang ditemukan di perempuan lainnya. Perempuan dengan wawasan yang luas dan cerdas, komunikasi dan tutur kata yang rapih, selalu mengerti konteks pembahasan, sudut pandang yang adaptif, dan suara ketawa yang tersimpan jelas di memori, menarik perhatianku untuk ingin lebih kenal lebih dekat lagi dalam hubungan yang lebih serius sebagai pasangan atau teman hidup. Jujur, aku sangat suka orang yg memiliki kecerdasan wawasan, komunikasi sefrekuensi, proses belajar/evaluasi (non akademik), dan berusaha dalam kehidupan.
+
+Selain itu, ternyata kamu juga punya misi dalam hidup yang hampir sama denganku, yaitu membantu teman-teman yang kurang dalam kehidupan ataupun keilmuwan. Dari sini, aku tertegun, berkomitmen, dan mencoba berusaha untuk mendukung kamu dalam kegiatan/program tersebut. Sepertinya akan menyenangkan memiliki teman hidup hingga akhir hayat jika ia selalu ingin berdiskusi dan memberi pendapat atas apa yang akan dilakukan meskipun kehidupan ini ada masanya entah di atas atau di bawah. Namun ku pastikan akan selalu berusaha dalam menghadapi lika liku kehidupan. Selebihnya, kita bisa membahas tentang cara pandang hidup untuk masa depan. 
+
+Would you like to date to discuss about future, faith, and science? xD`);
+            messageShown = true;
+        }
+
         fetchDashboardData();
     }, []);
 
@@ -150,10 +166,11 @@ const Dashboard = () => {
     const scheduleAssessmentData = prepareScheduleAssessmentData(dashboardData?.scheduleData);
 
     // Get unique schools from stats data for dynamic color mapping
-    const uniqueSchools = statsData?.schools ? statsData.schools.map(school => school.name) : 
-                         (dashboardData?.scheduleData ? 
-                          [...new Set(dashboardData.scheduleData.map(item => item.school_name).filter(Boolean))] : 
-                          []);
+    const uniqueSchools = statsData?.schools
+        ? statsData.schools.map((school) => school.name)
+        : dashboardData?.scheduleData
+        ? [...new Set(dashboardData.scheduleData.map((item) => item.school_name).filter(Boolean))]
+        : [];
 
     // Dynamic school colors mapping
     const generateSchoolColors = (schools) => {
@@ -178,7 +195,8 @@ const Dashboard = () => {
                     <h1 className="text-3xl font-bold text-gray-800">BB for Society Dashboard</h1>
                     {statsData?.currentTime && (
                         <p className="text-sm text-gray-500 mt-1">
-                            Data updated: {formatDateIndonesian(new Date(statsData.currentTime), true)}
+                            Data updated:{" "}
+                            {formatDateIndonesian(new Date(statsData.currentTime), true)}
                         </p>
                     )}
                 </div>
@@ -376,7 +394,9 @@ const Dashboard = () => {
                                                         ⏰{" "}
                                                     </span>
                                                     <span className="text-gray-900">
-                                                        {scheduleTime ? scheduleTime.slice(0, 5) : "00:00"}
+                                                        {scheduleTime
+                                                            ? scheduleTime.slice(0, 5)
+                                                            : "00:00"}
                                                     </span>
                                                 </div>
 
@@ -385,7 +405,8 @@ const Dashboard = () => {
                                                         👥{" "}
                                                     </span>
                                                     <span className="text-gray-900">
-                                                        {schedule.assessed_students}/{schedule.total_school_students} assessed
+                                                        {schedule.assessed_students}/
+                                                        {schedule.total_school_students} assessed
                                                     </span>
                                                 </div>
 
@@ -394,7 +415,9 @@ const Dashboard = () => {
                                                         📚{" "}
                                                     </span>
                                                     <span className="text-gray-900">
-                                                        {schedule.lesson_activity || schedule.notes || "General Learning Activity"}
+                                                        {schedule.lesson_activity ||
+                                                            schedule.notes ||
+                                                            "General Learning Activity"}
                                                     </span>
                                                 </div>
                                             </div>
@@ -463,7 +486,9 @@ const Dashboard = () => {
                                                             ⏰{" "}
                                                         </span>
                                                         <span className="text-gray-900">
-                                                            {scheduleTime ? scheduleTime.slice(0, 5) : "00:00"}
+                                                            {scheduleTime
+                                                                ? scheduleTime.slice(0, 5)
+                                                                : "00:00"}
                                                         </span>
                                                     </div>
 
@@ -472,7 +497,9 @@ const Dashboard = () => {
                                                             👥{" "}
                                                         </span>
                                                         <span className="text-gray-900">
-                                                            {schedule.assessed_students}/{schedule.total_school_students} assessed
+                                                            {schedule.assessed_students}/
+                                                            {schedule.total_school_students}{" "}
+                                                            assessed
                                                         </span>
                                                     </div>
 
@@ -481,7 +508,9 @@ const Dashboard = () => {
                                                             📚{" "}
                                                         </span>
                                                         <span className="text-gray-900">
-                                                            {schedule.lesson_activity || schedule.notes || "General Learning Activity"}
+                                                            {schedule.lesson_activity ||
+                                                                schedule.notes ||
+                                                                "General Learning Activity"}
                                                         </span>
                                                     </div>
                                                 </div>
@@ -495,7 +524,11 @@ const Dashboard = () => {
                                                                     Personal:
                                                                 </span>
                                                                 <span className="text-gray-900 font-medium">
-                                                                    {schedule.avg_personal ? parseFloat(schedule.avg_personal).toFixed(1) : "0.0"}
+                                                                    {schedule.avg_personal
+                                                                        ? parseFloat(
+                                                                              schedule.avg_personal
+                                                                          ).toFixed(1)
+                                                                        : "0.0"}
                                                                     /5
                                                                 </span>
                                                             </div>
@@ -504,7 +537,11 @@ const Dashboard = () => {
                                                                     Critical:
                                                                 </span>
                                                                 <span className="text-gray-900 font-medium">
-                                                                    {schedule.avg_critical ? parseFloat(schedule.avg_critical).toFixed(1) : "0.0"}
+                                                                    {schedule.avg_critical
+                                                                        ? parseFloat(
+                                                                              schedule.avg_critical
+                                                                          ).toFixed(1)
+                                                                        : "0.0"}
                                                                     /5
                                                                 </span>
                                                             </div>
@@ -513,7 +550,11 @@ const Dashboard = () => {
                                                                     Team Work:
                                                                 </span>
                                                                 <span className="text-gray-900 font-medium">
-                                                                    {schedule.avg_teamwork ? parseFloat(schedule.avg_teamwork).toFixed(1) : "0.0"}
+                                                                    {schedule.avg_teamwork
+                                                                        ? parseFloat(
+                                                                              schedule.avg_teamwork
+                                                                          ).toFixed(1)
+                                                                        : "0.0"}
                                                                     /5
                                                                 </span>
                                                             </div>
@@ -522,7 +563,11 @@ const Dashboard = () => {
                                                                     Academic:
                                                                 </span>
                                                                 <span className="text-gray-900 font-medium">
-                                                                    {schedule.avg_academic ? parseFloat(schedule.avg_academic).toFixed(1) : "0.0"}
+                                                                    {schedule.avg_academic
+                                                                        ? parseFloat(
+                                                                              schedule.avg_academic
+                                                                          ).toFixed(1)
+                                                                        : "0.0"}
                                                                     /5
                                                                 </span>
                                                             </div>
@@ -532,7 +577,11 @@ const Dashboard = () => {
                                                                 Overall Average:
                                                             </span>
                                                             <span className="text-blue-600 font-semibold">
-                                                                {schedule.avg_overall ? parseFloat(schedule.avg_overall).toFixed(1) : "0.0"}
+                                                                {schedule.avg_overall
+                                                                    ? parseFloat(
+                                                                          schedule.avg_overall
+                                                                      ).toFixed(1)
+                                                                    : "0.0"}
                                                                 /5
                                                             </span>
                                                         </div>
@@ -601,22 +650,24 @@ const Dashboard = () => {
                                         else if (max <= 100) step = 20;
                                         else if (max <= 200) step = 50;
                                         else step = Math.ceil(max / 5 / 10) * 10;
-                                        
+
                                         // For small values, ensure we have enough space
                                         let roundedMax = Math.ceil(max / step) * step;
                                         if (roundedMax < 5 && max <= 3) {
                                             roundedMax = 5; // Minimum chart height for readability
                                         }
-                                        
+
                                         const ticks = [];
                                         for (let i = 0; i <= 5; i++) {
                                             const value = Math.round((roundedMax * (5 - i)) / 5);
                                             ticks.push(value);
                                         }
-                                        
+
                                         // Remove duplicates while maintaining order
-                                        const uniqueTicks = [...new Set(ticks)].sort((a, b) => b - a);
-                                        
+                                        const uniqueTicks = [...new Set(ticks)].sort(
+                                            (a, b) => b - a
+                                        );
+
                                         return { ticks: uniqueTicks, roundedMax };
                                     };
 
@@ -628,25 +679,27 @@ const Dashboard = () => {
                                             <div className="flex">
                                                 {/* Y-axis title */}
                                                 <div className="flex items-center pr-2">
-                                                    <div 
+                                                    <div
                                                         className="text-xs text-gray-600 font-medium"
-                                                        style={{ 
-                                                            writingMode: 'vertical-rl',
-                                                            textOrientation: 'mixed',
-                                                            transform: 'rotate(180deg)'
+                                                        style={{
+                                                            writingMode: "vertical-rl",
+                                                            textOrientation: "mixed",
+                                                            transform: "rotate(180deg)",
                                                         }}
                                                     >
                                                         Student Count
                                                     </div>
                                                 </div>
-                                                
+
                                                 {/* Y-axis labels */}
                                                 <div
                                                     className="flex flex-col justify-between text-xs text-gray-500 pr-3 border-r border-gray-200"
                                                     style={{ height: "300px" }}
                                                 >
                                                     {ticks.map((value, i) => (
-                                                        <span key={`tick-${i}-${value}`}>{value}</span>
+                                                        <span key={`tick-${i}-${value}`}>
+                                                            {value}
+                                                        </span>
                                                     ))}
                                                 </div>
 
@@ -661,7 +714,13 @@ const Dashboard = () => {
                                                             <div
                                                                 key={`grid-${level}-${value}`}
                                                                 className="absolute w-full border-t border-gray-100"
-                                                                style={{ bottom: `${(level / (ticks.length - 1)) * 100}%` }}
+                                                                style={{
+                                                                    bottom: `${
+                                                                        (level /
+                                                                            (ticks.length - 1)) *
+                                                                        100
+                                                                    }%`,
+                                                                }}
                                                             ></div>
                                                         ))}
                                                     </div>
@@ -677,7 +736,10 @@ const Dashboard = () => {
                                                                     >
                                                                         <div className="flex items-end space-x-1">
                                                                             {uniqueSchools.map(
-                                                                                (school, schoolIndex) => {
+                                                                                (
+                                                                                    school,
+                                                                                    schoolIndex
+                                                                                ) => {
                                                                                     const assessedCount =
                                                                                         dateData[
                                                                                             `${school}_assessed`
@@ -690,17 +752,22 @@ const Dashboard = () => {
                                                                                         assessedCount +
                                                                                         notAssessedCount;
 
-                                                                                    if (totalCount === 0)
+                                                                                    if (
+                                                                                        totalCount ===
+                                                                                        0
+                                                                                    )
                                                                                         return null;
 
                                                                                     const totalBarHeight =
-                                                                                        roundedMax > 0
+                                                                                        roundedMax >
+                                                                                        0
                                                                                             ? (totalCount /
                                                                                                   roundedMax) *
                                                                                               300
                                                                                             : 0;
                                                                                     const assessedHeight =
-                                                                                        totalCount > 0
+                                                                                        totalCount >
+                                                                                        0
                                                                                             ? (assessedCount /
                                                                                                   totalCount) *
                                                                                               totalBarHeight
@@ -874,7 +941,9 @@ const Dashboard = () => {
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div>
                                                 <div className="text-sm font-medium text-gray-900">
-                                                    {new Date(transaction.transaction_date).toLocaleDateString("id-ID", {
+                                                    {new Date(
+                                                        transaction.transaction_date
+                                                    ).toLocaleDateString("id-ID", {
                                                         day: "2-digit",
                                                         month: "short",
                                                         year: "numeric",
@@ -909,11 +978,11 @@ const Dashboard = () => {
                                             <div className="text-sm font-semibold text-green-600">
                                                 {transaction.transaction_type === "income"
                                                     ? new Intl.NumberFormat("id-ID", {
-                                                        style: "currency",
-                                                        currency: "IDR",
-                                                        minimumFractionDigits: 0,
-                                                        maximumFractionDigits: 0,
-                                                    }).format(transaction.amount)
+                                                          style: "currency",
+                                                          currency: "IDR",
+                                                          minimumFractionDigits: 0,
+                                                          maximumFractionDigits: 0,
+                                                      }).format(transaction.amount)
                                                     : "-"}
                                             </div>
                                         </td>
@@ -921,11 +990,11 @@ const Dashboard = () => {
                                             <div className="text-sm font-semibold text-red-600">
                                                 {transaction.transaction_type === "expense"
                                                     ? new Intl.NumberFormat("id-ID", {
-                                                        style: "currency",
-                                                        currency: "IDR",
-                                                        minimumFractionDigits: 0,
-                                                        maximumFractionDigits: 0,
-                                                    }).format(transaction.amount)
+                                                          style: "currency",
+                                                          currency: "IDR",
+                                                          minimumFractionDigits: 0,
+                                                          maximumFractionDigits: 0,
+                                                      }).format(transaction.amount)
                                                     : "-"}
                                             </div>
                                         </td>
