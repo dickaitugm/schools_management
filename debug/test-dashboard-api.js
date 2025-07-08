@@ -1,11 +1,11 @@
-const pool = require('../lib/db.js');
+const pool = require("../lib/db.js");
 
 async function testDashboardAPI() {
-  try {
-    console.log('Testing dashboard API queries...');
-    
-    // Test basic counts
-    const countsQuery = `
+    try {
+        console.log("Testing dashboard API queries...");
+
+        // Test basic counts
+        const countsQuery = `
       SELECT 
         (SELECT COUNT(*) FROM schools) as schools,
         (SELECT COUNT(*) FROM teachers) as teachers,
@@ -13,12 +13,12 @@ async function testDashboardAPI() {
         (SELECT COUNT(*) FROM lessons) as lessons,
         (SELECT COUNT(*) FROM schedules) as schedules
     `;
-    
-    const countsResult = await pool.query(countsQuery);
-    console.log('✅ Basic counts:', countsResult.rows[0]);
-    
-    // Test students per school
-    const studentsPerSchoolQuery = `
+
+        const countsResult = await pool.query(countsQuery);
+        console.log("✅ Basic counts:", countsResult.rows[0]);
+
+        // Test students per school
+        const studentsPerSchoolQuery = `
       SELECT 
         sch.id,
         sch.name as school_name,
@@ -28,24 +28,24 @@ async function testDashboardAPI() {
       GROUP BY sch.id, sch.name
       ORDER BY student_count DESC
     `;
-    
-    const studentsResult = await pool.query(studentsPerSchoolQuery);
-    console.log('✅ Students per school:', studentsResult.rows);
-    
-    // Test schedule status
-    const scheduleStatusQuery = `
+
+        const studentsResult = await pool.query(studentsPerSchoolQuery);
+        console.log("✅ Students per school:", studentsResult.rows);
+
+        // Test schedule status
+        const scheduleStatusQuery = `
       SELECT 
         status,
         COUNT(*) as count
       FROM schedules
       GROUP BY status
     `;
-    
-    const statusResult = await pool.query(scheduleStatusQuery);
-    console.log('✅ Schedule status:', statusResult.rows);
-    
-    // Test schedule data
-    const scheduleDataQuery = `
+
+        const statusResult = await pool.query(scheduleStatusQuery);
+        console.log("✅ Schedule status:", statusResult.rows);
+
+        // Test schedule data
+        const scheduleDataQuery = `
       SELECT 
         s.id,
         s.scheduled_date,
@@ -61,16 +61,16 @@ async function testDashboardAPI() {
       ORDER BY s.scheduled_date DESC
       LIMIT 3
     `;
-    
-    const scheduleResult = await pool.query(scheduleDataQuery);
-    console.log('✅ Schedule data sample:', scheduleResult.rows);
-    
-    await pool.end();
-    console.log('✅ All tests passed!');
-  } catch (error) {
-    console.error('❌ Error:', error.message);
-    process.exit(1);
-  }
+
+        const scheduleResult = await pool.query(scheduleDataQuery);
+        console.log("✅ Schedule data sample:", scheduleResult.rows);
+
+        await pool.end();
+        console.log("✅ All tests passed!");
+    } catch (error) {
+        console.error("❌ Error:", error.message);
+        process.exit(1);
+    }
 }
 
 testDashboardAPI();
