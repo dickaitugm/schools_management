@@ -75,34 +75,34 @@ export async function PUT(request, { params }) {
       }, { status: 400 });
     }
     
-    let query;
-    let params;
+    // Prepare query and parameters based on whether password is being updated
+    let queryParams;
+    let queryText;
     
-    // Update with or without password
     if (password && password.trim() !== '') {
       // Hash new password
       const saltRounds = 10;
       const password_hash = await bcrypt.hash(password, saltRounds);
       
-      query = `
+      queryText = `
         UPDATE users 
         SET username = $1, email = $2, password_hash = $3, name = $4, role_id = $5, is_active = $6, updated_at = CURRENT_TIMESTAMP
         WHERE id = $7
         RETURNING id, username, email, name, role_id, is_active, updated_at
       `;
-      params = [username, email, password_hash, name, role_id, is_active, id];
+      queryParams = [username, email, password_hash, name, role_id, is_active, id];
     } else {
       // Update without password
-      query = `
+      queryText = `
         UPDATE users 
         SET username = $1, email = $2, name = $3, role_id = $4, is_active = $5, updated_at = CURRENT_TIMESTAMP
         WHERE id = $6
         RETURNING id, username, email, name, role_id, is_active, updated_at
       `;
-      params = [username, email, name, role_id, is_active, id];
+      queryParams = [username, email, name, role_id, is_active, id];
     }
     
-    const result = await pool.query(query, params);
+    const result = await pool.query(queryText, queryParams);
     
     if (result.rows.length === 0) {
       return NextResponse.json({

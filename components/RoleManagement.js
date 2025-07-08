@@ -106,13 +106,14 @@ const RoleManagement = () => {
 
     const handleEditUser = (user) => {
         setEditingUser(user);
+        // Pastikan role_id tidak undefined
         setUserFormData({
             username: user.username,
             email: user.email,
             password: "", // Don't populate password for editing
             name: user.name,
-            role_id: user.role_id,
-            is_active: user.is_active,
+            role_id: user.role_id || "", // Tambahkan fallback empty string jika undefined
+            is_active: user.is_active !== undefined ? user.is_active : true,
         });
         setIsUserModalOpen(true);
     };
@@ -474,7 +475,7 @@ const RoleManagement = () => {
                                         </td>
                                     </tr>
                                 ) : (
-                                    users.map((user) => (
+                                    users.filter(user => user && user.id).map((user) => (
                                         <tr key={user.id}>
                                             <td className="px-3 py-4">
                                                 <div>
@@ -604,7 +605,7 @@ const RoleManagement = () => {
                                         </td>
                                     </tr>
                                 ) : (
-                                    roles.map((role) => (
+                                    roles.filter(role => role && role.id).map((role) => (
                                         <tr key={role.id}>
                                             <td className="px-3 py-4">
                                                 <div>
@@ -788,7 +789,7 @@ const RoleManagement = () => {
                                         required
                                     >
                                         <option value="">Pilih Role</option>
-                                        {roles.map((role) => (
+                                        {roles.filter(role => role && role.id).map((role) => (
                                             <option key={role.id} value={role.id}>
                                                 {role.name} - {role.description}
                                             </option>
