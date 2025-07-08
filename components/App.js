@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { AuthProvider, useAuth } from './AuthContext';
-import InlineLogin from './InlineLogin';
+import Login from './Login';
 import ActivityLogs from './ActivityLogs';
 import Dashboard from './Dashboard';
 import SchoolManagement from './SchoolManagement';
@@ -140,7 +140,11 @@ const AppContent = () => {
   const renderPage = () => {
     switch (currentView.type) {
       case 'login':
-        return <InlineLogin onCancel={handleLoginCancel} />;
+        return <Login onLogin={(userData) => {
+          handleLoginCancel();
+          // Refresh halaman setelah login berhasil
+          window.location.reload();
+        }} />;
       case 'profile':
         return (
           <ProfileView 
