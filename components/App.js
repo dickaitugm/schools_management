@@ -128,7 +128,7 @@ const AppContent = () => {
         );
       case 'cash-flow':
         return <CashFlowManagement />;
-      case 'roles':
+      case 'user-roles':
         return <RoleManagement />;
       case 'activity-logs':
         return <ActivityLogs />;
