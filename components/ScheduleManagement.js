@@ -42,6 +42,8 @@ const ScheduleManagement = ({ selectedSchoolId, onViewProfile, onViewAssessment 
     lesson_ids: []
   });
 
+  const [assessmentStats, setAssessmentStats] = useState(null);
+
   const statusOptions = [
     { value: 'scheduled', label: 'Scheduled', color: 'blue', bgColor: 'bg-blue-100', textColor: 'text-blue-800', borderColor: 'border-blue-300' },
     { value: 'in-progress', label: 'In Progress', color: 'yellow', bgColor: 'bg-yellow-100', textColor: 'text-yellow-800', borderColor: 'border-yellow-300' },
@@ -147,6 +149,76 @@ const ScheduleManagement = ({ selectedSchoolId, onViewProfile, onViewAssessment 
     }
   };
 
+  const fetchAssessmentStats = async (scheduleId) => {
+    try {
+      const response = await fetch(`/api/schedules/${scheduleId}/assessment`);
+      const data = await response.json();
+      
+      if (data.success && data.data && data.data.students) {
+        // Filter students who have assessment data (attendance_id is not null)
+        const assessedStudents = data.data.students.filter(student => 
+          student.attendance_id && 
+          (student.personal_development_level || 
+           student.critical_thinking_level || 
+           student.team_work_level || 
+           student.academic_knowledge_level)
+        );
+        
+        console.log('Assessed students:', assessedStudents); // Debug log
+        
+        if (assessedStudents.length > 0) {
+          const totalPersonalDev = assessedStudents.reduce((sum, s) => sum + (s.personal_development_level || 0), 0);
+          const totalCriticalThinking = assessedStudents.reduce((sum, s) => sum + (s.critical_thinking_level || 0), 0);
+          const totalTeamWork = assessedStudents.reduce((sum, s) => sum + (s.team_work_level || 0), 0);
+          const totalAcademicKnowledge = assessedStudents.reduce((sum, s) => sum + (s.academic_knowledge_level || 0), 0);
+          
+          const avgPersonalDev = (totalPersonalDev / assessedStudents.length).toFixed(1);
+          const avgCriticalThinking = (totalCriticalThinking / assessedStudents.length).toFixed(1);
+          const avgTeamWork = (totalTeamWork / assessedStudents.length).toFixed(1);
+          const avgAcademicKnowledge = (totalAcademicKnowledge / assessedStudents.length).toFixed(1);
+          
+          const overallAverage = ((parseFloat(avgPersonalDev) + parseFloat(avgCriticalThinking) + parseFloat(avgTeamWork) + parseFloat(avgAcademicKnowledge)) / 4).toFixed(1);
+          
+          console.log('Assessment stats set:', {
+            assessedCount: assessedStudents.length,
+            totalStudents: data.data.students.length,
+            averages: {
+              personal_development: avgPersonalDev,
+              critical_thinking: avgCriticalThinking,
+              team_work: avgTeamWork,
+              academic_knowledge: avgAcademicKnowledge,
+              overall: overallAverage
+            }
+          }); // Debug log
+          
+          setAssessmentStats({
+            assessedCount: assessedStudents.length,
+            totalStudents: data.data.students.length,
+            averages: {
+              personal_development: avgPersonalDev,
+              critical_thinking: avgCriticalThinking,
+              team_work: avgTeamWork,
+              academic_knowledge: avgAcademicKnowledge,
+              overall: overallAverage
+            }
+          });
+        } else {
+          setAssessmentStats({
+            assessedCount: 0,
+            totalStudents: data.data.students.length,
+            averages: null
+          });
+        }
+      } else {
+        console.error('Invalid assessment data structure:', data);
+        setAssessmentStats(null);
+      }
+    } catch (error) {
+      console.error('Error fetching assessment stats:', error);
+      setAssessmentStats(null);
+    }
+  };
+
   const handleViewScheduleProfile = (scheduleId) => {
     if (onViewProfile) {
       onViewProfile('schedules', scheduleId);
@@ -161,6 +233,11 @@ const ScheduleManagement = ({ selectedSchoolId, onViewProfile, onViewAssessment 
 
   const handleScheduleClick = (schedule) => {
     setSelectedSchedule(schedule);
+    
+    // Fetch assessment stats for this schedule
+    if (schedule.id) {
+      fetchAssessmentStats(schedule.id);
+    }
     
     // Navigate calendar to the schedule's date
     if (schedule.scheduled_date) {
@@ -179,6 +256,8 @@ const ScheduleManagement = ({ selectedSchoolId, onViewProfile, onViewAssessment 
         }
       }, 100);
     }
+
+    fetchAssessmentStats(schedule.id);
   };
 
   const openModal = (type, schedule = null) => {
@@ -574,6 +653,7 @@ const ScheduleManagement = ({ selectedSchoolId, onViewProfile, onViewAssessment 
               <button
                 onClick={() => {
                   setSelectedSchedule(null);
+                  setAssessmentStats(null);
                   setDateFilter('');
                   setSelectedDate(new Date());
                 }}
@@ -611,7 +691,52 @@ const ScheduleManagement = ({ selectedSchoolId, onViewProfile, onViewAssessment 
                     {statusOptions.find(s => s.value === displaySchedule.status)?.label}
                   </span>
                 </div>
+                <div>
+                  <span className="font-medium text-gray-700">Students:</span>
+                  <p className="text-gray-600">
+                    {displaySchedule.assessed_students || 0}/{displaySchedule.total_students || 0} assessed
+                  </p>
+                </div>
               </div>
+
+              {/* Assessment Statistics */}
+              {assessmentStats && (
+                <div>
+                  {assessmentStats.assessedCount > 0 ? (
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <span className="font-medium text-gray-700 block mb-2">Assessment Average:</span>
+                      <div className="grid grid-cols-2 gap-3 text-sm">
+                        <div>
+                          <span className="text-gray-600">Personal Development:</span>
+                          <span className="font-semibold text-blue-600 ml-2">{assessmentStats.averages.personal_development}/5</span>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">Critical Thinking:</span>
+                          <span className="font-semibold text-green-600 ml-2">{assessmentStats.averages.critical_thinking}/5</span>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">Team Work:</span>
+                          <span className="font-semibold text-purple-600 ml-2">{assessmentStats.averages.team_work}/5</span>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">Academic Knowledge:</span>
+                          <span className="font-semibold text-orange-600 ml-2">{assessmentStats.averages.academic_knowledge}/5</span>
+                        </div>
+                      </div>
+                      <div className="mt-3 pt-3 border-t border-gray-200">
+                        <span className="text-gray-600">Overall Average:</span>
+                        <span className="font-bold text-indigo-600 ml-2 text-lg">{assessmentStats.averages.overall}/5</span>
+                      </div>
+                    </div>
+                  ) : displaySchedule.status === 'completed' ? (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                      <p className="text-yellow-800 text-sm">
+                        📊 No assessment data available for this completed schedule.
+                      </p>
+                    </div>
+                  ) : null}
+                </div>
+              )}
 
               {displaySchedule.teachers && displaySchedule.teachers.length > 0 && (
                 <div>
