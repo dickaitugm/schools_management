@@ -182,17 +182,27 @@ const TeacherManagement = ({ selectedSchoolId, onViewProfile }) => {
         }
       }
       
-      // Direct delete if no relations or check failed
-      if (confirm(`Are you sure you want to delete teacher "${teacher.name}"?`)) {
-        await performDelete(teacher.id, false);
-      }
+      // Direct delete if no relations or check failed - use simple confirmation modal
+      setDeleteConfirmation({
+        teacher: teacher,
+        teacherSchoolsCount: 0,
+        studentTeachersCount: 0,
+        schedulesCount: 0,
+        show: true,
+        isSimple: true
+      });
       
     } catch (error) {
       console.error('Error checking teacher relations:', error);
-      // Fallback to direct delete attempt
-      if (confirm(`Are you sure you want to delete teacher "${teacher.name}"?`)) {
-        await performDelete(teacher.id, false);
-      }
+      // Fallback to simple confirmation modal
+      setDeleteConfirmation({
+        teacher: teacher,
+        teacherSchoolsCount: 0,
+        studentTeachersCount: 0,
+        schedulesCount: 0,
+        show: true,
+        isSimple: true
+      });
     }
   };
 
@@ -233,6 +243,8 @@ const TeacherManagement = ({ selectedSchoolId, onViewProfile }) => {
   const handleConfirmDelete = (action) => {
     if (action === 'cascade' && deleteConfirmation?.teacher) {
       performDelete(deleteConfirmation.teacher.id, true);
+    } else if (action === 'simple' && deleteConfirmation?.teacher) {
+      performDelete(deleteConfirmation.teacher.id, false);
     }
     setDeleteConfirmation(null);
   };
@@ -572,29 +584,37 @@ const TeacherManagement = ({ selectedSchoolId, onViewProfile }) => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <div>
-                      <p className="text-amber-800 font-medium mb-2">
-                        This teacher has related records that will be affected:
-                      </p>
-                      <ul className="space-y-2 text-sm">
-                        <li className="flex items-center">
-                          <div className="bg-blue-500 w-2 h-2 rounded-full mr-3"></div>
-                          <span className="text-gray-700">
-                            <strong>{deleteConfirmation.teacherSchoolsCount}</strong> school assignment(s)
-                          </span>
-                        </li>
-                        <li className="flex items-center">
-                          <div className="bg-green-500 w-2 h-2 rounded-full mr-3"></div>
-                          <span className="text-gray-700">
-                            <strong>{deleteConfirmation.studentTeachersCount}</strong> student relationship(s)
-                          </span>
-                        </li>
-                        <li className="flex items-center">
-                          <div className="bg-purple-500 w-2 h-2 rounded-full mr-3"></div>
-                          <span className="text-gray-700">
-                            <strong>{deleteConfirmation.schedulesCount}</strong> schedule(s)
-                          </span>
-                        </li>
-                      </ul>
+                      {deleteConfirmation.isSimple ? (
+                        <p className="text-amber-800 font-medium">
+                          This teacher can be safely deleted.
+                        </p>
+                      ) : (
+                        <>
+                          <p className="text-amber-800 font-medium mb-2">
+                            This teacher has related records that will be affected:
+                          </p>
+                          <ul className="space-y-2 text-sm">
+                            <li className="flex items-center">
+                              <div className="bg-blue-500 w-2 h-2 rounded-full mr-3"></div>
+                              <span className="text-gray-700">
+                                <strong>{deleteConfirmation.teacherSchoolsCount}</strong> school assignment(s)
+                              </span>
+                            </li>
+                            <li className="flex items-center">
+                              <div className="bg-green-500 w-2 h-2 rounded-full mr-3"></div>
+                              <span className="text-gray-700">
+                                <strong>{deleteConfirmation.studentTeachersCount}</strong> student relationship(s)
+                              </span>
+                            </li>
+                            <li className="flex items-center">
+                              <div className="bg-purple-500 w-2 h-2 rounded-full mr-3"></div>
+                              <span className="text-gray-700">
+                                <strong>{deleteConfirmation.schedulesCount}</strong> schedule(s)
+                              </span>
+                            </li>
+                          </ul>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>

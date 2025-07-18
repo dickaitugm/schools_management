@@ -33,6 +33,9 @@ const RoleManagement = () => {
     const [userLoading, setUserLoading] = useState(false);
     const [roleLoading, setRoleLoading] = useState(false);
 
+    // Delete confirmation modal states
+    const [deleteConfirmation, setDeleteConfirmation] = useState(null);
+
     useEffect(() => {
         loadData();
     }, []);
@@ -119,22 +122,34 @@ const RoleManagement = () => {
     };
 
     const handleDeleteUser = async (userId) => {
-        if (window.confirm("Apakah Anda yakin ingin menghapus user ini?")) {
-            try {
-                const response = await fetch(`/api/users/${userId}`, {
-                    method: "DELETE",
-                });
-                const result = await response.json();
+        const user = users.find(u => u.id === userId);
+        if (!user) return;
+        
+        setDeleteConfirmation({
+            show: true,
+            type: 'user',
+            item: user,
+            title: 'Delete User',
+            message: `Are you sure you want to delete user "${user.name}" (${user.username})?`,
+            action: () => performDeleteUser(userId)
+        });
+    };
 
-                if (result.success) {
-                    loadUsers();
-                } else {
-                    alert("Error: " + result.error);
-                }
-            } catch (error) {
-                console.error("Error deleting user:", error);
-                alert("Gagal menghapus user");
+    const performDeleteUser = async (userId) => {
+        try {
+            const response = await fetch(`/api/users/${userId}`, {
+                method: "DELETE",
+            });
+            const result = await response.json();
+
+            if (result.success) {
+                loadUsers();
+            } else {
+                alert("Error: " + result.error);
             }
+        } catch (error) {
+            console.error("Error deleting user:", error);
+            alert("Gagal menghapus user");
         }
     };
 
@@ -210,22 +225,34 @@ const RoleManagement = () => {
     };
 
     const handleDeleteRole = async (roleId) => {
-        if (window.confirm("Apakah Anda yakin ingin menghapus role ini?")) {
-            try {
-                const response = await fetch(`/api/roles/${roleId}`, {
-                    method: "DELETE",
-                });
-                const result = await response.json();
+        const role = roles.find(r => r.id === roleId);
+        if (!role) return;
+        
+        setDeleteConfirmation({
+            show: true,
+            type: 'role',
+            item: role,
+            title: 'Delete Role',
+            message: `Are you sure you want to delete role "${role.name}"?`,
+            action: () => performDeleteRole(roleId)
+        });
+    };
 
-                if (result.success) {
-                    loadRoles();
-                } else {
-                    alert("Error: " + result.error);
-                }
-            } catch (error) {
-                console.error("Error deleting role:", error);
-                alert("Gagal menghapus role");
+    const performDeleteRole = async (roleId) => {
+        try {
+            const response = await fetch(`/api/roles/${roleId}`, {
+                method: "DELETE",
+            });
+            const result = await response.json();
+
+            if (result.success) {
+                loadRoles();
+            } else {
+                alert("Error: " + result.error);
             }
+        } catch (error) {
+            console.error("Error deleting role:", error);
+            alert("Gagal menghapus role");
         }
     };
 
@@ -284,6 +311,13 @@ const RoleManagement = () => {
             return permissionsList.map((p) => p.name).join(", ");
         }
         return "No permissions";
+    };
+
+    const handleConfirmDelete = (confirmed) => {
+        if (confirmed && deleteConfirmation?.action) {
+            deleteConfirmation.action();
+        }
+        setDeleteConfirmation(null);
     };
 
     if (loading) {
@@ -1006,6 +1040,84 @@ const RoleManagement = () => {
                                     </button>
                                 </div>
                             </form>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Delete Confirmation Modal */}
+            {deleteConfirmation?.show && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
+                    <div className="relative w-full max-w-md mx-auto bg-white rounded-2xl shadow-2xl transform transition-all animate-pulse">
+                        {/* Gradient Header */}
+                        <div className="bg-gradient-to-r from-red-500 to-red-600 px-6 py-4 rounded-t-2xl">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-bold text-white">
+                                        {deleteConfirmation.title}
+                                    </h3>
+                                    <p className="text-red-100 text-sm opacity-90">
+                                        This action cannot be undone
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Modal Content */}
+                        <div className="px-6 py-5">
+                            <div className="mb-4">
+                                <p className="text-gray-700 text-base leading-relaxed">
+                                    {deleteConfirmation.message}
+                                </p>
+                                
+                                {deleteConfirmation.item && (
+                                    <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                                <svg className="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    {deleteConfirmation.type === 'user' ? (
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                                    ) : (
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                                    )}
+                                                </svg>
+                                            </div>
+                                            <div className="flex-1">
+                                                <h4 className="font-semibold text-gray-900">
+                                                    {deleteConfirmation.type === 'user' ? deleteConfirmation.item.name : deleteConfirmation.item.name}
+                                                </h4>
+                                                <p className="text-sm text-gray-600">
+                                                    {deleteConfirmation.type === 'user' 
+                                                        ? `Username: ${deleteConfirmation.item.username} | Email: ${deleteConfirmation.item.email}`
+                                                        : deleteConfirmation.item.description || 'No description'
+                                                    }
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="flex gap-3 pt-4">
+                                <button
+                                    onClick={() => handleConfirmDelete(false)}
+                                    className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={() => handleConfirmDelete(true)}
+                                    className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors"
+                                >
+                                    Delete {deleteConfirmation.type === 'user' ? 'User' : 'Role'}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

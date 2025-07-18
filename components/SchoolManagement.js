@@ -184,17 +184,31 @@ const SchoolManagement = ({ onSchoolSelect, selectedSchoolId, onViewProfile }) =
         }
       }
       
-      // Direct delete if no relations or check failed
-      if (confirm(`Are you sure you want to delete school "${school.name}"?`)) {
-        await performDelete(school.id, false);
-      }
+      // Direct delete if no relations or check failed - use simple confirmation modal
+      setDeleteConfirmation({
+        school: school,
+        studentsCount: 0,
+        teacherSchoolsCount: 0,
+        cashFlowCount: 0,
+        attendanceCount: 0,
+        studentTeachersCount: 0,
+        show: true,
+        isSimple: true // Flag to show simpler version
+      });
       
     } catch (error) {
       console.error('Error checking school relations:', error);
-      // Fallback to direct delete attempt
-      if (confirm(`Are you sure you want to delete school "${school.name}"?`)) {
-        await performDelete(school.id, false);
-      }
+      // Fallback to simple confirmation modal
+      setDeleteConfirmation({
+        school: school,
+        studentsCount: 0,
+        teacherSchoolsCount: 0,
+        cashFlowCount: 0,
+        attendanceCount: 0,
+        studentTeachersCount: 0,
+        show: true,
+        isSimple: true // Flag to show simpler version
+      });
     }
   };
 
@@ -235,6 +249,8 @@ const SchoolManagement = ({ onSchoolSelect, selectedSchoolId, onViewProfile }) =
   const handleConfirmDelete = (action) => {
     if (action === 'cascade' && deleteConfirmation?.school) {
       performDelete(deleteConfirmation.school.id, true);
+    } else if (action === 'simple' && deleteConfirmation?.school) {
+      performDelete(deleteConfirmation.school.id, false);
     }
     setDeleteConfirmation(null);
   };
@@ -560,41 +576,49 @@ const SchoolManagement = ({ onSchoolSelect, selectedSchoolId, onViewProfile }) =
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <div>
-                      <p className="text-amber-800 font-medium mb-2">
-                        This school has related records that will be affected:
-                      </p>
-                      <ul className="space-y-2 text-sm">
-                        <li className="flex items-center">
-                          <div className="bg-green-500 w-2 h-2 rounded-full mr-3"></div>
-                          <span className="text-gray-700">
-                            <strong>{deleteConfirmation.studentsCount}</strong> student(s)
-                          </span>
-                        </li>
-                        <li className="flex items-center">
-                          <div className="bg-blue-500 w-2 h-2 rounded-full mr-3"></div>
-                          <span className="text-gray-700">
-                            <strong>{deleteConfirmation.teacherSchoolsCount}</strong> teacher relationship(s)
-                          </span>
-                        </li>
-                        <li className="flex items-center">
-                          <div className="bg-yellow-500 w-2 h-2 rounded-full mr-3"></div>
-                          <span className="text-gray-700">
-                            <strong>{deleteConfirmation.cashFlowCount}</strong> cash flow record(s)
-                          </span>
-                        </li>
-                        <li className="flex items-center">
-                          <div className="bg-purple-500 w-2 h-2 rounded-full mr-3"></div>
-                          <span className="text-gray-700">
-                            <strong>{deleteConfirmation.attendanceCount}</strong> attendance record(s)
-                          </span>
-                        </li>
-                        <li className="flex items-center">
-                          <div className="bg-indigo-500 w-2 h-2 rounded-full mr-3"></div>
-                          <span className="text-gray-700">
-                            <strong>{deleteConfirmation.studentTeachersCount}</strong> student-teacher relationship(s)
-                          </span>
-                        </li>
-                      </ul>
+                      {deleteConfirmation.isSimple ? (
+                        <p className="text-amber-800 font-medium">
+                          This school can be safely deleted.
+                        </p>
+                      ) : (
+                        <>
+                          <p className="text-amber-800 font-medium mb-2">
+                            This school has related records that will be affected:
+                          </p>
+                          <ul className="space-y-2 text-sm">
+                            <li className="flex items-center">
+                              <div className="bg-green-500 w-2 h-2 rounded-full mr-3"></div>
+                              <span className="text-gray-700">
+                                <strong>{deleteConfirmation.studentsCount}</strong> student(s)
+                              </span>
+                            </li>
+                            <li className="flex items-center">
+                              <div className="bg-blue-500 w-2 h-2 rounded-full mr-3"></div>
+                              <span className="text-gray-700">
+                                <strong>{deleteConfirmation.teacherSchoolsCount}</strong> teacher relationship(s)
+                              </span>
+                            </li>
+                            <li className="flex items-center">
+                              <div className="bg-yellow-500 w-2 h-2 rounded-full mr-3"></div>
+                              <span className="text-gray-700">
+                                <strong>{deleteConfirmation.cashFlowCount}</strong> cash flow record(s)
+                              </span>
+                            </li>
+                            <li className="flex items-center">
+                              <div className="bg-purple-500 w-2 h-2 rounded-full mr-3"></div>
+                              <span className="text-gray-700">
+                                <strong>{deleteConfirmation.attendanceCount}</strong> attendance record(s)
+                              </span>
+                            </li>
+                            <li className="flex items-center">
+                              <div className="bg-indigo-500 w-2 h-2 rounded-full mr-3"></div>
+                              <span className="text-gray-700">
+                                <strong>{deleteConfirmation.studentTeachersCount}</strong> student-teacher relationship(s)
+                              </span>
+                            </li>
+                          </ul>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -608,15 +632,29 @@ const SchoolManagement = ({ onSchoolSelect, selectedSchoolId, onViewProfile }) =
 
               {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row gap-3">
-                <button
-                  onClick={() => handleConfirmDelete('cascade')}
-                  className="flex-1 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 transform hover:scale-105 flex items-center justify-center"
-                >
-                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                  Delete School & All Related Data
-                </button>
+                {deleteConfirmation.isSimple ? (
+                  // Simple delete - no relations
+                  <button
+                    onClick={() => handleConfirmDelete('simple')}
+                    className="flex-1 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 transform hover:scale-105 flex items-center justify-center"
+                  >
+                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Yes, Delete School
+                  </button>
+                ) : (
+                  // Cascade delete - has relations
+                  <button
+                    onClick={() => handleConfirmDelete('cascade')}
+                    className="flex-1 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 transform hover:scale-105 flex items-center justify-center"
+                  >
+                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Delete School & All Related Data
+                  </button>
+                )}
                 <button
                   onClick={() => handleConfirmDelete('cancel')}
                   className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 px-4 rounded-xl transition-all duration-200 flex items-center justify-center"
