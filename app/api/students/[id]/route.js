@@ -165,10 +165,14 @@ export async function PUT(request, { params }) {
   }
 }
 
-// DELETE - Delete student
+// DELETE - Delete student with cascade option
 export async function DELETE(request, { params }) {
   try {
     const { id } = params;
+    const url = new URL(request.url);
+    const cascade = url.searchParams.get('cascade') === 'true';
+
+    console.log(`🗑️ DELETE Student ID: ${id}, Cascade: ${cascade}`);
 
     const client = await pool.connect();
     
@@ -180,6 +184,8 @@ export async function DELETE(request, { params }) {
       const checkResult = await client.query(checkQuery, [id]);
       
       if (checkResult.rows.length === 0) {
+        await client.query('ROLLBACK');
+        console.log(`❌ Student with ID ${id} not found`);
         return NextResponse.json(
           { success: false, error: 'Student not found' },
           { status: 404 }
@@ -187,35 +193,85 @@ export async function DELETE(request, { params }) {
       }
 
       const studentName = checkResult.rows[0].name;
+      console.log(`👤 Found student: ${studentName}`);
 
-      // Check if student has any attendance records
+      // Check if student has any related records
       const attendanceCheckQuery = `
         SELECT COUNT(*) as count 
         FROM student_attendance
         WHERE student_id = $1
       `;
       
-      const attendanceResult = await client.query(attendanceCheckQuery, [id]);
-      const hasAttendanceRecords = parseInt(attendanceResult.rows[0].count) > 0;
+      const studentTeachersCheckQuery = `
+        SELECT COUNT(*) as count 
+        FROM student_teachers
+        WHERE student_id = $1
+      `;
+      
+      const [attendanceResult, studentTeachersResult] = await Promise.all([
+        client.query(attendanceCheckQuery, [id]),
+        client.query(studentTeachersCheckQuery, [id])
+      ]);
+      
+      const attendanceCount = parseInt(attendanceResult.rows[0].count);
+      const studentTeachersCount = parseInt(studentTeachersResult.rows[0].count);
+      const hasRelatedRecords = attendanceCount > 0 || studentTeachersCount > 0;
 
-      if (hasAttendanceRecords) {
+      console.log(`📊 Records found - Attendance: ${attendanceCount}, Student-Teachers: ${studentTeachersCount}, Has Relations: ${hasRelatedRecords}`);
+
+      if (hasRelatedRecords && !cascade) {
+        await client.query('ROLLBACK');
+        console.log(`⚠️ Cannot delete - student has related records and cascade=false`);
         return NextResponse.json(
           { 
             success: false, 
-            error: 'Cannot delete student with existing attendance records. Please remove attendance records first.' 
+            error: 'Cannot delete student with existing records. Please remove related records first or use cascade delete.',
+            code: 'FOREIGN_KEY_VIOLATION',
+            details: {
+              attendanceCount,
+              studentTeachersCount
+            },
+            suggestion: 'Use cascade=true parameter to delete all related records'
           },
           { status: 409 }
         );
       }
 
-      // Delete student (CASCADE will handle student_teachers)
+      if (cascade && hasRelatedRecords) {
+        // Delete all related records first
+        console.log(`🗑️ Cascade delete - removing related records for student "${studentName}"`);
+        
+        // Delete attendance records
+        const attendanceDeleteResult = await client.query(
+          'DELETE FROM student_attendance WHERE student_id = $1',
+          [id]
+        );
+        console.log(`   - Deleted ${attendanceDeleteResult.rowCount} attendance records`);
+        
+        // Delete student-teacher relationships (if any)
+        const teacherDeleteResult = await client.query(
+          'DELETE FROM student_teachers WHERE student_id = $1',
+          [id]
+        );
+        console.log(`   - Deleted ${teacherDeleteResult.rowCount} teacher relationships`);
+      }
+
+      // Delete student
       await client.query('DELETE FROM students WHERE id = $1', [id]);
 
       await client.query('COMMIT');
 
+      const message = cascade && hasRelatedRecords
+        ? `Student "${studentName}" and all related records (${attendanceCount} attendance, ${studentTeachersCount} teacher relations) deleted successfully`
+        : `Student "${studentName}" deleted successfully`;
+
       return NextResponse.json({
         success: true,
-        message: `Student "${studentName}" deleted successfully`
+        message: message,
+        deletedRecords: cascade ? {
+          attendanceCount,
+          studentTeachersCount
+        } : null
       });
 
     } catch (error) {
@@ -228,7 +284,7 @@ export async function DELETE(request, { params }) {
   } catch (error) {
     console.error('Error deleting student:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to delete student' },
+      { success: false, error: 'Failed to delete student: ' + error.message },
       { status: 500 }
     );
   }

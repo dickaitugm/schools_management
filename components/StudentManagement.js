@@ -194,31 +194,82 @@ const StudentManagement = ({ selectedSchoolId, onViewProfile }) => {
     }
   };
 
-  const handleDelete = async (student) => {
-    if (!confirm(`Are you sure you want to delete student "${student.name}"?`)) {
-      return;
-    }
+  // Add state for delete confirmation
+  const [deleteConfirmation, setDeleteConfirmation] = useState(null);
 
-    setLoading(true);
+  const handleDelete = async (student) => {
     try {
-      const response = await fetch(`/api/students/${student.id}`, {
+      // Check if student has related records
+      const checkResponse = await fetch(`/api/students/${student.id}/check-relations`);
+      
+      if (checkResponse.ok) {
+        const { hasRelations, attendanceCount, studentTeachersCount } = await checkResponse.json();
+        
+        if (hasRelations) {
+          // Show confirmation dialog
+          setDeleteConfirmation({
+            student: student,
+            attendanceCount: attendanceCount,
+            studentTeachersCount: studentTeachersCount,
+            show: true
+          });
+          return;
+        }
+      }
+      
+      // Direct delete if no relations or check failed
+      if (confirm(`Are you sure you want to delete student "${student.name}"?`)) {
+        await performDelete(student.id, false);
+      }
+      
+    } catch (error) {
+      console.error('Error checking student relations:', error);
+      // Fallback to direct delete attempt
+      if (confirm(`Are you sure you want to delete student "${student.name}"?`)) {
+        await performDelete(student.id, false);
+      }
+    }
+  };
+
+  const performDelete = async (studentId, cascade = false) => {
+    setLoading(true);
+    console.log(`🔧 Frontend DELETE - StudentID: ${studentId}, Cascade: ${cascade}`);
+    
+    try {
+      const url = cascade ? `/api/students/${studentId}?cascade=true` : `/api/students/${studentId}`;
+      console.log(`📡 Calling API: ${url}`);
+      
+      const response = await fetch(url, {
         method: 'DELETE',
       });
 
       const data = await response.json();
+      console.log(`📋 API Response:`, data);
 
       if (data.success) {
         setSuccess(data.message);
         fetchStudents();
         setTimeout(() => setSuccess(null), 3000);
       } else {
-        setError(data.error);
+        if (data.code === 'FOREIGN_KEY_VIOLATION') {
+          // Show error with suggestion
+          setError(`${data.error}\n\n💡 ${data.suggestion}`);
+        } else {
+          setError(data.error);
+        }
       }
     } catch (error) {
-      setError('Failed to delete student');
+      setError('Failed to delete student: ' + error.message);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleConfirmDelete = (action) => {
+    if (action === 'cascade' && deleteConfirmation?.student) {
+      performDelete(deleteConfirmation.student.id, true);
+    }
+    setDeleteConfirmation(null);
   };
 
   const handleSearch = (e) => {
@@ -573,6 +624,46 @@ const StudentManagement = ({ selectedSchoolId, onViewProfile }) => {
           </form>
         </div>
       </Modal>
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirmation?.show && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold mb-4 text-red-600">
+              ⚠️ Delete Student Confirmation
+            </h3>
+            <div className="mb-6 text-gray-700">
+              <p className="mb-3">
+                <strong>Student:</strong> {deleteConfirmation.student?.name}
+              </p>
+              <p className="mb-3">
+                This student has related records:
+              </p>
+              <ul className="list-disc list-inside mb-4 text-sm bg-gray-50 p-3 rounded">
+                <li>{deleteConfirmation.attendanceCount} attendance record(s)</li>
+                <li>{deleteConfirmation.studentTeachersCount} teacher relationship(s)</li>
+              </ul>
+              <p className="text-red-600 font-medium">
+                What would you like to do?
+              </p>
+            </div>
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={() => handleConfirmDelete('cascade')}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors"
+              >
+                🗑️ Delete Student and All Related Records
+              </button>
+              <button
+                onClick={() => handleConfirmDelete('cancel')}
+                className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded-md transition-colors"
+              >
+                ❌ Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
