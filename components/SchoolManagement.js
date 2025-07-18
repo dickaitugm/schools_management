@@ -23,6 +23,9 @@ const SchoolManagement = ({ onSchoolSelect, selectedSchoolId, onViewProfile }) =
     phone: '',
     email: ''
   });
+  
+  // Add state for delete confirmation
+  const [deleteConfirmation, setDeleteConfirmation] = useState(null);
 
   useEffect(() => {
     fetchSchools();
@@ -159,27 +162,81 @@ const SchoolManagement = ({ onSchoolSelect, selectedSchoolId, onViewProfile }) =
   };
 
   const handleDelete = async (school) => {
-    if (!window.confirm(`Are you sure you want to delete "${school.name}"?`)) {
-      return;
-    }
-
     try {
-      const response = await fetch(`/api/schools/${school.id}`, {
+      // Check if school has related records
+      const checkResponse = await fetch(`/api/schools/${school.id}/check-relations`);
+      
+      if (checkResponse.ok) {
+        const relationData = await checkResponse.json();
+        
+        if (relationData.hasRelations) {
+          // Show confirmation dialog with related counts
+          setDeleteConfirmation({
+            school: school,
+            studentsCount: relationData.studentsCount || 0,
+            teacherSchoolsCount: relationData.teacherSchoolsCount || 0,
+            cashFlowCount: relationData.cashFlowCount || 0,
+            attendanceCount: relationData.attendanceCount || 0,
+            studentTeachersCount: relationData.studentTeachersCount || 0,
+            show: true
+          });
+          return;
+        }
+      }
+      
+      // Direct delete if no relations or check failed
+      if (confirm(`Are you sure you want to delete school "${school.name}"?`)) {
+        await performDelete(school.id, false);
+      }
+      
+    } catch (error) {
+      console.error('Error checking school relations:', error);
+      // Fallback to direct delete attempt
+      if (confirm(`Are you sure you want to delete school "${school.name}"?`)) {
+        await performDelete(school.id, false);
+      }
+    }
+  };
+
+  const performDelete = async (schoolId, cascade = false) => {
+    setLoading(true);
+    console.log(`🔧 Frontend DELETE - SchoolID: ${schoolId}, Cascade: ${cascade}`);
+    
+    try {
+      const url = cascade ? `/api/schools/${schoolId}?cascade=true` : `/api/schools/${schoolId}`;
+      console.log(`📡 Calling API: ${url}`);
+      
+      const response = await fetch(url, {
         method: 'DELETE',
       });
 
-      if (response.ok) {
-        setSuccess('School deleted successfully!');
-        setTimeout(() => setSuccess(null), 3000);
+      const data = await response.json();
+      console.log(`📋 API Response:`, data);
+
+      if (data.success) {
+        setSuccess(data.message);
         fetchSchools();
+        setTimeout(() => setSuccess(null), 3000);
       } else {
-        const errorData = await response.json();
-        setError(errorData.error || 'Failed to delete school');
+        if (data.code === 'FOREIGN_KEY_VIOLATION') {
+          // Show error with suggestion
+          setError(`${data.error}\n\n💡 ${data.suggestion}`);
+        } else {
+          setError(data.error);
+        }
       }
     } catch (error) {
-      console.error('Error deleting school:', error);
-      setError('Error deleting school: ' + error.message);
+      setError('Failed to delete school: ' + error.message);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const handleConfirmDelete = (action) => {
+    if (action === 'cascade' && deleteConfirmation?.school) {
+      performDelete(deleteConfirmation.school.id, true);
+    }
+    setDeleteConfirmation(null);
   };
 
 
@@ -459,6 +516,50 @@ const SchoolManagement = ({ onSchoolSelect, selectedSchoolId, onViewProfile }) =
           </div>
         </form>
       </Modal>
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirmation?.show && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold mb-4 text-red-600">
+              ⚠️ Delete School Confirmation
+            </h3>
+            <div className="mb-6 text-gray-700">
+              <p className="mb-3">
+                <strong>School:</strong> {deleteConfirmation.school?.name}
+              </p>
+              <p className="mb-3">
+                This school has related records:
+              </p>
+              <ul className="list-disc list-inside mb-4 text-sm bg-gray-50 p-3 rounded">
+                <li>{deleteConfirmation.studentsCount} student(s)</li>
+                <li>{deleteConfirmation.teacherSchoolsCount} teacher relationship(s)</li>
+                <li>{deleteConfirmation.cashFlowCount} cash flow record(s)</li>
+                <li>{deleteConfirmation.attendanceCount} attendance record(s)</li>
+                <li>{deleteConfirmation.studentTeachersCount} student-teacher relationship(s)</li>
+              </ul>
+              <p className="text-red-600 font-medium">
+                What would you like to do?
+              </p>
+            </div>
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={() => handleConfirmDelete('cascade')}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors"
+              >
+                🗑️ Delete School and All Related Records
+              </button>
+              <button
+                onClick={() => handleConfirmDelete('cancel')}
+                className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded-md transition-colors"
+              >
+                ❌ Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
