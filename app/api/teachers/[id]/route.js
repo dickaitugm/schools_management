@@ -162,10 +162,14 @@ export async function PUT(request, { params }) {
   }
 }
 
-// DELETE - Delete teacher
+// DELETE - Delete teacher with cascade option
 export async function DELETE(request, { params }) {
   try {
     const { id } = params;
+    const url = new URL(request.url);
+    const cascade = url.searchParams.get('cascade') === 'true';
+
+    console.log(`🗑️ DELETE Teacher ID: ${id}, Cascade: ${cascade}`);
 
     const client = await pool.connect();
     
@@ -177,6 +181,8 @@ export async function DELETE(request, { params }) {
       const checkResult = await client.query(checkQuery, [id]);
       
       if (checkResult.rows.length === 0) {
+        await client.query('ROLLBACK');
+        console.log(`❌ Teacher with ID ${id} not found`);
         return NextResponse.json(
           { success: false, error: 'Teacher not found' },
           { status: 404 }
@@ -184,36 +190,88 @@ export async function DELETE(request, { params }) {
       }
 
       const teacherName = checkResult.rows[0].name;
+      console.log(`👨‍🏫 Found teacher: ${teacherName}`);
 
-      // Check if teacher has any scheduled lessons
-      const scheduleCheckQuery = `
-        SELECT COUNT(*) as count 
-        FROM schedule_teachers st
-        JOIN schedules s ON st.schedule_id = s.id
-        WHERE st.teacher_id = $1 AND s.scheduled_date >= CURRENT_DATE
-      `;
+      // Check if teacher has any related records
+      const teacherSchoolsCheckQuery = 'SELECT COUNT(*) as count FROM teacher_schools WHERE teacher_id = $1';
+      const studentTeachersCheckQuery = 'SELECT COUNT(*) as count FROM student_teachers WHERE teacher_id = $1';
+      const schedulesCheckQuery = 'SELECT COUNT(*) as count FROM schedules WHERE teacher_id = $1';
       
-      const scheduleResult = await client.query(scheduleCheckQuery, [id]);
-      const hasUpcomingSchedules = parseInt(scheduleResult.rows[0].count) > 0;
+      const [teacherSchoolsResult, studentTeachersResult, schedulesResult] = await Promise.all([
+        client.query(teacherSchoolsCheckQuery, [id]),
+        client.query(studentTeachersCheckQuery, [id]),
+        client.query(schedulesCheckQuery, [id])
+      ]);
+      
+      const teacherSchoolsCount = parseInt(teacherSchoolsResult.rows[0].count);
+      const studentTeachersCount = parseInt(studentTeachersResult.rows[0].count);
+      const schedulesCount = parseInt(schedulesResult.rows[0].count);
+      const hasRelatedRecords = teacherSchoolsCount > 0 || studentTeachersCount > 0 || schedulesCount > 0;
 
-      if (hasUpcomingSchedules) {
+      console.log(`📊 Records found - Teacher Schools: ${teacherSchoolsCount}, Student Teachers: ${studentTeachersCount}, Schedules: ${schedulesCount}, Has Relations: ${hasRelatedRecords}`);
+
+      if (hasRelatedRecords && !cascade) {
+        await client.query('ROLLBACK');
+        console.log(`⚠️ Cannot delete - teacher has related records and cascade=false`);
         return NextResponse.json(
           { 
             success: false, 
-            error: 'Cannot delete teacher with upcoming scheduled lessons. Please reassign or cancel the schedules first.' 
+            error: 'Cannot delete teacher with existing records. Please remove related records first or use cascade delete.',
+            code: 'FOREIGN_KEY_VIOLATION',
+            details: {
+              teacherSchoolsCount,
+              studentTeachersCount,
+              schedulesCount
+            },
+            suggestion: 'Use cascade=true parameter to delete all related records'
           },
           { status: 409 }
         );
       }
 
-      // Delete teacher (CASCADE will handle teacher_schools and schedule_teachers)
+      if (cascade && hasRelatedRecords) {
+        // Delete all related records first
+        console.log(`🗑️ Cascade delete - removing related records for teacher "${teacherName}"`);
+        
+        // Delete schedules
+        const schedulesDeleteResult = await client.query(
+          'DELETE FROM schedules WHERE teacher_id = $1',
+          [id]
+        );
+        console.log(`   - Deleted ${schedulesDeleteResult.rowCount} schedules`);
+        
+        // Delete student-teacher relationships
+        const studentTeachersDeleteResult = await client.query(
+          'DELETE FROM student_teachers WHERE teacher_id = $1',
+          [id]
+        );
+        console.log(`   - Deleted ${studentTeachersDeleteResult.rowCount} student-teacher relationships`);
+        
+        // Delete teacher-school relationships
+        const teacherSchoolsDeleteResult = await client.query(
+          'DELETE FROM teacher_schools WHERE teacher_id = $1',
+          [id]
+        );
+        console.log(`   - Deleted ${teacherSchoolsDeleteResult.rowCount} teacher-school relationships`);
+      }
+
+      // Delete teacher
       await client.query('DELETE FROM teachers WHERE id = $1', [id]);
 
       await client.query('COMMIT');
 
+      const message = cascade && hasRelatedRecords
+        ? `Teacher "${teacherName}" and all related records (${teacherSchoolsCount} school assignments, ${studentTeachersCount} student relations, ${schedulesCount} schedules) deleted successfully`
+        : `Teacher "${teacherName}" deleted successfully`;
+
       return NextResponse.json({
         success: true,
-        message: `Teacher "${teacherName}" deleted successfully`
+        message: message,
+        deletedRecords: cascade ? {
+          teacherSchoolsCount,
+          studentTeachersCount,
+          schedulesCount
+        } : null
       });
 
     } catch (error) {
@@ -226,7 +284,7 @@ export async function DELETE(request, { params }) {
   } catch (error) {
     console.error('Error deleting teacher:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to delete teacher' },
+      { success: false, error: 'Failed to delete teacher: ' + error.message },
       { status: 500 }
     );
   }

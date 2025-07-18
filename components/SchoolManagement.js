@@ -519,42 +519,114 @@ const SchoolManagement = ({ onSchoolSelect, selectedSchoolId, onViewProfile }) =
 
       {/* Delete Confirmation Modal */}
       {deleteConfirmation?.show && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold mb-4 text-red-600">
-              ⚠️ Delete School Confirmation
-            </h3>
-            <div className="mb-6 text-gray-700">
-              <p className="mb-3">
-                <strong>School:</strong> {deleteConfirmation.school?.name}
-              </p>
-              <p className="mb-3">
-                This school has related records:
-              </p>
-              <ul className="list-disc list-inside mb-4 text-sm bg-gray-50 p-3 rounded">
-                <li>{deleteConfirmation.studentsCount} student(s)</li>
-                <li>{deleteConfirmation.teacherSchoolsCount} teacher relationship(s)</li>
-                <li>{deleteConfirmation.cashFlowCount} cash flow record(s)</li>
-                <li>{deleteConfirmation.attendanceCount} attendance record(s)</li>
-                <li>{deleteConfirmation.studentTeachersCount} student-teacher relationship(s)</li>
-              </ul>
-              <p className="text-red-600 font-medium">
-                What would you like to do?
-              </p>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full transform transition-all duration-300 ease-in-out">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-red-500 to-red-600 px-6 py-4 rounded-t-2xl">
+              <div className="flex items-center">
+                <div className="bg-white bg-opacity-20 rounded-full p-2 mr-3">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-bold text-white">
+                  Delete School Confirmation
+                </h3>
+              </div>
             </div>
-            <div className="flex flex-col gap-3">
-              <button
-                onClick={() => handleConfirmDelete('cascade')}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors"
-              >
-                🗑️ Delete School and All Related Records
-              </button>
-              <button
-                onClick={() => handleConfirmDelete('cancel')}
-                className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-700 rounded-md transition-colors"
-              >
-                ❌ Cancel
-              </button>
+
+            {/* Content */}
+            <div className="p-6">
+              <div className="mb-6">
+                <div className="flex items-center mb-4">
+                  <div className="bg-blue-100 rounded-full p-2 mr-3">
+                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-lg font-semibold text-gray-800">
+                      {deleteConfirmation.school?.name}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {deleteConfirmation.school?.address}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
+                  <div className="flex items-start">
+                    <svg className="w-5 h-5 text-amber-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div>
+                      <p className="text-amber-800 font-medium mb-2">
+                        This school has related records that will be affected:
+                      </p>
+                      <ul className="space-y-2 text-sm">
+                        <li className="flex items-center">
+                          <div className="bg-green-500 w-2 h-2 rounded-full mr-3"></div>
+                          <span className="text-gray-700">
+                            <strong>{deleteConfirmation.studentsCount}</strong> student(s)
+                          </span>
+                        </li>
+                        <li className="flex items-center">
+                          <div className="bg-blue-500 w-2 h-2 rounded-full mr-3"></div>
+                          <span className="text-gray-700">
+                            <strong>{deleteConfirmation.teacherSchoolsCount}</strong> teacher relationship(s)
+                          </span>
+                        </li>
+                        <li className="flex items-center">
+                          <div className="bg-yellow-500 w-2 h-2 rounded-full mr-3"></div>
+                          <span className="text-gray-700">
+                            <strong>{deleteConfirmation.cashFlowCount}</strong> cash flow record(s)
+                          </span>
+                        </li>
+                        <li className="flex items-center">
+                          <div className="bg-purple-500 w-2 h-2 rounded-full mr-3"></div>
+                          <span className="text-gray-700">
+                            <strong>{deleteConfirmation.attendanceCount}</strong> attendance record(s)
+                          </span>
+                        </li>
+                        <li className="flex items-center">
+                          <div className="bg-indigo-500 w-2 h-2 rounded-full mr-3"></div>
+                          <span className="text-gray-700">
+                            <strong>{deleteConfirmation.studentTeachersCount}</strong> student-teacher relationship(s)
+                          </span>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <p className="text-red-800 font-medium text-center">
+                    ⚠️ This action cannot be undone
+                  </p>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  onClick={() => handleConfirmDelete('cascade')}
+                  className="flex-1 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 transform hover:scale-105 flex items-center justify-center"
+                >
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  Delete School & All Related Data
+                </button>
+                <button
+                  onClick={() => handleConfirmDelete('cancel')}
+                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 px-4 rounded-xl transition-all duration-200 flex items-center justify-center"
+                >
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  Cancel
+                </button>
+              </div>
             </div>
           </div>
         </div>

@@ -28,6 +28,9 @@ const LessonManagement = ({ onViewProfile }) => {
     teacher_ids: []
   });
 
+  // Add state for delete confirmation
+  const [deleteConfirmation, setDeleteConfirmation] = useState(null);
+
   useEffect(() => {
     fetchLessons();
     fetchTeachers();
@@ -173,30 +176,77 @@ const LessonManagement = ({ onViewProfile }) => {
   };
 
   const handleDelete = async (lesson) => {
-    if (!confirm(`Are you sure you want to delete lesson "${lesson.title}"?`)) {
-      return;
-    }
-
-    setLoading(true);
     try {
-      const response = await fetch(`/api/lessons/${lesson.id}`, {
+      // Check if lesson has related records
+      const checkResponse = await fetch(`/api/lessons/${lesson.id}/check-relations`);
+      
+      if (checkResponse.ok) {
+        const relationData = await checkResponse.json();
+        
+        if (relationData.hasRelations) {
+          // Show confirmation dialog with related counts
+          setDeleteConfirmation({
+            lesson: lesson,
+            schedulesCount: relationData.schedulesCount || 0,
+            show: true
+          });
+          return;
+        }
+      }
+      
+      // Direct delete if no relations or check failed
+      if (confirm(`Are you sure you want to delete lesson "${lesson.title}"?`)) {
+        await performDelete(lesson.id, false);
+      }
+      
+    } catch (error) {
+      console.error('Error checking lesson relations:', error);
+      // Fallback to direct delete attempt
+      if (confirm(`Are you sure you want to delete lesson "${lesson.title}"?`)) {
+        await performDelete(lesson.id, false);
+      }
+    }
+  };
+
+  const performDelete = async (lessonId, cascade = false) => {
+    setLoading(true);
+    console.log(`🔧 Frontend DELETE - LessonID: ${lessonId}, Cascade: ${cascade}`);
+    
+    try {
+      const url = cascade ? `/api/lessons/${lessonId}?cascade=true` : `/api/lessons/${lessonId}`;
+      console.log(`📡 Calling API: ${url}`);
+      
+      const response = await fetch(url, {
         method: 'DELETE',
       });
 
       const data = await response.json();
+      console.log(`📋 API Response:`, data);
 
       if (data.success) {
         setSuccess(data.message);
         fetchLessons();
         setTimeout(() => setSuccess(null), 3000);
       } else {
-        setError(data.error);
+        if (data.code === 'FOREIGN_KEY_VIOLATION') {
+          // Show error with suggestion
+          setError(`${data.error}\n\n💡 ${data.suggestion}`);
+        } else {
+          setError(data.error);
+        }
       }
     } catch (error) {
-      setError('Failed to delete lesson');
+      setError('Failed to delete lesson: ' + error.message);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleConfirmDelete = (action) => {
+    if (action === 'cascade' && deleteConfirmation?.lesson) {
+      performDelete(deleteConfirmation.lesson.id, true);
+    }
+    setDeleteConfirmation(null);
   };
 
   const handleSearch = (e) => {
@@ -552,6 +602,96 @@ const LessonManagement = ({ onViewProfile }) => {
           </form>
         </div>
       </Modal>
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirmation?.show && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full transform transition-all duration-300 ease-in-out">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-red-500 to-red-600 px-6 py-4 rounded-t-2xl">
+              <div className="flex items-center">
+                <div className="bg-white bg-opacity-20 rounded-full p-2 mr-3">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-bold text-white">
+                  Delete Lesson Confirmation
+                </h3>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="p-6">
+              <div className="mb-6">
+                <div className="flex items-center mb-4">
+                  <div className="bg-indigo-100 rounded-full p-2 mr-3">
+                    <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-lg font-semibold text-gray-800">
+                      {deleteConfirmation.lesson?.title}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      Duration: {deleteConfirmation.lesson?.duration_minutes} minutes | Grade: {deleteConfirmation.lesson?.target_grade}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
+                  <div className="flex items-start">
+                    <svg className="w-5 h-5 text-amber-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div>
+                      <p className="text-amber-800 font-medium mb-2">
+                        This lesson has related records that will be affected:
+                      </p>
+                      <div className="flex items-center">
+                        <div className="bg-orange-500 w-2 h-2 rounded-full mr-3"></div>
+                        <span className="text-gray-700">
+                          <strong>{deleteConfirmation.schedulesCount}</strong> schedule(s) using this lesson
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <p className="text-red-800 font-medium text-center">
+                    ⚠️ This action cannot be undone
+                  </p>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  onClick={() => handleConfirmDelete('cascade')}
+                  className="flex-1 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 transform hover:scale-105 flex items-center justify-center"
+                >
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  Delete Lesson & All Related Data
+                </button>
+                <button
+                  onClick={() => handleConfirmDelete('cancel')}
+                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 px-4 rounded-xl transition-all duration-200 flex items-center justify-center"
+                >
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

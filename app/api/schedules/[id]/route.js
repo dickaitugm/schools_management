@@ -163,27 +163,57 @@ export async function PUT(request, { params }) {
 export async function DELETE(request, { params }) {
   try {
     const { id } = params;
+    console.log(`🗑️ DELETE Schedule ID: ${id}`);
+    
     const client = await pool.connect();
 
-    const result = await client.query('DELETE FROM schedules WHERE id = $1 RETURNING *', [id]);
-    client.release();
+    try {
+      await client.query('BEGIN');
 
-    if (result.rows.length === 0) {
-      return NextResponse.json(
-        { success: false, error: 'Schedule not found' },
-        { status: 404 }
-      );
+      // First check if schedule exists and get details
+      const checkQuery = `
+        SELECT s.*, sch.name as school_name 
+        FROM schedules s
+        JOIN schools sch ON s.school_id = sch.id
+        WHERE s.id = $1
+      `;
+      const checkResult = await client.query(checkQuery, [id]);
+
+      if (checkResult.rows.length === 0) {
+        await client.query('ROLLBACK');
+        console.log(`❌ Schedule with ID ${id} not found`);
+        return NextResponse.json(
+          { success: false, error: 'Schedule not found' },
+          { status: 404 }
+        );
+      }
+
+      const schedule = checkResult.rows[0];
+      console.log(`📅 Found schedule: ${schedule.scheduled_date} at ${schedule.scheduled_time} - ${schedule.school_name}`);
+
+      // Delete the schedule
+      const deleteResult = await client.query('DELETE FROM schedules WHERE id = $1', [id]);
+      
+      await client.query('COMMIT');
+
+      console.log(`✅ Schedule deleted successfully`);
+
+      return NextResponse.json({
+        success: true,
+        message: `Schedule for ${schedule.scheduled_date} at ${schedule.school_name} deleted successfully`
+      });
+
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
     }
-
-    return NextResponse.json({
-      success: true,
-      message: 'Schedule deleted successfully'
-    });
 
   } catch (error) {
     console.error('Error deleting schedule:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to delete schedule' },
+      { success: false, error: 'Failed to delete schedule: ' + error.message },
       { status: 500 }
     );
   }

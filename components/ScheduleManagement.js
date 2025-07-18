@@ -45,6 +45,9 @@ const ScheduleManagement = ({ selectedSchoolId, onViewProfile, onViewAssessment 
   const [assessmentStats, setAssessmentStats] = useState(null);
   const [scheduleAssessments, setScheduleAssessments] = useState({}); // Store assessment data for multiple schedules
 
+  // Add state for delete confirmation
+  const [deleteConfirmation, setDeleteConfirmation] = useState(null);
+
   const statusOptions = [
     { value: 'scheduled', label: 'Scheduled', color: 'blue', bgColor: 'bg-blue-100', textColor: 'text-blue-800', borderColor: 'border-blue-300' },
     { value: 'in-progress', label: 'In Progress', color: 'yellow', bgColor: 'bg-yellow-100', textColor: 'text-yellow-800', borderColor: 'border-yellow-300' },
@@ -533,17 +536,47 @@ const ScheduleManagement = ({ selectedSchoolId, onViewProfile, onViewAssessment 
   };
 
   const handleDelete = async (schedule) => {
-    if (!confirm(`Are you sure you want to delete this schedule?`)) {
-      return;
-    }
-
-    setLoading(true);
     try {
-      const response = await fetch(`/api/schedules/${schedule.id}`, {
+      // Check if schedule has related records (though usually none)
+      const checkResponse = await fetch(`/api/schedules/${schedule.id}/check-relations`);
+      
+      if (checkResponse.ok) {
+        const relationData = await checkResponse.json();
+        
+        // For schedules, we'll show a simpler confirmation dialog
+        setDeleteConfirmation({
+          schedule: schedule,
+          message: relationData.message || 'Schedule can be safely deleted',
+          show: true
+        });
+        return;
+      }
+      
+      // Direct delete if check failed
+      if (confirm(`Are you sure you want to delete this schedule?`)) {
+        await performDelete(schedule.id);
+      }
+      
+    } catch (error) {
+      console.error('Error checking schedule relations:', error);
+      // Fallback to direct delete attempt
+      if (confirm(`Are you sure you want to delete this schedule?`)) {
+        await performDelete(schedule.id);
+      }
+    }
+  };
+
+  const performDelete = async (scheduleId) => {
+    setLoading(true);
+    console.log(`🔧 Frontend DELETE - ScheduleID: ${scheduleId}`);
+    
+    try {
+      const response = await fetch(`/api/schedules/${scheduleId}`, {
         method: 'DELETE',
       });
 
       const data = await response.json();
+      console.log(`📋 API Response:`, data);
 
       if (data.success) {
         setSuccess(data.message);
@@ -554,10 +587,17 @@ const ScheduleManagement = ({ selectedSchoolId, onViewProfile, onViewAssessment 
         setError(data.error);
       }
     } catch (error) {
-      setError('Failed to delete schedule');
+      setError('Failed to delete schedule: ' + error.message);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleConfirmDelete = (action) => {
+    if (action === 'confirm' && deleteConfirmation?.schedule) {
+      performDelete(deleteConfirmation.schedule.id);
+    }
+    setDeleteConfirmation(null);
   };
 
 
@@ -1729,6 +1769,90 @@ const ScheduleManagement = ({ selectedSchoolId, onViewProfile, onViewAssessment 
           </form>
         </div>
       </Modal>
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirmation?.show && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full transform transition-all duration-300 ease-in-out">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-red-500 to-red-600 px-6 py-4 rounded-t-2xl">
+              <div className="flex items-center">
+                <div className="bg-white bg-opacity-20 rounded-full p-2 mr-3">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-bold text-white">
+                  Delete Schedule Confirmation
+                </h3>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="p-6">
+              <div className="mb-6">
+                <div className="flex items-center mb-4">
+                  <div className="bg-orange-100 rounded-full p-2 mr-3">
+                    <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3a1 1 0 012 0v4m-2 0v10a1 1 0 002 0V7m8 0V3a1 1 0 012 0v4m-2 0v10a1 1 0 002 0V7m-8 0h8M8 17a1 1 0 002 0V7" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-lg font-semibold text-gray-800">
+                      {deleteConfirmation.schedule?.scheduled_date} at {deleteConfirmation.schedule?.scheduled_time}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      School: {deleteConfirmation.schedule?.school_name}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+                  <div className="flex items-start">
+                    <svg className="w-5 h-5 text-green-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div>
+                      <p className="text-green-800 font-medium">
+                        {deleteConfirmation.message}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <p className="text-red-800 font-medium text-center">
+                    ⚠️ Are you sure you want to delete this schedule?
+                  </p>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  onClick={() => handleConfirmDelete('confirm')}
+                  className="flex-1 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 transform hover:scale-105 flex items-center justify-center"
+                >
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  Yes, Delete Schedule
+                </button>
+                <button
+                  onClick={() => handleConfirmDelete('cancel')}
+                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 px-4 rounded-xl transition-all duration-200 flex items-center justify-center"
+                >
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

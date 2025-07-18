@@ -154,10 +154,14 @@ export async function PUT(request, { params }) {
   }
 }
 
-// DELETE - Delete lesson
+// DELETE - Delete lesson with cascade option
 export async function DELETE(request, { params }) {
   try {
     const { id } = params;
+    const url = new URL(request.url);
+    const cascade = url.searchParams.get('cascade') === 'true';
+
+    console.log(`🗑️ DELETE Lesson ID: ${id}, Cascade: ${cascade}`);
 
     const client = await pool.connect();
     
@@ -169,6 +173,8 @@ export async function DELETE(request, { params }) {
       const checkResult = await client.query(checkQuery, [id]);
       
       if (checkResult.rows.length === 0) {
+        await client.query('ROLLBACK');
+        console.log(`❌ Lesson with ID ${id} not found`);
         return NextResponse.json(
           { success: false, error: 'Lesson not found' },
           { status: 404 }
@@ -176,36 +182,61 @@ export async function DELETE(request, { params }) {
       }
 
       const lessonTitle = checkResult.rows[0].title;
+      console.log(`📚 Found lesson: ${lessonTitle}`);
 
-      // Check if lesson is used in any schedules
-      const scheduleCheckQuery = `
-        SELECT COUNT(*) as count 
-        FROM schedule_lessons sl
-        JOIN schedules s ON sl.schedule_id = s.id
-        WHERE sl.lesson_id = $1 AND s.scheduled_date >= CURRENT_DATE
-      `;
+      // Check if lesson has any related records
+      const schedulesCheckQuery = 'SELECT COUNT(*) as count FROM schedules WHERE lesson_id = $1';
       
-      const scheduleResult = await client.query(scheduleCheckQuery, [id]);
-      const hasUpcomingSchedules = parseInt(scheduleResult.rows[0].count) > 0;
+      const schedulesResult = await client.query(schedulesCheckQuery, [id]);
+      const schedulesCount = parseInt(schedulesResult.rows[0].count);
+      const hasRelatedRecords = schedulesCount > 0;
 
-      if (hasUpcomingSchedules) {
+      console.log(`📊 Records found - Schedules: ${schedulesCount}, Has Relations: ${hasRelatedRecords}`);
+
+      if (hasRelatedRecords && !cascade) {
+        await client.query('ROLLBACK');
+        console.log(`⚠️ Cannot delete - lesson has related records and cascade=false`);
         return NextResponse.json(
           { 
             success: false, 
-            error: 'Cannot delete lesson with upcoming schedules. Please remove or reassign the schedules first.' 
+            error: 'Cannot delete lesson with existing schedules. Please remove related records first or use cascade delete.',
+            code: 'FOREIGN_KEY_VIOLATION',
+            details: {
+              schedulesCount
+            },
+            suggestion: 'Use cascade=true parameter to delete all related records'
           },
           { status: 409 }
         );
       }
 
-      // Delete lesson (CASCADE will handle lesson_teachers and schedule_lessons)
+      if (cascade && hasRelatedRecords) {
+        // Delete all related records first
+        console.log(`🗑️ Cascade delete - removing related records for lesson "${lessonTitle}"`);
+        
+        // Delete schedules that use this lesson
+        const schedulesDeleteResult = await client.query(
+          'DELETE FROM schedules WHERE lesson_id = $1',
+          [id]
+        );
+        console.log(`   - Deleted ${schedulesDeleteResult.rowCount} schedules`);
+      }
+
+      // Delete lesson
       await client.query('DELETE FROM lessons WHERE id = $1', [id]);
 
       await client.query('COMMIT');
 
+      const message = cascade && hasRelatedRecords
+        ? `Lesson "${lessonTitle}" and all related records (${schedulesCount} schedules) deleted successfully`
+        : `Lesson "${lessonTitle}" deleted successfully`;
+
       return NextResponse.json({
         success: true,
-        message: `Lesson "${lessonTitle}" deleted successfully`
+        message: message,
+        deletedRecords: cascade ? {
+          schedulesCount
+        } : null
       });
 
     } catch (error) {
@@ -218,7 +249,7 @@ export async function DELETE(request, { params }) {
   } catch (error) {
     console.error('Error deleting lesson:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to delete lesson' },
+      { success: false, error: 'Failed to delete lesson: ' + error.message },
       { status: 500 }
     );
   }
